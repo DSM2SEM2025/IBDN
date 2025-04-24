@@ -8,7 +8,6 @@ import os
 import socket
 
 
-# Configure logging
 def setup_logging():
     """Configure logging for the database operations"""
     log_dir = os.path.join(os.path.dirname(

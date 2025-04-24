@@ -1,21 +1,15 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import uvicorn
-from app.model.database_setup import create_database_if_not_exists, create_tables, setup_logging
+from app.models.database_setup import create_database_if_not_exists, create_tables, setup_logging
 import logging
-
 
 # Configure logging
 logger = setup_logging()
 
-app = FastAPI(title="Sistema de Gerenciamento de Empresas")
-
-# Include routes
-
 
 @asynccontextmanager
-async def lifespan(application: FastAPI):
-
+async def lifespan(app: FastAPI):
     logger.info("Starting application...")
     try:
         create_database_if_not_exists()
@@ -24,10 +18,14 @@ async def lifespan(application: FastAPI):
         yield
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Database initialization error: {str(e)}")
+        # Encerra a aplicação se o banco não puder ser inicializado
+        raise SystemExit(f"Database initialization failed: {e}")
 
-app = FastAPI(lifespan=lifespan)
+
+app = FastAPI(
+    title="Sistema de Gerenciamento de Empresas",
+    lifespan=lifespan
+)
 
 
 @app.get("/")
