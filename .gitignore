@@ -1,0 +1,64 @@
+# Ambiente virtual
+venv/
+.venv/
+env/
+
+# Arquivos de ambiente
+.env
+.env.local
+.env*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# FastAPI/uvicorn
+*.sock
+.pytest_cache/
+.uvicorn/
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs e bancos de dados
+*.log
+*.sqlite
+*.db
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# Documentação
+docs/_build/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Testes
+.coverage
+htmlcov/
+.mypy_cache/
