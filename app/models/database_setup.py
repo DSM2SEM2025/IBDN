@@ -54,17 +54,20 @@ def create_tables():
 
         tables['empresa'] = """
         CREATE TABLE IF NOT EXISTS empresa (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            cnpj VARCHAR(18) NOT NULL,
-            razao_social VARCHAR(255) NOT NULL,
-            nome_fantasia VARCHAR(255),
-            email VARCHAR(255) NOT NULL,
-            telefone VARCHAR(20),
-            responsavel VARCHAR(100),
-            cargo_responsavel VARCHAR(100),
-            site_empresa VARCHAR(255),
-            data_cadastro DATE NOT NULL,
-            UNIQUE (cnpj)
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        cnpj VARCHAR(18) NOT NULL,
+        razao_social VARCHAR(255) NOT NULL,
+        nome_fantasia VARCHAR(255),
+        email VARCHAR(255) NOT NULL UNIQUE,  
+        senha_hash VARCHAR(255) NOT NULL,   
+        telefone VARCHAR(20),
+        responsavel VARCHAR(100),
+        cargo_responsavel VARCHAR(100),
+        site_empresa VARCHAR(255),
+        data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  
+        ativo BOOLEAN DEFAULT TRUE,       
+        UNIQUE (cnpj),                 
+        INDEX (email)                      
         ) ENGINE=InnoDB;
         """
 
