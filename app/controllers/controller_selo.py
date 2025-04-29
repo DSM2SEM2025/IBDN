@@ -35,13 +35,13 @@ async def get_selos_por_empresas(
             SELECT 
                 s.id,
                 s.codigo_selo,
-                s.sata_emissao,
-                s.data_expiraxao,
+                s.data_emissao,
+                s.data_expiracao,
                 s.status,
-                DATEDIFF(a.data_expiracao, CURDATE()) AS dias_para_expirar,
-                e.razao_social s
-            FROM selo s 
-            JOIN EMPRESA E on s.id_empresa = e.id
+                DATEDIFF(s.data_expiracao, CURDATE()) AS dias_para_expirar,
+                e.razao_social 
+            FROM selos s
+            JOIN empresa e on s.id_empresa = e.id
             WHERE s.id_empresa = %s
             """
 
@@ -53,16 +53,16 @@ async def get_selos_por_empresas(
 
             if expiracao_proxima is not None:
                 if expiracao_proxima:
-                      query += " AND s.data_espiracao BETWEEN CURDATE{} AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)"
+                      query += " AND s.data_expiracao BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)"
                 else:
-                     query += "AND (s.data_expiracao < CURDATE() OR s.data_expiracao > DATE_ADD(CURDATE(), INTERVAAL 30 DAY))"
-
+                      query += "AND (s.data_expiracao < CURDATE() OR s.data_expiracao > DATE_ADD(CURDATE(), INTERVAAL 30 DAY))"
+ 
 
             count_query = "SELECT COUNT(*) AS  total FROM (" + query + ") AS subquery"
             cursor.execute(count_query, params)
             total = cursor.fetchone()["total"]
 
-            query += "ORDER BY s.data_expiracao ASC LIMIT %s OFFSET %s"
+            query += " ORDER BY s.data_expiracao ASC LIMIT %s OFFSET %s"
             offset = (pagina - 1) * limite
             params.extend([limite, offset])
 

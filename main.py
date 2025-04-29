@@ -29,7 +29,7 @@ app = FastAPI(
 )
 
 app.include_router(routes_selo.router)
-app.include_router(routes_empresa)
+
 
 @app.get("/")
 def root():
