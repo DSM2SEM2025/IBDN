@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from typing import List
-from models.schemas import Empresa
-from controllers.controller_empresa import get_empresas
+from app.models.schemas import Empresa
+from app.controllers.controller_empresa import get_empresas
 
 router = APIRouter()
 

@@ -1,8 +1,8 @@
 import mysql.connector
 from fastapi import HTTPException
 from typing import List
-from models.schemas import Empresa
-from database.config import get_db_config
+from app.models.schemas import Empresa
+from app.database.config import get_db_config
 
 def get_empresas() -> List[Empresa]:
     try:
