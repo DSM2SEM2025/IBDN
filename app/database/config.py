@@ -4,9 +4,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-print(os.getenv('DB_NAME'))
-
-
 def get_db_config():
     config = {
         'host': os.getenv('DB_HOST', 'localhost'),

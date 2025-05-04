@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import uvicorn
-from app.models.database_setup import create_database_if_not_exists, create_tables, setup_logging
+from app.database.tables import create_database_if_not_exists, create_tables, setup_logging
 import logging
 
 # Configure logging

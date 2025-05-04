@@ -52,34 +52,32 @@ def create_tables():
 
         tables = {}
 
-        tables['empresa'] = """
-        CREATE TABLE IF NOT EXISTS empresa (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        cnpj VARCHAR(18) NOT NULL,
-        razao_social VARCHAR(255) NOT NULL,
-        nome_fantasia VARCHAR(255),
-        email VARCHAR(255) NOT NULL UNIQUE,  
-        senha_hash VARCHAR(255) NOT NULL,   
-        telefone VARCHAR(20),
-        responsavel VARCHAR(100),
-        cargo_responsavel VARCHAR(100),
-        site_empresa VARCHAR(255),
-        data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  
-        ativo BOOLEAN DEFAULT TRUE,       
-        UNIQUE (cnpj),                 
-        INDEX (email)                      
-        ) ENGINE=InnoDB;
-        """
-
-        tables['administrador'] = """
-        CREATE TABLE IF NOT EXISTS administrador (
+        tables['usuario'] = """
+        CREATE TABLE IF NOT EXISTS usuario (
             id INT AUTO_INCREMENT PRIMARY KEY,
             nome VARCHAR(100) NOT NULL,
             email VARCHAR(255) NOT NULL,
             senha_hash VARCHAR(255) NOT NULL,
             perfil VARCHAR(50) NOT NULL,
-            tipo_admin VARCHAR(50) NOT NULL,
+            is_admin  BOOLEAN DEFAULT FALSE,
             UNIQUE (email)
+        ) ENGINE=InnoDB;
+        """
+
+        tables['empresa'] = """
+        CREATE TABLE IF NOT EXISTS empresa (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            cnpj VARCHAR(18) NOT NULL UNIQUE,
+            razao_social VARCHAR(255) NOT NULL,
+            nome_fantasia VARCHAR(255),
+            usuario_id INT NOT NULL,
+            telefone VARCHAR(20),
+            responsavel VARCHAR(100),
+            cargo_responsavel VARCHAR(100),
+            site_empresa VARCHAR(255),
+            data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            ativo BOOLEAN DEFAULT TRUE,
+            FOREIGN KEY (usuario_id) REFERENCES usuario(id)
         ) ENGINE=InnoDB;
         """
 
@@ -211,7 +209,7 @@ def create_tables():
         tables['log_acesso'] = """
         CREATE TABLE IF NOT EXISTS log_acesso (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            id_administrador INT,
+            id_usuario INT,
             data_hora DATETIME NOT NULL,
             operacao VARCHAR(50) NOT NULL,
             tabela_afetada VARCHAR(50),
@@ -223,21 +221,21 @@ def create_tables():
             status VARCHAR(20) NOT NULL,
             mensagem TEXT,
             tempo_execucao INT,
-            FOREIGN KEY (id_administrador) REFERENCES administrador(id) ON DELETE SET NULL
+            FOREIGN KEY (id_usuario) REFERENCES usuario(id) ON DELETE SET NULL
         ) ENGINE=InnoDB;
         """
 
         tables['log_auditoria'] = """
         CREATE TABLE IF NOT EXISTS log_auditoria (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            id_administrador INT,
+            id_usuario INT,
             data_hora DATETIME NOT NULL,
             tipo_evento ENUM('LOGIN', 'LOGOUT', 'TENTATIVA_LOGIN', 'ALTERACAO_PERMISSAO', 'EXCLUSAO', 'APROVACAO') NOT NULL,
             descricao TEXT NOT NULL,
             ip VARCHAR(45) NOT NULL,
             user_agent VARCHAR(255),
             status VARCHAR(20) NOT NULL,
-            FOREIGN KEY (id_administrador) REFERENCES administrador(id) ON DELETE SET NULL
+            FOREIGN KEY (id_usuario) REFERENCES usuario(id) ON DELETE SET NULL
         ) ENGINE=InnoDB;
         """
 
@@ -249,14 +247,14 @@ def create_tables():
             origem VARCHAR(255) NOT NULL,
             mensagem TEXT NOT NULL,
             stack_trace TEXT,
-            id_administrador INT,
+            id_usuario INT,
             ip VARCHAR(45),
-            FOREIGN KEY (id_administrador) REFERENCES administrador(id) ON DELETE SET NULL
+            FOREIGN KEY (id_usuario) REFERENCES usuario(id) ON DELETE SET NULL
         ) ENGINE=InnoDB;
         """
 
         table_creation_order = [
-            'tipo_rede_social', 'empresa', 'administrador', 'ramo',
+            'usuario', 'tipo_rede_social', 'empresa', 'ramo',
             'empresa_ramo', 'rede_social', 'endereco', 'contato',
             'selo', 'alerta_expiracao_selo', 'notificacao',
             'solicitacao_aprovacao', 'log_acesso', 'log_auditoria', 'log_erro'
