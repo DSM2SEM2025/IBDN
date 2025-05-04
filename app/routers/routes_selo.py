@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from typing import Optional
-from ..controllers.controller_selo import get_selos_por_empresas
+from ..controllers.controller_selo import get_selos_por_empresas, retornar_empresas_com_selos_criados
 
 router = APIRouter(
     prefix="/empresas/{empresa_id}/selos",
@@ -18,7 +18,6 @@ async def listar_selos_empresa(
         description="Filtrar selos com expiração próxima (30 dias)"
     ) 
 ):
-    
     return await get_selos_por_empresas(
         empresa_id=empresa_id,
         pagina=pagina,
@@ -26,3 +25,15 @@ async def listar_selos_empresa(
         status=status,
         expiracao_proxima=expiracao_proxima
     )
+    
+    
+@router.get("/empresas/todos_selos", summary="Listar todos os selos e quais empresas adquiriram", status_code=200)
+async def pegar_todos_selos_empresas_existentes():
+    try:
+        selos = retornar_empresas_com_selos_criados()
+        return {"dados": selos}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+        
