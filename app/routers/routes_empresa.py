@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from typing import List
-from app.models.schemas import Empresa, EmpresaCreate
+from app.models.empresas_model import Empresa, EmpresaCreate
 from app.controllers.controller_empresa import get_empresas, criar_empresas
 
 router = APIRouter()
@@ -11,4 +11,4 @@ def listar_empresas():
 
 @router.post("/empresas")
 def adcionar_empresa(empresa: EmpresaCreate):
-    return criar_empresas
+    return criar_empresas(empresa)

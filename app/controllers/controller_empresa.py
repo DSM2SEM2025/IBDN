@@ -1,13 +1,15 @@
 import mysql.connector
 from fastapi import HTTPException
 from typing import List
-from app.models.schemas import Empresa, EmpresaCreate
+from app.models.empresas_model import Empresa, EmpresaCreate
 from app.database.config import get_db_config
 
 def get_empresas() -> List[Empresa]:
     try:
-        conn = get_db_config
+        config = get_db_config()
+        conn = mysql.connector.connect(**config)
         cursor = conn.cursor(dictionary=True)
+
         cursor.execute("SELECT * from empresa")
         rows = cursor.fetchall()
 
@@ -21,7 +23,8 @@ def get_empresas() -> List[Empresa]:
     
 def criar_empresas(empresa: EmpresaCreate):
     try:
-        conn = get_db_config
+        config = get_db_config()
+        conn = mysql.connector.connect(**config)
         cursor = conn.cursor(dictionary=True)
         sql = """
             INSERT INTO empresa(

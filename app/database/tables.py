@@ -346,8 +346,8 @@ def create_database_if_not_exists():
 
         logger.info(f"Creating database {db_name} if not exists")
         cursor.execute(
-            f"CREATE DATABASE IF NOT EXISTS `{db_name}` "
-            "DEFAULT CHARACTER SET utf8mb4 "
+            f"CREATE DATABASE IF NOT EXISTS `{db_name}`;"
+            "DEFAULT CHARACTER SET utf8mb4;"
             "COLLATE utf8mb4_general_ci;"
         )
         logger.info(f"Database {db_name} created or already exists")
