@@ -3,11 +3,11 @@ from typing import Optional
 from ..controllers.controller_selo import get_selos_por_empresas, retornar_empresas_com_selos_criados
 
 router = APIRouter(
-    prefix="/empresas/{empresa_id}/selos",
+    prefix="",
     tags=["Selos"],
     responses={404: {"description": "Não encontrado"}},
 )
-@router.get("/", summary="Lista selos fornecidos por uma empresa")
+@router.get("/empresas/{empresa_id}/selos", summary="Lista selos fornecidos por uma empresa")
 async def listar_selos_empresa(
     empresa_id: int, 
     pagina: int = Query(1, gt=0, description="Número da página"),
