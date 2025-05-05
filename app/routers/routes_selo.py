@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from typing import Optional
-from ..controllers.controller_selo import get_selos_por_empresas, retornar_empresas_com_selos_criados
+from ..controllers.controller_selo import get_selos_por_empresas, retornar_empresas_com_selos_criados, renovar_selo_da_empresa
 
 router = APIRouter(
     prefix="/empresas/{empresa_id}/selos",
@@ -37,3 +37,9 @@ async def pegar_todos_selos_empresas_existentes():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
         
+@router.put("/empresas/{empresa_id}/selos/{selo_id}/renovar", summary="Renovar um selo específico de uma empresa", status_code=200)
+async def renovar_selo(
+    empresa_id: int,
+    selo_id: int
+):
+    return await renovar_selo_da_empresa(empresa_id=empresa_id, selo_id=selo_id)

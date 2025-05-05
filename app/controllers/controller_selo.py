@@ -128,4 +128,55 @@ def retornar_empresas_com_selos_criados():
         if connection and connection.is_connected():
             connection.close()
         return todos_selos
+
+async def renovar_selo_da_empresa(empresa_id: int, selo_id: int):
+    """
+    Renova um selo específico de uma empresa.
+    """
+    config = get_db_config()
+    connection = mysql.connector.connect(**config)
+    try:
+        cursor = connection.cursor()
+
+        nova_data_emissao = datetime.today().strftime("%Y-%m-%d")
+        nova_data_expiracao = (datetime.today() + timedelta(days=365)).strftime("%Y-%m-%d")
         
+        # validar selo
+        query_check = """
+            SELECT id FROM selo WHERE id = %s AND id_empresa = %s
+        """
+        cursor.execute(query_check, (selo_id, empresa_id))
+        result = cursor.fetchone()
+        if not result:
+            raise HTTPException(
+                status_code=404,
+                detail="Selo não encontrado ou não pertence à empresa."
+            )
+
+        # Atualizar selo
+        query_update = """
+            UPDATE selo 
+            SET data_emissao = %s, data_expiracao = %s, status = 'ativo'
+            WHERE id = %s AND id_empresa = %s
+        """
+        cursor.execute(query_update, (nova_data_emissao, nova_data_expiracao, selo_id, empresa_id))
+        connection.commit()
+
+        return {
+            "empresa_id": empresa_id,
+            "selo_id": selo_id,
+            "nova_data_emissao": nova_data_emissao,
+            "nova_data_expiracao": nova_data_expiracao,
+            "mensagem": "Selo renovado com sucesso"
+        }
+
+    except Error as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao renovar selo: {str(e)}"
+        )
+    finally:
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
