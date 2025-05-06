@@ -37,3 +37,37 @@ class EmpresaCreate(BaseModel):
         if len(x) > 50:
             raise ValueError("A Razão Social deve ter no máximo 50 caracteres")
         return x
+    
+    # Para empresa_ramo
+class EmpresaRamo(BaseModel):
+    id: int
+    id_empresa: int
+    id_ramo: int
+
+class EmpresaRamoUpdate(BaseModel):
+    id_empresa: int
+    id_ramo: int
+
+# Para empresa_contato
+class EmpresaContato(BaseModel):
+    id: int
+    id_empresa: int
+    telefone_comercial: Optional[str] = None
+    celular: Optional[str] = None
+    whatsapp: Optional[str] = None
+
+class EmpresaContatoUpdate(BaseModel):
+    telefone_comercial: Optional[str] = None
+    celular: Optional[str] = None
+    whatsapp: Optional[str] = None
+
+# Para empresa_rede_social
+class EmpresaRedeSocial(BaseModel):
+    id: int
+    id_empresa: int
+    id_tipo_rede_social: int
+    url: str
+
+class EmpresaRedeSocialUpdate(BaseModel):
+    id_tipo_rede_social: Optional[int] = None
+    url: Optional[str] = None
