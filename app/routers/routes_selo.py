@@ -7,6 +7,7 @@ router = APIRouter(
     tags=["Selos"],
     responses={404: {"description": "Não encontrado"}},
 )
+
 @router.get("/empresa/{empresa_id}", summary="Lista selos fornecidos por uma empresa")
 async def listar_selos_empresa(
     empresa_id: int, 
@@ -27,7 +28,7 @@ async def listar_selos_empresa(
     )
     
     
-@router.get("/empresas/todos_selos", summary="Listar todos os selos e quais empresas adquiriram", status_code=200)
+@router.get("/todos_selos", summary="Listar todos os selos e quais empresas adquiriram", status_code=200)
 async def pegar_todos_selos_empresas_existentes():
     try:
         selos = retornar_empresas_com_selos_criados()
@@ -36,4 +37,4 @@ async def pegar_todos_selos_empresas_existentes():
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-        
+
