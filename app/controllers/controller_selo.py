@@ -40,7 +40,7 @@ async def get_selos_por_empresas(
                 s.status,
                 DATEDIFF(s.data_expiracao, CURDATE()) AS dias_para_expirar,
                 e.razao_social
-            FROM selos s
+            FROM selo s
             JOIN empresa e on s.id_empresa = e.id
             WHERE s.id_empresa = %s
             """
