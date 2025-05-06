@@ -39,7 +39,7 @@ async def get_selos_por_empresas(
                 s.data_expiracao,
                 s.status,
                 DATEDIFF(s.data_expiracao, CURDATE()) AS dias_para_expirar,
-                e.nome_fantasia
+                e.razao_social
             FROM selos s
             JOIN empresa e on s.id_empresa = e.id
             WHERE s.id_empresa = %s
@@ -127,5 +127,5 @@ def retornar_empresas_com_selos_criados():
             cursor.close()
         if connection and connection.is_connected():
             connection.close()
-        return todos_selos
+    return todos_selos
         
