@@ -1,9 +1,9 @@
 import mysql.connector 
-from mysql.connector import Error 
+from mysql.connector import Error
 from fastapi import HTTPException
 from ..database.config import get_db_config 
 
-
+# mostro todas as empresas e seus respectivos selos
 def select_selo_empresa():
     config = get_db_config()
     connection = mysql.connector.connect(**config)

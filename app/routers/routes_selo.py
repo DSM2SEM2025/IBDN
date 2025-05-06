@@ -37,4 +37,3 @@ async def pegar_todos_selos_empresas_existentes():
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
