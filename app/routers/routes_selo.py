@@ -43,3 +43,6 @@ async def renovar_selo(
     selo_id: int
 ):
     return await renovar_selo_da_empresa(empresa_id=empresa_id, selo_id=selo_id)
+
+
+#força commit
