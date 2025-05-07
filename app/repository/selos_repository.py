@@ -98,7 +98,7 @@ async def get_selos_por_empresas(
                 if expiracao_proxima:
                       query += " AND s.data_expiracao BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)"
                 else:
-                      query += "AND (s.data_expiracao < CURDATE() OR s.data_expiracao > DATE_ADD(CURDATE(), INTERVAAL 30 DAY))"
+                      query += "AND (s.data_expiracao < CURDATE() OR s.data_expiracao > DATE_ADD(CURDATE(), INTERVAL 30 DAY))"
  
 
             count_query = "SELECT COUNT(*) AS  total FROM (" + query + ") AS subquery"
