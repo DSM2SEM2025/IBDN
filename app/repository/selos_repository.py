@@ -14,7 +14,7 @@ def get_db_connection():
             status_code=500,
             detail=f"Erro ao conectar ao banco de dados: {str(e)}"
         )
-    
+ 
 # mostro todas as empresas e seus respectivos selos
 def select_selo_empresa():
     config = get_db_config()

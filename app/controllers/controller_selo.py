@@ -5,6 +5,7 @@ from typing import Optional
 from fastapi import HTTPException
 from ..repository.selos_repository import get_selos_por_empresas as repo_get_selos, select_selo_empresa
 
+
 async def get_selos_por_empresas(
     empresa_id: int,
     pagina: int = 1,
@@ -24,8 +25,8 @@ async def get_selos_por_empresas(
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Erro ao listar selos: {str(e)}"
-        )  
+        )
+
 
 def retornar_empresas_com_selos_criados():
     try:
