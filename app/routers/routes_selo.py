@@ -7,7 +7,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 scheduler = BackgroundScheduler()
 
 router = APIRouter(
-    prefix="/selos",
+    prefix="",
     tags=["Selos"],
     responses={404: {"description": "Não encontrado"}},
 )
@@ -49,6 +49,9 @@ async def rota_remover_selos_expirados():
 @router.put("/aprovar/{selo_id}")
 def aprovar_selo(selo_id: int):
     return controller_renovar_selo(selo_id)
+
+# Matheus - Criar o rota ou função PUT para Admin(pendente → expirado)
+# Caso a IBDN não aprove que o selo da empresa seja renovado - Olhar o exaclidraw , la eu coloquei um bloco sobre isso 
 
 
 # PUT para Cliente (expirado → pendente)
