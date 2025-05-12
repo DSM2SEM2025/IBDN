@@ -4,7 +4,7 @@ from datetime import datetime
 from typing  import Optional 
 from fastapi import HTTPException
 from ..database.config import get_db_config 
-from ..repository.selos_repository import select_selo_empresa
+from ..repository.selos_repository import select_selo_empresa, delete_selos_expirados, update_renovar_selo, update_solicitar_renovacao, update_expirar_selo_automatico
 
 def get_db_connection():
     try:
@@ -97,3 +97,16 @@ def retornar_empresas_com_selos_criados():
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+    
+def remover_selos_expirados():
+    return delete_selos_expirados()
+
+def controller_renovar_selo(selo_id: int):
+    return update_renovar_selo(selo_id)
+
+def controller_solicitar_renovacao(selo_id: int):
+    return update_solicitar_renovacao(selo_id)
+
+def controller_expirar_selo_automatico():
+    return update_expirar_selo_automatico()
