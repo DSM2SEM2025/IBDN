@@ -49,3 +49,5 @@ def controller_solicitar_renovacao(selo_id: int):
 
 def controller_expirar_selo_automatico():
     return update_expirar_selo_automatico()
+
+
