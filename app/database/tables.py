@@ -58,7 +58,7 @@ def create_tables():
             nome VARCHAR(100) NOT NULL,
             email VARCHAR(255) NOT NULL,
             senha_hash VARCHAR(255) NOT NULL,
-            perfil VARCHAR(50) NOT NULL,
+            perfil ENUM('admin', 'moderador', 'usuario') NOT NULL DEFAULT 'usuario',
             is_admin  BOOLEAN DEFAULT FALSE,
             UNIQUE (email)
         ) ENGINE=InnoDB;
