@@ -32,6 +32,6 @@ class RamoUpdate(BaseModel):
 class RamoOut(RamoBase):
     id: int
 
-class Config:
-    orm_mode = True
+    class Config:
+        orm_mode = True
 
