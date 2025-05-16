@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, ForeignKey, UniqueConstraint
 from database import Base
 from pydantic import BaseModel
+
 class EmpresaRamo(Base):
     __tablename__ = 'empresa_ramo'
     id = Column(Integer, primary_key=True, index=True)
@@ -12,6 +13,7 @@ class EmpresaRamo(Base):
 class EmpresaRamoBase(BaseModel):
     id_empresa: int
     id_ramo: int
+    
 class EmpresaRamoOut(BaseModel):
     id: int
     id_empresa: int

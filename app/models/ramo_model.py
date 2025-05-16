@@ -6,7 +6,7 @@ from typing import Optional
 
 class Ramo(Base):
     __tablename__ = 'ramo'
-    id = Column(Integer, primery_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     id_empresa = Column(Integer, ForeignKey('empresa.id', ondelete="CASCADE"))
     id_tipo_rede_social = Column(Integer, ForeignKey('tipo_rede_social.id', ondelete="SET NULL"), nullable=True)
     nome = Column(String(100), nullable=False)

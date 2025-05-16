@@ -21,7 +21,7 @@ def get_ramos_por_empresa(id_empresa: int, db: Session = Depends(get_db)):
         .with_entities(
             EmpresaRamo.id_empresa,
             EmpresaRamo.id_ramo,
-            Empresa.nome.label("empresa_nome"),
+            Empresa.razao_social.label("empresa_nome"),
             Ramo.nome.label("ramo_nome"),
             Ramo.descricao.label("ramo_descricao")
         )
@@ -40,7 +40,7 @@ def get_empresa_por_ramo(id_ramo: int, db: Session = Depends(get_db)):
             EmpresaRamo.id,
             EmpresaRamo.id_empresa,
             EmpresaRamo.id_ramo,
-            Empresa.nome.label("empresa_nome"),
+            Empresa.razao_social.label("empresa_nome"),
             Ramo.nome.label("ramo_nome"),
             Ramo.descricao.label("ramo_descricao")
         )
