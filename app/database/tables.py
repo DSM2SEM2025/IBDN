@@ -1,4 +1,4 @@
-from app.database.config import get_db_config
+from app.config.config import get_db_config
 import mysql.connector
 from mysql.connector import Error
 import logging

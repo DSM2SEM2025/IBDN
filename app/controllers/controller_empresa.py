@@ -2,7 +2,7 @@ import mysql.connector
 from fastapi import HTTPException
 from typing import List
 from app.models.empresas_model import Empresa, EmpresaCreate
-from app.database.config import get_db_config
+from ..database.connection import get_db_config
 from app.models.empresas_model import (
     Empresa, EmpresaCreate,
     EmpresaRamoUpdate, EmpresaContatoUpdate, EmpresaRedeSocialUpdate
@@ -22,10 +22,12 @@ def get_empresas() -> List[Empresa]:
 
         cursor.close()
         conn.close()
-        return empresas	
+        return empresas
     except mysql.connector.Error as err:
-        raise HTTPException(status_code=500, detail=f"Erro ao acessar banco {err}")
-    
+        raise HTTPException(
+            status_code=500, detail=f"Erro ao acessar banco {err}")
+
+
 def criar_empresas(empresa: EmpresaCreate):
     try:
         config = get_db_config()
@@ -52,7 +54,7 @@ def criar_empresas(empresa: EmpresaCreate):
             empresa.ativo
         )
 
-        cursor.execute(sql,values)
+        cursor.execute(sql, values)
         conn.commit()
 
         empresa_id = cursor.lastrowid
@@ -62,9 +64,12 @@ def criar_empresas(empresa: EmpresaCreate):
 
         return {"id": empresa_id, "mensagem": "Empresa criada com sucesso"}
     except mysql.connector.Error as err:
-        raise HTTPException(status_code=500, detail=f"Erro ao criar empresa: {err}")
-    
+        raise HTTPException(
+            status_code=500, detail=f"Erro ao criar empresa: {err}")
+
     # EMPRESA_RAMO
+
+
 def get_empresa_ramos():
     config = get_db_config()
     conn = mysql.connector.connect(**config)
@@ -74,6 +79,7 @@ def get_empresa_ramos():
     cursor.close()
     conn.close()
     return dados
+
 
 def update_empresa_ramo(id: int, data: EmpresaRamoUpdate):
     config = get_db_config()
@@ -88,6 +94,8 @@ def update_empresa_ramo(id: int, data: EmpresaRamoUpdate):
     return {"mensagem": "Empresa_ramo atualizada com sucesso"}
 
 # EMPRESA_CONTATO
+
+
 def get_empresa_contatos():
     config = get_db_config()
     conn = mysql.connector.connect(**config)
@@ -97,6 +105,7 @@ def get_empresa_contatos():
     cursor.close()
     conn.close()
     return dados
+
 
 def update_empresa_contato(id: int, data: EmpresaContatoUpdate):
     config = get_db_config()
@@ -111,6 +120,8 @@ def update_empresa_contato(id: int, data: EmpresaContatoUpdate):
     return {"mensagem": "Contato atualizado com sucesso"}
 
 # EMPRESA_REDE_SOCIAL
+
+
 def get_empresa_redes_sociais():
     config = get_db_config()
     conn = mysql.connector.connect(**config)
@@ -120,6 +131,7 @@ def get_empresa_redes_sociais():
     cursor.close()
     conn.close()
     return dados
+
 
 def update_empresa_rede_social(id: int, data: EmpresaRedeSocialUpdate):
     config = get_db_config()
@@ -132,6 +144,7 @@ def update_empresa_rede_social(id: int, data: EmpresaRedeSocialUpdate):
     cursor.close()
     conn.close()
     return {"mensagem": "Rede social atualizada com sucesso"}
+
 
 def get_empresa_por_id(empresa_id: int) -> Empresa:
     try:
@@ -146,11 +159,14 @@ def get_empresa_por_id(empresa_id: int) -> Empresa:
         conn.close()
 
         if not row:
-            raise HTTPException(status_code=404, detail="Empresa não encontrada")
+            raise HTTPException(
+                status_code=404, detail="Empresa não encontrada")
 
         return Empresa(**row)
     except mysql.connector.Error as err:
-        raise HTTPException(status_code=500, detail=f"Erro ao acessar banco: {err}")
+        raise HTTPException(
+            status_code=500, detail=f"Erro ao acessar banco: {err}")
+
 
 def get_empresa_by_id(empresa_id: int) -> Empresa:
     try:
@@ -165,9 +181,11 @@ def get_empresa_by_id(empresa_id: int) -> Empresa:
         conn.close()
 
         if row is None:
-            raise HTTPException(status_code=404, detail="Empresa não encontrada")
+            raise HTTPException(
+                status_code=404, detail="Empresa não encontrada")
 
         return Empresa(**row)
 
     except mysql.connector.Error as err:
-        raise HTTPException(status_code=500, detail=f"Erro ao buscar empresa: {err}")
+        raise HTTPException(
+            status_code=500, detail=f"Erro ao buscar empresa: {err}")

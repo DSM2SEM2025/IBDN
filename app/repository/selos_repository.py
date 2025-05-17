@@ -1,25 +1,17 @@
-import mysql.connector 
+import mysql.connector
 from mysql.connector import Error
 from fastapi import HTTPException
-from ..database.config import get_db_config 
+from app.config.config import get_db_config
 from datetime import datetime, timedelta
 from typing import Optional
+from app.database.connection import get_db_connection
 
-def get_db_connection():
-    try:
-        config = get_db_config()
-        connection = mysql.connector.connect(**config)
-        return connection 
-    except Error as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erro ao conectar ao banco de dados: {str(e)}"
-        )
- 
+
 # mostro todas as empresas e seus respectivos selos
+
+
 def select_selo_empresa():
-    config = get_db_config()
-    connection = mysql.connector.connect(**config)
+    connection = get_db_connection()
     try:
         cursor = connection.cursor(dictionary=True)
         cursor.execute("""SELECT 
@@ -37,8 +29,8 @@ def select_selo_empresa():
         todos_selos = [
             {
                 "id": colunm["id"],
-                "codigo_selo":colunm["codigo_selo"],
-                "data_emissao": colunm["data_emissao"],  
+                "codigo_selo": colunm["codigo_selo"],
+                "data_emissao": colunm["data_emissao"],
                 "data_expiracao": colunm["data_expiracao"],
                 "status": colunm["status"],
                 "dias_para_expirar": colunm["dias_para_expirar"],
@@ -48,10 +40,10 @@ def select_selo_empresa():
             for colunm in cursor.fetchall()
         ]
     except Error as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Erro ao buscar selos: {str(e)}"
-            )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao buscar selos: {str(e)}"
+        )
     finally:
         if cursor:
             cursor.close()
@@ -59,21 +51,21 @@ def select_selo_empresa():
             connection.close()
     return todos_selos
 
+
 async def get_selos_por_empresas(
         empresa_id: int,
         pagina: int = 1,
         limite: int = 10,
         status: Optional[str] = None,
-        expiracao_proxima: Optional[bool] = None 
+        expiracao_proxima: Optional[bool] = None
 ):
-        config = get_db_config()
-        connection = mysql.connector.connect(**config)
-        try:
-            cursor = connection.cursor(dictionary=True)
-            cursor.execute
 
-            # Query base
-            query = """
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute
+
+        # Query base
+        query = """
             SELECT 
                 s.id,
                 s.codigo_selo,
@@ -87,51 +79,51 @@ async def get_selos_por_empresas(
             WHERE s.id_empresa = %s
             """
 
-            params = [empresa_id]
+        params = [empresa_id]
 
-            if status:
-                query += " AND s.status = %s"
-                params.append(status)
+        if status:
+            query += " AND s.status = %s"
+            params.append(status)
 
-            if expiracao_proxima is not None:
-                if expiracao_proxima:
-                      query += " AND s.data_expiracao BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)"
-                else:
-                      query += "AND (s.data_expiracao < CURDATE() OR s.data_expiracao > DATE_ADD(CURDATE(), INTERVAL 30 DAY))"
- 
+        if expiracao_proxima is not None:
+            if expiracao_proxima:
+                query += " AND s.data_expiracao BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)"
+            else:
+                query += "AND (s.data_expiracao < CURDATE() OR s.data_expiracao > DATE_ADD(CURDATE(), INTERVAL 30 DAY))"
 
-            count_query = "SELECT COUNT(*) AS  total FROM (" + query + ") AS subquery"
-            cursor.execute(count_query, params)
-            total = cursor.fetchone()["total"]
+        count_query = "SELECT COUNT(*) AS  total FROM (" + \
+            query + ") AS subquery"
+        cursor.execute(count_query, params)
+        total = cursor.fetchone()["total"]
 
-            query += " ORDER BY s.data_expiracao ASC LIMIT %s OFFSET %s"
-            offset = (pagina - 1) * limite
-            params.extend([limite, offset])
+        query += " ORDER BY s.data_expiracao ASC LIMIT %s OFFSET %s"
+        offset = (pagina - 1) * limite
+        params.extend([limite, offset])
 
-            cursor.execute(query, params)
-            selos = cursor.fetchall()
+        cursor.execute(query, params)
+        selos = cursor.fetchall()
 
-            return {
-                "empresa_id": empresa_id,
-                "pagina": pagina, 
-                "total": total, 
-                "selos": selos 
+        return {
+            "empresa_id": empresa_id,
+            "pagina": pagina,
+            "total": total,
+            "selos": selos
 
-            }  
-        except Error as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Erro ao buscar selos: {str(e)}"
-            )
-        finally:
-            if cursor:
-                cursor.close()
-            if connection and connection.is_connected():
-                connection.close()
-        
+        }
+    except Error as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao buscar selos: {str(e)}"
+        )
+    finally:
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
+
+
 def delete_selos_expirados():
-    config = get_db_config()
-    connection = mysql.connector.connect(**config)
+    connection = get_db_connection()
     try:
         cursor = connection.cursor(dictionary=True)
         # Deletar os selos com status 'expirado' e expiração superior a 30 dias atrás
@@ -151,23 +143,23 @@ def delete_selos_expirados():
             return {"mensagem": f"{selos_excluidos} selo(s) expirado(s) removido(s) com sucesso."}
 
     except Error as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao remover selos expirados: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Erro ao remover selos expirados: {str(e)}")
 
     finally:
         if cursor:
             cursor.close()
         if connection and connection.is_connected():
             connection.close()
-            
-            
+
+
 def update_renovar_selo(selo_id: int):
-    config = get_db_config()
-    conn = mysql.connector.connect(**config)
-    cursor = conn.cursor(dictionary=True)
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
     # Verifica o status atual
     cursor.execute("SELECT status FROM selo WHERE id = %s", (selo_id,))
     result = cursor.fetchone()
-    
+
     if not result:
         raise HTTPException(status_code=404, detail="Selo não encontrado")
     if result["status"] != "pendente":
@@ -176,7 +168,7 @@ def update_renovar_selo(selo_id: int):
     # Atualiza status e datas
     hoje = datetime.now().date()
     nova_expiracao = hoje + timedelta(days=30)
-    
+
     cursor.execute(
         """
         UPDATE selo 
@@ -188,10 +180,10 @@ def update_renovar_selo(selo_id: int):
     conn.commit()
     return {"message": "Selo aprovado e ativado com sucesso!"}
 
+
 def update_solicitar_renovacao(selo_id: int):
-    config = get_db_config()
-    connection = mysql.connector.connect(**config)
-    
+    connection = get_db_connection()
+
     cursor = connection.cursor(dictionary=True)
     cursor.execute("SELECT status FROM selo WHERE id = %s", (selo_id,))
     result = cursor.fetchone()
@@ -209,25 +201,24 @@ def update_solicitar_renovacao(selo_id: int):
 
 
 def update_expirar_selo_automatico():
-    config = get_db_config()
-    connection = mysql.connector.connect(**config)
+    connection = get_db_connection()
     cursor = None
     try:
         cursor = connection.cursor(dictionary=True)
         hoje = datetime.now().date()
 
         cursor.execute(
-        """
+            """
         UPDATE selo 
         SET status = 'expirado'
         WHERE status = 'ativo' AND data_expiracao < %s
         """,
-        (hoje,)
+            (hoje,)
         )
         connection.commit()
         print(f"Selos expirados: {cursor.rowcount}")
     except Exception as e:
-        print({"error":f"erro realizar a expiração: {e}"})
+        print({"error": f"erro realizar a expiração: {e}"})
     finally:
         if cursor:
             cursor.close()
