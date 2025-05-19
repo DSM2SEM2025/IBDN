@@ -1,0 +1,163 @@
+*{
+   margin: 0;
+   padding: 0;
+   box-sizing: border-box;
+   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+   min-height: 100vh;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   background: url('/Time_Elias/app/static/imagem/maos-protegendo-planta.jpg');
+   background-size: 130% 120%;
+   background-position: 0% 50%;
+   background-repeat: no-repeat;
+   animation: gradientBG 10s ease infinite;
+   overflow: hidden;
+}
+
+@keyframes gradientBG {
+   0% { background-position: 0% 50%; }
+   50% { background-position: 100% 50%; }
+   100% { background-position: 0% 50%; }
+}
+
+.login-container {
+   position: relative;
+   width: 380px;
+   padding: 40px;
+   border-radius: 20px;
+   backdrop-filter: blur(10px);
+   background: rgba(6, 6, 6, 0.204);
+   border: 1px solid rgba(6, 248, 199, 0.4);
+   box-shadow: 0 25px 45px rgba(0, 0, 0, 0.4);
+   z-index: 10;
+   overflow: hidden;
+}
+
+.login-container::before {
+   content: '';
+   position: absolute;
+   top:0;
+   left: -100%;
+   width: 100%;
+   height: 100%;
+   background: rgba(5, 232, 148, 0.05);
+   transform: skewX(-15deg);
+   transition: 0.5s;
+   pointer-events: none;
+}
+
+.login-container:hover::before {
+   left: 120%;
+}
+
+.login-container h2 {
+   color: #fff;
+   font-size: 28px;
+   font-weight: 600;
+   text-align: center;
+   letter-spacing: 1px;
+   margin-bottom: 40px;
+   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.login-input-group{
+   position: relative;
+   margin-bottom: 30px;
+}
+
+.login-input-group input{
+   width: 100%;
+   padding: 15px 20px;
+   background: rgba(224, 235, 224, 0.74);
+   border: 1px solid rgba(6, 248, 199, 0.4);
+   outline: none;
+   border-radius: 35px;
+   font-size: 16px;
+   color: #025428f7;
+   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+   transition: all 0.3s ease;
+}
+
+.login-input-group input::placeholder {
+   color: rgba(28, 27, 27, 0.419);
+}
+
+.login-input-group input:focus {
+   background: rgba(255, 255, 255, 0.3);
+   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.login-relembrar-senha {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   margin-bottom: 25px;
+   font-size: 14px;
+   color: rgba(255, 255, 255, 0.8)
+}
+
+.login-relembrar-senha label {
+   display: flex;
+   align-content: center;
+   cursor: pointer;
+}
+
+.login-relembrar-senha input{
+   margin-right: 8px;
+   accent-color: #fff;
+}
+
+.login-relembrar-senha a {
+   color: #fff;
+   text-decoration: none;
+   transition: all 0.3s ease;
+}
+
+.login-relembrar-senha a:hover{
+   color: rgba(1, 69, 1, 0.816);
+   text-decoration: underline;
+}
+
+.login-botao {
+   width: 60%;
+   display: block;
+   margin: 0 auto;
+   padding: 15px;
+   background: rgba(1, 98, 1, 0.656);
+   border: 1px solid rgba(6, 248, 199, 0.4);
+   outline: none;
+   border-radius: 35px;
+   font-size: 20px;
+   color: #fff;
+   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+   transition: all 0.3s ease;
+}
+
+.login-botao:hover {
+   background: rgba(1, 98, 1, 0.4);
+   transform: translateY(-3px);
+   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.login-link-registro{
+   text-align: center;
+   margin-top: 25px;
+   color: rgba(255, 255, 255, 0.8);
+   font-size: 14px;
+}
+
+.login-link-registro a {
+   color: #fff;
+   font-weight: 600;
+   text-decoration: none;
+   transition: all 0.3s ease;
+}
+
+.login-link-registro a:hover{
+   color: rgba(1, 69, 1, 0.816);
+   text-decoration: underline;
+}

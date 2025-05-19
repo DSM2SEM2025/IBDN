@@ -1,0 +1,124 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    background: url('/Login_e_Cadastro/src/imagem/pessoa-idosa-e-criancas-segurando-planta.jpg');
+    background-size: 130% 120%;
+    background-position: 0% 50%;
+    background-repeat: no-repeat;
+    animation: gradientBG 10s ease infinite;
+    overflow-x: hidden;
+    padding: 40px 20px;
+}
+
+
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.cadastro-container {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 40px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    background: rgba(6, 6, 6, 0.204);
+    border: 1px solid rgba(6, 248, 199, 0.4);
+    box-shadow: 0 25px 45px rgba(0, 0, 0, 0.4);
+}
+
+
+.cadastro-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: rgba(5, 232, 148, 0.05);
+    transform: skewX(-15deg);
+    transition: 0.5s;
+    pointer-events: none;
+}
+
+.cadastro-container:hover::before {
+    left: 120%;
+}
+
+.cadastro-container h2 {
+    color: #fff;
+    font-size: 28px;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: 1px;
+    margin-bottom: 30px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.cadastro-input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.cadastro-input-group input,
+.cadastro-input-group select {
+    width: 100%;
+    padding: 14px 18px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(6, 248, 199, 0.4);
+    outline: none;
+    border-radius: 35px;
+    font-size: 15px;
+    color: #025428;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    appearance: none;
+}
+
+.cadastro-input-group input::placeholder {
+    color: rgba(28, 27, 27, 0.45);
+}
+
+.cadastro-input-group input:focus,
+.cadastro-input-group select:focus {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.cadastro-input-group select {
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6H0z' fill='%23025428'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 18px center;
+    background-size: 12px;
+}
+
+select option[disabled] {
+    color: #777;
+}
+
+
+.cadastro-botao {
+    width: 60%;
+   display: block;
+   margin: 0 auto;
+   padding: 10px;
+   background: rgba(1, 98, 1, 0.656);
+   border: 1px solid rgba(6, 248, 199, 0.4);
+   outline: none;
+   border-radius: 35px;
+   font-size: 20px;
+   color: #fff;
+   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+   transition: all 0.3s ease;
+}
+
+.cadastro-botao:hover {
+    background: #02946b;
+}
