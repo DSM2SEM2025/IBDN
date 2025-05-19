@@ -171,3 +171,4 @@ def get_empresa_by_id(empresa_id: int) -> Empresa:
 
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Erro ao buscar empresa: {err}")
+# forcar commit
