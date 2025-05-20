@@ -38,16 +38,6 @@ class EmpresaCreate(BaseModel):
             raise ValueError("A Razão Social deve ter no máximo 50 caracteres")
         return x
     
-    # Para empresa_ramo
-class EmpresaRamo(BaseModel):
-    id: int
-    id_empresa: int
-    id_ramo: int
-
-class EmpresaRamoUpdate(BaseModel):
-    id_empresa: int
-    id_ramo: int
-
 # Para empresa_contato
 class EmpresaContato(BaseModel):
     id: int
