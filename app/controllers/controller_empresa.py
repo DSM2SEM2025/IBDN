@@ -104,6 +104,18 @@ def get_empresa_ramos():
     conn.close()
     return dados
 
+def get_empresa_ramos_by_id():
+    config = get_db_config()
+    conn = mysql.connector.connect(**config)
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM empresa_ramo WHERE id = %s", (id,))
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="Empresa_ramo não encontrada para exclusão")
+    return row
+
 def update_empresa_ramo(id: int, data: EmpresaRamoUpdate):
     config = get_db_config()
     conn = mysql.connector.connect(**config)
@@ -118,6 +130,16 @@ def update_empresa_ramo(id: int, data: EmpresaRamoUpdate):
     conn.close()
     return {"mensagem": "Empresa_ramo atualizada com sucesso"}
 
+def delete_empresa_ramo(id: int):
+    config = get_db_config()
+    conn = mysql.connector.connect(**config)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM empresa_ramo WHERE id = %s", (id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return {"mensagem": "Empresa_ramo deletada com sucesso"}
+    
 # EMPRESA_CONTATO
 def get_empresa_contatos():
     config = get_db_config()
