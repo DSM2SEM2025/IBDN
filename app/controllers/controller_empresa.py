@@ -4,10 +4,9 @@ from typing import List
 from app.models.empresas_model import Empresa, EmpresaCreate
 from app.database.config import get_db_config
 from app.models.empresas_model import (
-    Empresa, EmpresaCreate,
-    EmpresaRamoUpdate, EmpresaContatoUpdate, EmpresaRedeSocialUpdate
+    Empresa, EmpresaCreate, EmpresaContatoUpdate, EmpresaRedeSocialUpdate
 )
-
+from app.models.empresa_ramo_model import EmpresaRamoUpdate
 
 def get_empresas() -> List[Empresa]:
     try:
@@ -65,6 +64,36 @@ def criar_empresas(empresa: EmpresaCreate):
         raise HTTPException(status_code=500, detail=f"Erro ao criar empresa: {err}")
     
     # EMPRESA_RAMO
+
+def criar_empresa_ramo(data: EmpresaRamoUpdate):
+    try:
+        config = get_db_config()
+        conn = mysql.connector.connect(**config)
+        cursor = conn.cursor()
+
+        cursor.execute("""
+        SELECT id FROM empresa_ramo
+        WHERE id_empresa = %s AND id_ramo = %s
+        """, (data.id_empresa, data.id_ramo))
+        existente = cursor.fetchone()
+        if existente:
+            raise HTTPException(status_code=400, detail="Empresa_ramo já existente com esse IDs.")
+        
+        cursor.execute("""
+        INSERT INTO empresa_ramo (id_empresa, id_ramo)
+        VALUES (%s, %s)
+        """)
+        conn.commit()
+
+        novo_id = cursor.lastrowid
+
+        cursor.close()
+        conn.close()
+
+        return {"id": novo_id, "mensagem":"Empresa_ramo criada com sucesso"}
+    except mysql.connector.Error as err:
+        raise HTTPException(status_code=500, detail=f"Erro ao criar empresa_ramo {err}")
+
 def get_empresa_ramos():
     config = get_db_config()
     conn = mysql.connector.connect(**config)
@@ -79,6 +108,8 @@ def update_empresa_ramo(id: int, data: EmpresaRamoUpdate):
     config = get_db_config()
     conn = mysql.connector.connect(**config)
     cursor = conn.cursor()
+    if cursor.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Empresa_ramo não encontrada")
     cursor.execute("""
         UPDATE empresa_ramo SET id_empresa = %s, id_ramo = %s WHERE id = %s
     """, (data.id_empresa, data.id_ramo, id))
