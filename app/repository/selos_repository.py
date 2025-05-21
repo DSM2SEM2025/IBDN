@@ -231,3 +231,58 @@ def update_expirar_selo_automatico():
     finally:
         if cursor:
             cursor.close()
+def update_rejeitar_renovacao(selo_id: int, motivo: str = ""):
+    """
+    Rejeita a renovação de um selo, alterando o status de pendente para expirado.
+    """
+    config = get_db_config()
+    connection = mysql.connector.connect(**config)
+    
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT status FROM selo WHERE id = %s", (selo_id,))
+        result = cursor.fetchone()
+        
+        if not result:
+            raise HTTPException(status_code=404, detail="Selo não encontrado")
+        if result["status"] != "pendente":
+            raise HTTPException(status_code=400, detail="Selo não está pendente")
+        
+        cursor.execute(
+            "UPDATE selo SET status = 'expirado' WHERE id = %s",
+            (selo_id,)
+        )
+        if motivo:
+            empresa_query = "SELECT id_empresa FROM selo WHERE id = %s"
+            cursor.execute(empresa_query, (selo_id,))
+            empresa_result = cursor.fetchone()
+            
+            if empresa_result:
+                empresa_id = empresa_result["id_empresa"]
+                data_envio = datetime.now()
+                mensagem = f"Renovação de selo rejeitada. Motivo: {motivo}"
+                
+                notificacao_query = """
+                INSERT INTO notificacao (id_empresa, mensagem, data_envio, tipo, lida)
+                VALUES (%s, %s, %s, %s, %s)
+                """
+                cursor.execute(
+                    notificacao_query,
+                    (empresa_id, mensagem, data_envio, "rejeicao_renovacao", False)
+                )
+        
+        connection.commit()
+        return {"message": "Renovação de selo rejeitada com sucesso"}
+        
+    except HTTPException as e:
+        raise e
+    except Error as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao rejeitar renovação do selo: {str(e)}"
+        )
+    finally:
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
