@@ -17,27 +17,34 @@ def get_db_connection():
         )
  
 # mostro todas as empresas e seus respectivos selos
-def select_selo_empresa():
+def select_selo_empresa(selo_id: Optional[int] = None):
     config = get_db_config()
     connection = mysql.connector.connect(**config)
     try:
         cursor = connection.cursor(dictionary=True)
-        cursor.execute("""SELECT 
-            s.id,
-            s.codigo_selo,
-            s.data_emissao,
-            s.data_expiracao,
-            s.status,
-            DATEDIFF(s.data_expiracao, CURDATE()) AS dias_para_expirar,
-            e.id AS id_empresa,
-            e.razao_social
+        query = """
+            SELECT 
+                s.id,
+                s.codigo_selo,
+                s.data_emissao,
+                s.data_expiracao,
+                s.status,
+                DATEDIFF(s.data_expiracao, CURDATE()) AS dias_para_expirar,
+                e.id AS id_empresa,
+                e.razao_social
             FROM selo s
-            JOIN empresa e ON s.id_empresa = e.id 
-            """)
+            JOIN empresa e ON s.id_empresa = e.id
+        """
+        params = []
+        if selo_id:
+            query += " WHERE s.id = %s"
+            params.append(selo_id)
+        
+        cursor.execute(query, params)
         todos_selos = [
             {
                 "id": colunm["id"],
-                "codigo_selo":colunm["codigo_selo"],
+                "codigo_selo": colunm["codigo_selo"],
                 "data_emissao": colunm["data_emissao"],  
                 "data_expiracao": colunm["data_expiracao"],
                 "status": colunm["status"],
@@ -47,17 +54,17 @@ def select_selo_empresa():
             }
             for colunm in cursor.fetchall()
         ]
+        return todos_selos[0] if selo_id and todos_selos else todos_selos  # Retorna um único selo se ID for passado
     except Error as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Erro ao buscar selos: {str(e)}"
-            )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro ao buscar selos: {str(e)}"
+        )
     finally:
         if cursor:
             cursor.close()
         if connection and connection.is_connected():
             connection.close()
-    return todos_selos
 
 async def get_selos_por_empresas(
         empresa_id: int,
@@ -170,7 +177,7 @@ def update_renovar_selo(selo_id: int):
     
     if not result:
         raise HTTPException(status_code=404, detail="Selo não encontrado")
-    if result["status"] != "pendente":
+    if result["status"].lower() != "pendente":
         raise HTTPException(status_code=400, detail="Selo não está pendente")
 
     # Atualiza status e datas
@@ -197,7 +204,7 @@ def update_solicitar_renovacao(selo_id: int):
     result = cursor.fetchone()
     if not result:
         raise HTTPException(status_code=404, detail="Selo não encontrado")
-    if result["status"] != "expirado":
+    if result["status"].lower() != "expirado":
         raise HTTPException(status_code=400, detail="Selo não está expirado")
 
     cursor.execute(
@@ -245,7 +252,7 @@ def update_rejeitar_renovacao(selo_id: int, motivo: str = ""):
         
         if not result:
             raise HTTPException(status_code=404, detail="Selo não encontrado")
-        if result["status"] != "pendente":
+        if result["status"].lower() != "pendente":
             raise HTTPException(status_code=400, detail="Selo não está pendente")
         
         cursor.execute(
