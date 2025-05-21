@@ -5,7 +5,6 @@ from app.controllers.controller_empresa import get_empresas, criar_empresas
 from fastapi import Path
 from app.controllers.controller_empresa import get_empresas, criar_empresas, get_empresa_por_id
 from app.models.empresas_model import (
-    EmpresaRamo, EmpresaRamoUpdate,
     EmpresaContato, EmpresaContatoUpdate,
     EmpresaRedeSocial, EmpresaRedeSocialUpdate
 )
@@ -13,6 +12,9 @@ from app.controllers.controller_empresa import (
     get_empresa_ramos, update_empresa_ramo,
     get_empresa_contatos, update_empresa_contato,
     get_empresa_redes_sociais, update_empresa_rede_social
+)
+from app.models.empresa_ramo_model import (
+    EmpresaRamo, EmpresaRamoUpdate
 )
 
 router = APIRouter()
