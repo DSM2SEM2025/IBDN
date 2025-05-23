@@ -61,3 +61,24 @@ class EmpresaRedeSocial(BaseModel):
 class EmpresaRedeSocialUpdate(BaseModel):
     id_tipo_rede_social: Optional[int] = None
     url: Optional[str] = None
+
+class EmpresaEndereco(BaseModel):
+    id: int
+    id_empresa: int
+    logradouro: str
+    bairro: str
+    cep: str
+    cidade: str
+    uf: str
+    complemento: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class EmpresaEnderecoUpdate(BaseModel):
+    logradouro: Optional[str] = None
+    bairro: Optional[str] = None
+    cep: Optional[str] = None
+    cidade: Optional[str] = None
+    uf: Optional[str] = None
+    complemento: Optional[str] = None

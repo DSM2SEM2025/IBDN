@@ -6,12 +6,14 @@ from fastapi import Path
 from app.controllers.controller_empresa import get_empresas, criar_empresas, get_empresa_por_id
 from app.models.empresas_model import (
     EmpresaContato, EmpresaContatoUpdate,
-    EmpresaRedeSocial, EmpresaRedeSocialUpdate
+    EmpresaRedeSocial, EmpresaRedeSocialUpdate,
+    EmpresaEndereco, EmpresaEnderecoUpdate
 )
 from app.controllers.controller_empresa import (
     get_empresa_ramos, update_empresa_ramo,
     get_empresa_contatos, update_empresa_contato,
-    get_empresa_redes_sociais, update_empresa_rede_social
+    get_empresa_redes_sociais, update_empresa_rede_social,
+    get_empresa_enderecos_by_empresa_id, update_empresa_endereco
 )
 from app.models.empresa_ramo_model import (
     EmpresaRamo, EmpresaRamoUpdate
@@ -55,3 +57,14 @@ def atualizar_rede_social(id: int, data: EmpresaRedeSocialUpdate):
 def buscar_empresa_por_id(empresa_id: int = Path(..., gt=0)):
     return get_empresa_por_id(empresa_id)
 
+@router.get("/empresas/{empresa_id}/enderecos", response_model=List[EmpresaEndereco])
+def listar_enderecos_da_empresa(empresa_id: int = Path(..., gt=0)):
+    return get_empresa_enderecos_by_empresa_id(empresa_id)
+
+@router.put("/empresas/{empresa_id}/enderecos/{endereco_id}")
+def atualizar_endereco_da_empresa(
+    empresa_id: int = Path(..., gt=0), 
+    endereco_id: int = Path(..., gt=0), 
+    data: EmpresaEnderecoUpdate
+):
+    return update_empresa_endereco(empresa_id, endereco_id, data.dict())
