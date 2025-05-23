@@ -63,8 +63,8 @@ def listar_enderecos_da_empresa(empresa_id: int = Path(..., gt=0)):
 
 @router.put("/empresas/{empresa_id}/enderecos/{endereco_id}")
 def atualizar_endereco_da_empresa(
-    empresa_id: int = Path(..., gt=0), 
-    endereco_id: int = Path(..., gt=0), 
-    data: EmpresaEnderecoUpdate
+    data: EmpresaEnderecoUpdate,
+    empresa_id: int = Path(..., gt=0),
+    endereco_id: int = Path(..., gt=0)
 ):
     return update_empresa_endereco(empresa_id, endereco_id, data.dict())
