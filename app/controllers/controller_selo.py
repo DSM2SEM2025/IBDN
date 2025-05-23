@@ -88,7 +88,6 @@ def controller_renovar_selo(selo_id: int):
 def controller_solicitar_renovacao(selo_id: int):
     """
     Controller para solicitar renovação de um selo (alterar status de expirado para pendente).
-    Esta função é utilizada pelo cliente para solicitar renovação de selos expirados.
     """
     try:
         selo = select_selo_empresa(selo_id=selo_id)
@@ -98,7 +97,7 @@ def controller_solicitar_renovacao(selo_id: int):
                 detail=f"Selo com ID {selo_id} não encontrado"
             )
             
-        if selo.get("status") != "expirado":
+        if selo.get("status", "").lower() != "expirado":  # Corrigido aqui
             raise HTTPException(
                 status_code=400, 
                 detail=f"Apenas selos com status 'expirado' podem solicitar renovação"
