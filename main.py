@@ -3,8 +3,10 @@ import uvicorn
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from app.database.tables import create_database_if_not_exists, create_tables, setup_logging
-from app.routers import  routes_selo
-from app.routers import routes_empresa
+from app.routers import  (
+    routes_selo,
+    routes_empresa
+    )
 
 # Configure logging
 logger = setup_logging()
