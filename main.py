@@ -5,7 +5,9 @@ from contextlib import asynccontextmanager
 from app.database.tables import create_database_if_not_exists, create_tables, setup_logging
 from app.routers import  (
     routes_selo,
-    routes_empresa
+    routes_empresa,
+    routes_empresaRamo,
+    routes_ramos
     )
 
 # Configure logging
@@ -33,6 +35,8 @@ app = FastAPI(
 
 app.include_router(routes_selo.router)
 app.include_router(routes_empresa.router)
+app.include_router(routes_ramos.router)
+app.include_router(routes_empresaRamo.router)
 
 @app.get("/")
 def root():
