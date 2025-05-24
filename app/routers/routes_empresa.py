@@ -1,22 +1,16 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Path
 from typing import List
-from app.models.empresas_model import Empresa, EmpresaCreate
-from app.controllers.controller_empresa import get_empresas, criar_empresas
-from fastapi import Path
-from app.controllers.controller_empresa import get_empresas, criar_empresas, get_empresa_por_id
 from app.models.empresas_model import (
+    Empresa, EmpresaCreate,
     EmpresaContato, EmpresaContatoUpdate,
     EmpresaRedeSocial, EmpresaRedeSocialUpdate,
     EmpresaEndereco, EmpresaEnderecoUpdate
 )
 from app.controllers.controller_empresa import (
-    get_empresa_ramos, update_empresa_ramo,
+    get_empresas, criar_empresas, get_empresa_por_id,
     get_empresa_contatos, update_empresa_contato,
     get_empresa_redes_sociais, update_empresa_rede_social,
-    get_empresa_enderecos_by_empresa_id, update_empresa_endereco
-)
-from app.models.empresa_ramo_model import (
-    EmpresaRamo, EmpresaRamoUpdate
+    get_empresa_enderecos_by_empresa_id, update_empresa_endereco,
 )
 
 router = APIRouter()
@@ -28,14 +22,6 @@ def listar_empresas():
 @router.post("/empresas")
 def adcionar_empresa(empresa: EmpresaCreate):
     return criar_empresas(empresa)
-
-@router.get("/empresa_ramos", response_model=List[EmpresaRamo])
-def listar_empresa_ramos():
-    return get_empresa_ramos()
-
-@router.put("/empresa_ramos/{id}")
-def atualizar_empresa_ramo(id: int, data: EmpresaRamoUpdate):
-    return update_empresa_ramo(id, data)
 
 @router.get("/empresa_contatos", response_model=List[EmpresaContato])
 def listar_empresa_contatos():
