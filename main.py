@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from app.database.tables import create_database_if_not_exists, create_tables, setup_logging
 
-from app.routers import routes_empresa, routes_selo, routes_usuario
+from app.routers import routes_empresa, routes_login, routes_selo
 
 # Configure logging
 logger = setup_logging()
@@ -33,7 +33,7 @@ app = FastAPI(
 
 app.include_router(routes_selo.router)
 app.include_router(routes_empresa.router)
-app.include_router(routes_usuario.router)
+app.include_router(routes_login.router)
 
 
 @app.get("/")
