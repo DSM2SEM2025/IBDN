@@ -5,7 +5,7 @@ from app.database.connection import get_db_connection
 from typing import Optional
 
 
-def login_usuario(email: str, senha: str) -> Optional[dict]:
+def login_usuario(email: str):
     try:
 
         connection = get_db_connection()
