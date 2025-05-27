@@ -17,9 +17,9 @@ async def login(email_route: str, senha: str):
     usuario = login_usuario(email_route)
     if usuario:
         senha_hash = usuario.get("senha_hash")
-
-        print(f'{usuario['senha_hash']} aquiiiiii  {senha}')
         if verificar_senha(senha, senha_hash) is True:
+            perfil = usuario.get('perfil')
+
             return print("corretaAAAAAAAAAAAA")
 
     if not usuario:

@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from app.models.usuario_model import UsuarioResponse, CredenciaisLogin
 from app.controllers.controller_login import login
