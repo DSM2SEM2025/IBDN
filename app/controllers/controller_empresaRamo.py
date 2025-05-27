@@ -1,6 +1,6 @@
 import mysql.connector
 from fastapi import HTTPException
-from database.config import get_db_config
+from app.database.config import get_db_config
 from typing import List
 from app.models.model_ramo import RamoBase
 from app.models.empresa_ramo_model import EmpresaRamoCreate, EmpresaRamoResponse

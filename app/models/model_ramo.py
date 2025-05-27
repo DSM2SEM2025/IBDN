@@ -3,7 +3,7 @@ from typing import Optional
 
 class RamoBase(BaseModel):
     nome: str = Field(..., exemple="Tecnologia")
-    descricao: Optional[str] = Field(None, exemple="Empresas de desenvolvimento")
+    descricao: Optional[str] = Field(None, example="Empresas de desenvolvimento")
 
 class RamoCreate(RamoBase):
     pass

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Path
 from typing import List
-from models.model_ramo import RamoBase
+from app.models.model_ramo import RamoBase
 from app.controllers.controller_empresaRamo import(
      listar_ramos_por_empresas,associar_ramos, remover_associacao
 )
