@@ -81,6 +81,14 @@ def create_tables():
         ) ENGINE=InnoDB;
         """
 
+        tables['ramo'] = """
+        CREATE TABLE IF NOT EXISTS ramo (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            nome VARCHAR(100) NOT NULL,
+            descricao TEXT
+        ) ENGINE=InnoDB;
+        """
+        
         tables['empresa_ramo'] = """
         CREATE TABLE IF NOT EXISTS empresa_ramo (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -89,18 +97,6 @@ def create_tables():
             FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE,
             FOREIGN KEY (id_ramo) REFERENCES ramo(id) ON DELETE CASCADE,
             UNIQUE (id_empresa, id_ramo)
-        ) ENGINE=InnoDB;
-        """
-
-        tables['ramo'] = """
-        CREATE TABLE IF NOT EXISTS ramo (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            id_empresa INT NOT NULL,
-            id_tipo_rede_social INT,
-            nome VARCHAR(100) NOT NULL,
-            descricao TEXT,
-            FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE,
-            FOREIGN KEY (id_tipo_rede_social) REFERENCES tipo_rede_social(id) ON DELETE SET NULL
         ) ENGINE=InnoDB;
         """
 
