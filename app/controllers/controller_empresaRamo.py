@@ -23,7 +23,7 @@ def associar_ramos(id_empresa:int, dados: EmpresaRamoCreate) -> List[EmpresaRamo
                 continue
         
             cursor.execute(
-                "INSER INTO empresa_ramo (id_empresa, id_ramo) VALUES (%s,%s)",(id_empresa, id_ramo)
+                "INSERT INTO empresa_ramo (id_empresa, id_ramo) VALUES (%s,%s)",(id_empresa, id_ramo)
             )
             conn.commit()
 
@@ -51,7 +51,7 @@ def remover_associacao(id_empresa: int, id_ramo:int) -> None:
         cursor = conn.cursor()
 
         cursor.execute(
-            "SELECT * FROM empresa_ramo WHERE id_empresa = %s AND id_ramo %s", (id_empresa, id_ramo)
+            "SELECT * FROM empresa_ramo WHERE id_empresa = %s AND id_ramo = %s", (id_empresa, id_ramo)
         )
         if cursor.fetchone() is None:
             cursor.close()
@@ -76,7 +76,7 @@ def listar_ramos_por_empresas(id_empresa:int) -> List[RamoBase]:
         cursor = conn.cursor(dictionary=True)
 
         cursor.execute(
-            """SELECT r.id, r.nome, r.descricao FROM ramo r INNER JOIN empresa_ramo er ON r.id = er.id_ramo WHERE er.id_empresa = %s""", (id_empresa)
+            """SELECT r.id, r.nome, r.descricao FROM ramo r INNER JOIN empresa_ramo er ON r.id = er.id_ramo WHERE er.id_empresa = %s""", (id_empresa,)
         )
 
         rows = cursor.fetchall()

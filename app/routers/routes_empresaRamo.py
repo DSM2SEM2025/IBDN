@@ -11,13 +11,13 @@ router = APIRouter()
 # rotas empresa_ramo
 
 @router.post("/{id_empresa}/ramos/", response_model=List[EmpresaRamoResponse], status_code=201)
-def associar_ramos(id_empresa:int = Path(...,gt=0), dados: EmpresaRamoCreate = None):
+def atrelar_ramos(id_empresa:int = Path(...,gt=0), dados: EmpresaRamoCreate = None):
     return associar_ramos(id_empresa,dados)
 
-@router.delete("/{id_empresa}/ramos/{id_ramos}",status_code=204)
-def ramover_associacao(id_empresa: int = Path(..., gt=0),id_ramo:int = Path(...,gt=0)):
-    return remover_associacao(id_empresa, id_ramo)
-
 @router.get("/{id_empresa}/ramos/", response_model=List[RamoBase])
-def listar_ramos_por_empresa(id_empresa:int =Path(...,gt=0)):
-    return listar_ramos_por_empresas
+def get_ramos_por_empresa(id_empresa:int =Path(...,gt=0)):
+    return listar_ramos_por_empresas(id_empresa)
+
+@router.delete("/{id_empresa}/ramos/{id_ramo}/",status_code=204)
+def delete_associacao(id_empresa: int = Path(..., gt=0),id_ramo:int = Path(...,gt=0)):
+    return remover_associacao(id_empresa, id_ramo)
