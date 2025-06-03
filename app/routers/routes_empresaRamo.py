@@ -6,7 +6,11 @@ from app.controllers.controller_empresaRamo import(
 )
 from app.models.empresa_ramo_model import EmpresaRamoCreate,EmpresaRamoResponse
 
-router = APIRouter()
+router = APIRouter(
+    prefix="",
+    tags=["Empresa_Ramo"],
+    responses={404: {"description": "Não encontrado"}},
+)
 
 # rotas empresa_ramo
 

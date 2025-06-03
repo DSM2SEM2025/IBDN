@@ -99,27 +99,7 @@ def create_tables():
             UNIQUE (id_empresa, id_ramo)
         ) ENGINE=InnoDB;
         """
-
-        tables['tipo_rede_social'] = """
-        CREATE TABLE IF NOT EXISTS tipo_rede_social (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            nome VARCHAR(50) NOT NULL,
-            descricao VARCHAR(255),
-            UNIQUE (nome)
-        ) ENGINE=InnoDB;
-        """
-
-        tables['rede_social'] = """
-        CREATE TABLE IF NOT EXISTS rede_social (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            id_empresa INT NOT NULL,
-            id_tipo_rede_social INT NOT NULL,
-            url VARCHAR(255) NOT NULL,
-            FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE,
-            FOREIGN KEY (id_tipo_rede_social) REFERENCES tipo_rede_social(id) ON DELETE CASCADE
-        ) ENGINE=InnoDB;
-        """
-
+        
         tables['endereco'] = """
         CREATE TABLE IF NOT EXISTS endereco (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -250,8 +230,8 @@ def create_tables():
         """
 
         table_creation_order = [
-            'usuario', 'tipo_rede_social', 'empresa', 'ramo',
-            'empresa_ramo', 'rede_social', 'endereco', 'contato',
+            'usuario', 'empresa', 'ramo',
+            'empresa_ramo', 'endereco', 'contato',
             'selo', 'alerta_expiracao_selo', 'notificacao',
             'solicitacao_aprovacao', 'log_acesso', 'log_auditoria', 'log_erro'
         ]

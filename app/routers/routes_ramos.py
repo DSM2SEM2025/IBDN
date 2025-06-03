@@ -7,12 +7,15 @@ from app.controllers.controller_ramo import (
 )
 from typing import List
 
-router = APIRouter()
+router = APIRouter(
+    prefix="",
+    tags=["Ramos"],
+    responses={404: {"description": "Não encontrado"}},)
 
 # rotas ramos
 @router.get("/ramos", response_model=List[RamoBase])
 def listar_ramo():
-    return get_ramos()
+    return get_ramos() #preciso colocar o ID na resposta da rota
 
 @router.get("/ramos/{ramo_id}", response_model=RamoBase)
 def obter_ramo(ramo_id:int = Path(..., gt=0)):
