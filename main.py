@@ -9,7 +9,8 @@ from app.routers import  (
     routes_empresaRamo,
     routes_ramos,
     routes_contato,
-    routes_endereco
+    routes_endereco,
+    routes_notificacao
     )
 
 # Configure logging
@@ -41,6 +42,7 @@ app.include_router(routes_ramos.router)
 app.include_router(routes_empresaRamo.router)
 app.include_router(routes_contato.router)
 app.include_router(routes_endereco.router)
+app.include_router(routes_notificacao.router)
 
 @app.get("/")
 def root():
