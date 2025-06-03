@@ -73,28 +73,29 @@ def update_notificacao(notificacao_id: int, update_data: dict) -> bool:
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        
         cursor.execute("SELECT id FROM notificacao WHERE id = %s", (notificacao_id,))
         if not cursor.fetchone():
             raise HTTPException(status_code=404, detail="Notificação não encontrada")
 
-        
         set_clause = []
         params = []
         for field, value in update_data.items():
             if value is not None:
                 set_clause.append(f"{field} = %s")
                 params.append(value)
-        
+
         if not set_clause:
-            return False
-            
+            raise HTTPException(
+                status_code=400,
+                detail="Nenhum campo válido para atualizar foi enviado"
+            )
+
         query = f"UPDATE notificacao SET {', '.join(set_clause)} WHERE id = %s"
         params.append(notificacao_id)
-        
+
         cursor.execute(query, params)
         conn.commit()
-        return cursor.rowcount > 0
+        return True
     except Error as e:
         raise HTTPException(
             status_code=500,
@@ -103,6 +104,7 @@ def update_notificacao(notificacao_id: int, update_data: dict) -> bool:
     finally:
         cursor.close()
         conn.close()
+
 
 def delete_notificacao(notificacao_id: int) -> bool:
     conn = get_db_connection()

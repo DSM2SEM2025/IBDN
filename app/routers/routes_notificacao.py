@@ -3,7 +3,7 @@ from typing import List, Optional
 from app.controllers.controller_notificacao import (
     get_notificacoes_empresa,
     criar_notificacao_empresa,
-    atualizar_notificacao,
+    atualizar_notificacao as atualizar_notificacao_controller,
     remover_notificacao
 )
 from app.models.notificacao_model import (
@@ -37,9 +37,8 @@ def criar_notificacao(
 def atualizar_notificacao(
     notificacao: NotificacaoUpdate,
     notificacao_id: int = Path(..., gt=0)
-    
 ):
-    return atualizar_notificacao(notificacao_id, notificacao)
+    return atualizar_notificacao_controller(notificacao_id, notificacao)
 
 @router.delete("/notificacoes/{notificacao_id}", response_model=dict)
 def deletar_notificacao(
