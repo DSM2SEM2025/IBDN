@@ -10,7 +10,7 @@ def get_ramos() -> List[RamoBase]:
         conn = mysql.connector.connect(**config)
         cursor = conn.cursor(dictionary=True)
 
-        cursor.execute("SELECT * FROM ramo")
+        cursor.execute("SELECT id, nome, descricao FROM ramo")
         rows = cursor.fetchall()
 
         cursor.close()
