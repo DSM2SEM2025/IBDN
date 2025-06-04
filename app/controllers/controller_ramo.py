@@ -3,77 +3,38 @@ from fastapi import HTTPException
 from app.database.config import get_db_config
 from typing import List
 from app.models.model_ramo import RamoBase,RamoCreate, RamoUpdate, RamoResponse
+from app.repository.ramos_repository import get_ramos, get_ramo_by_id,create_ramo, update_ramo
 
-def get_ramos() -> List[RamoBase]:
+def controller_get_ramos():
     try:
-        config = get_db_config()
-        conn = mysql.connector.connect(**config)
-        cursor = conn.cursor(dictionary=True)
-
-        cursor.execute("SELECT id, nome, descricao FROM ramo")
-        rows = cursor.fetchall()
-
-        cursor.close()
-        conn.close()
-
-        ramos = [RamoBase(**row) for row in rows]
+        ramos = get_ramos()
         return ramos
-    except mysql.connector.Error as err:
-        raise HTTPException(status_code=500, detail=f"Erro ao acessar banco: {err}")
+    except Exception as e:
+        raise HTTPException(status_code=403, detail=f"Erro ao acessar banco: {e}")
     
-def get_ramo_by_id(ramo_id:int) -> RamoBase:
+def controller_get_ramo_by_id(ramo_id:int):
     try:
-        config = get_db_config()
-        conn = mysql.connector.connect(**config)
-        cursor = conn.cursor(dictionary=True)
-
-        cursor.execute("SELECT * FROM ramo WHERE id = %s", (ramo_id,))
-        row = cursor.fetchone()
-
-        cursor.close()
-        conn.close()
-
-        if not row:
-            raise HTTPException(status_code=404, detail="Ramo não encontrado")
-
-        return RamoBase(**row)
-    except mysql.connector.Error as err:
-        raise HTTPException(status_code=500, detail=f"Erro ao acessar banco: {err}")
+        row = get_ramo_by_id(ramo_id)
+        return row
+    except Exception as e:
+        raise HTTPException(status_code=403, detail=f"Erro ao acessar banco: {e}")
     
-def create_ramo(ramo: RamoCreate) -> RamoBase:
+def controller_create_ramo(ramo: RamoCreate):
     try:
-        config = get_db_config()
-        conn = mysql.connector.connect(**config)
-        cursor = conn.cursor(dictionary=True)
-
-        cursor.execute("INSERT INTO ramo (nome, descricao) VALUES (%s,%s)", (ramo.nome,ramo.descricao))
-        conn.commit()
-        ramo_id = cursor.lastrowid
-
-        cursor.close()
-        conn.close()
-
-        return RamoBase(id=ramo_id, nome=ramo.nome, descricao=ramo.descricao)
-    except mysql.connector.Error as err:
-        raise HTTPException(status_code=500, detail=f"Erro ao inserir ramo: {err}")
+        criar_ramo = create_ramo(ramo)
+        return criar_ramo
+    except Exception as e:
+        raise HTTPException(status_code=403, detail=f"Ramo existente: {e}")
     
-def update_ramo(ramo_id: int, ramo:RamoBase) -> RamoResponse:
+    
+def controller_update_ramo(ramo_id: int, ramo:RamoBase) -> RamoResponse:
     try:
-        config = get_db_config()
-        conn = mysql.connector.connect(**config)
-        cursor = conn.cursor()
+        atualiza_ramo = update_ramo(ramo_id, ramo)
+        return atualiza_ramo
+    except Exception as e:
+        raise HTTPException(status_code=403, detail=f"Erro ao atualizar ramo: {e}")
 
-        cursor.execute("UPDATE ramo SET nome = %s, descricao = %s WHERE id = %s", (ramo.nome,ramo.descricao,ramo_id))
-        conn.commit()
-
-        cursor.close()
-        conn.close()
-
-        return RamoResponse(id=ramo_id, nome=ramo.nome, descricao=ramo.descricao)
-    except mysql.connector.Error as err:
-        raise HTTPException(status_code=500, detail=f"Erro ao atualizar ramo: {err}")
-
-def delete_ramo(ramo_id:int) -> None:
+def controller_delete_ramo(ramo_id:int) -> None:
     try:
         config = get_db_config()
         conn = mysql.connector.connect(**config)
@@ -91,6 +52,6 @@ def delete_ramo(ramo_id:int) -> None:
         cursor.close()
         conn.close()
 
-    except mysql.connector.Error as err:
-        raise HTTPException(status_code=500, detail=(f"Erro ao deletar ramo; {err}"))
+    except Exception as e:
+        raise HTTPException(status_code=403, detail=(f"{e}"))
     

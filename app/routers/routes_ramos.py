@@ -3,7 +3,7 @@ from fastapi import APIRouter, Path
 from logging import info
 from app.models.model_ramo import RamoBase, RamoCreate, RamoUpdate
 from app.controllers.controller_ramo import (
-    get_ramos, get_ramo_by_id, create_ramo, delete_ramo, update_ramo
+    controller_update_ramo,controller_create_ramo,controller_delete_ramo,controller_get_ramo_by_id,controller_get_ramos
 )
 from typing import List
 
@@ -15,20 +15,20 @@ router = APIRouter(
 # rotas ramos
 @router.get("/ramos", response_model=List[RamoBase])
 def listar_ramo():
-    return get_ramos() #preciso colocar o ID na resposta da rota
+    return controller_get_ramos() #preciso colocar o ID na resposta da rota
 
 @router.get("/ramos/{ramo_id}", response_model=RamoBase)
 def obter_ramo(ramo_id:int = Path(..., gt=0)):
-    return get_ramo_by_id(ramo_id)
+    return controller_get_ramo_by_id(ramo_id)
 
 @router.post("/ramos",response_model=RamoBase)
 def criar_ramo(ramo: RamoCreate):
-    return create_ramo(ramo)
+    return controller_create_ramo(ramo)
 
 @router.put("/ramos/{ramo_id}", response_model=RamoBase)
 def atualizar_ramo(ramo_id: int, ramo: RamoBase):
-    return update_ramo(ramo_id, ramo)
+    return controller_update_ramo(ramo_id, ramo)
 
 @router.delete("/ramos/{ramo_id}", status_code=204)
 def deletar_ramo(ramo_id:int = Path(..., gt=0)):
-   return delete_ramo(ramo_id)
+   return controller_delete_ramo(ramo_id)
