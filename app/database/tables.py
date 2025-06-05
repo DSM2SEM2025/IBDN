@@ -84,7 +84,7 @@ def create_tables():
         tables['ramo'] = """
         CREATE TABLE IF NOT EXISTS ramo (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            nome VARCHAR(100) NOT NULL,
+            nome VARCHAR(100) NOT NULL UNIQUE,
             descricao TEXT
         ) ENGINE=InnoDB;
         """
