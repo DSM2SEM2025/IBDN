@@ -62,3 +62,10 @@ docs/_build/
 .coverage
 htmlcov/
 .mypy_cache/
+
+
+# Script para popular o banco de dados com dados de teste
+seed_data.py
+
+# Script para gerar tokens JWT para testes locais
+gerar_tokens_teste.py

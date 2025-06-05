@@ -38,4 +38,5 @@ class EmpresaCreate(BaseModel):
             raise ValueError("A Razão Social deve ter no máximo 50 caracteres")
         return x
 
-
+class EmpresaDeleteRequest(BaseModel):
+    empresa_id: Optional[int] = None
