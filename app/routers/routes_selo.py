@@ -68,7 +68,7 @@ def expirar_selos_automaticamente():
     
 @router.on_event("startup")
 def realizar_evento():
-    scheduler.add_job(expirar_selos_automaticamente, 'interval', minutes=1)
+    scheduler.add_job(expirar_selos_automaticamente, 'interval', hours=24)
     scheduler.start()
 
 @router.on_event("shutdown")

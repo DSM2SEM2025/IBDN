@@ -1,21 +1,17 @@
-from fastapi import APIRouter
-from typing import List
-from app.models.empresas_model import Empresa, EmpresaCreate
-from app.controllers.controller_empresa import get_empresas, criar_empresas
-from fastapi import Path
-from app.controllers.controller_empresa import get_empresas, criar_empresas, get_empresa_por_id
+from fastapi import APIRouter, Path, Depends, Body, status
+from typing import List, Optional
 from app.models.empresas_model import (
-    EmpresaRamo, EmpresaRamoUpdate,
-    EmpresaContato, EmpresaContatoUpdate,
-    EmpresaRedeSocial, EmpresaRedeSocialUpdate
+    Empresa, EmpresaCreate, EmpresaDeleteRequest
 )
 from app.controllers.controller_empresa import (
-    get_empresa_ramos, update_empresa_ramo,
-    get_empresa_contatos, update_empresa_contato,
-    get_empresa_redes_sociais, update_empresa_rede_social
+    get_empresas, criar_empresas, get_empresa_por_id, delete_empresa_by_user
 )
+from app.controllers.token import get_current_user, TokenPayLoad
 
-router = APIRouter()
+router = APIRouter(
+    prefix="",
+    tags=["Empresa"],
+    responses={404: {"description": "Não encontrado"}},)
 
 @router.get("/empresas", response_model=List[Empresa])
 def listar_empresas():
@@ -25,31 +21,19 @@ def listar_empresas():
 def adcionar_empresa(empresa: EmpresaCreate):
     return criar_empresas(empresa)
 
-@router.get("/empresa_ramos", response_model=List[EmpresaRamo])
-def listar_empresa_ramos():
-    return get_empresa_ramos()
-
-@router.put("/empresa_ramos/{id}")
-def atualizar_empresa_ramo(id: int, data: EmpresaRamoUpdate):
-    return update_empresa_ramo(id, data)
-
-@router.get("/empresa_contatos", response_model=List[EmpresaContato])
-def listar_empresa_contatos():
-    return get_empresa_contatos()
-
-@router.put("/empresa_contatos/{id}")
-def atualizar_empresa_contato(id: int, data: EmpresaContatoUpdate):
-    return update_empresa_contato(id, data)
-
-@router.get("/empresa_redes_sociais", response_model=List[EmpresaRedeSocial])
-def listar_redes_sociais():
-    return get_empresa_redes_sociais()
-
-@router.put("/empresa_redes_sociais/{id}")
-def atualizar_rede_social(id: int, data: EmpresaRedeSocialUpdate):
-    return update_empresa_rede_social(id, data)
-
 @router.get("/empresas/{empresa_id}", response_model=Empresa)
 def buscar_empresa_por_id(empresa_id: int = Path(..., gt=0)):
     return get_empresa_por_id(empresa_id)
 
+@router.delete("/empresa", status_code=status.HTTP_200_OK, summary="Excluir uma empresa")
+def excluir_empresa_endpoint(
+    delete_request: Optional[EmpresaDeleteRequest] = Body(None),
+    current_user: TokenPayLoad = Depends(get_current_user)
+):
+    """
+    Permite a exclusão (lógica) de uma empresa.
+
+    - **Administrador (ADM):** Pode excluir qualquer empresa informando o `empresa_id` no corpo da requisição.
+    - **Cliente:** Pode excluir apenas a própria empresa (o `empresa_id` é obtido do token e o corpo da requisição pode ser omitido ou `empresa_id` deve coincidir).
+    """
+    return delete_empresa_by_user(delete_request, current_user)

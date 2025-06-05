@@ -9,7 +9,7 @@ def get_db_config():
         'user': os.getenv('DB_USER'),
         'password': os.getenv('DB_PASSWORD'),
         'database': os.getenv('DB_NAME'),
-        'port': int(os.getenv('DB_PORT', '3307'))
+        'port': int(os.getenv('DB_PORT'))
     }
     if not all([config['user'], config['password'], config['database']]):
         raise ValueError(
