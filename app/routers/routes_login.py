@@ -2,7 +2,7 @@ import asyncio
 from fastapi import APIRouter, HTTPException
 from fastapi import APIRouter, HTTPException, status
 
-from app.models.usuario_model import UsuarioResponse, CredenciaisLogin
+from app.models.login_model import CredenciaisLogin
 from app.controllers.controller_login import login
 router = APIRouter(
     prefix="",

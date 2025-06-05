@@ -6,7 +6,7 @@ from app.controllers.token import gerar_token
 from app.repository.usuario_repository import login_usuario
 import bcrypt
 
-from app.security.password import verificar_senha
+from app.security.password import verify_password
 
 
 def login(email_route: str, senha: str):
