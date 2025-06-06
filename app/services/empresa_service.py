@@ -43,3 +43,38 @@ def update_empresa_service(id_empresa: int, empresa_update_data: EmpresaUpdate, 
         )
 
     return empresa_atualizada
+
+
+def delete_empresa_service(delete_payload: Optional[EmpresaDeleteRequest], current_user: TokenPayLoad) -> dict:
+    """Aplica regras de negócio e permissão para excluir uma empresa."""
+    
+    empresa_id_to_delete: Optional[int] = None
+    
+    # Lógica de permissão para determinar qual ID de empresa deve ser excluído.
+    if current_user.tipo_usuario == "ADM":
+        if not delete_payload or delete_payload.empresa_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Administrador deve fornecer 'empresa_id' no corpo da requisição."
+            )
+        empresa_id_to_delete = delete_payload.empresa_id
+    elif current_user.tipo_usuario == "Cliente":
+        if not current_user.empresa_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Usuário cliente não está associado a uma empresa."
+            )
+        empresa_id_to_delete = current_user.empresa_id
+    else:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tipo de usuário inválido.")
+    
+    # Delega a operação de banco de dados para o controller.
+    success = controller_empresa.delete_logically(empresa_id_to_delete)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Empresa com ID {empresa_id_to_delete} não encontrada ou já está inativa."
+        )
+
+    return {"mensagem": "Empresa excluída com sucesso."}
