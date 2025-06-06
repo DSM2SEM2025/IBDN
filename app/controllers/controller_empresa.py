@@ -3,7 +3,10 @@ from fastapi import HTTPException, status
 from typing import List, Optional
 from app.database.config import get_db_config
 from app.models.empresas_model import (
-    Empresa, EmpresaCreate, EmpresaDeleteRequest
+    Empresa, 
+    EmpresaCreate, 
+    EmpresaDeleteRequest, 
+    EmpresaUpdate
 )
 from app.controllers.token import TokenPayLoad
 
@@ -154,3 +157,37 @@ def delete_empresa_by_user(
             cursor.close()
         if conn and conn.is_connected():
             conn.close()
+
+def update_empresa_db(id_empresa: int, empresa_data: EmpresaUpdate) -> Optional[Empresa]:
+    """Executa a query UPDATE no banco e retorna os dados atualizados da empresa."""
+    config = get_db_config()
+    conn = None
+    try:
+        conn = mysql.connector.connect(**config)
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT * FROM empresa WHERE id = %s", (id_empresa,))
+        if not cursor.fetchone():
+            return None
+
+        update_fields = empresa_data.model_dump(exclude_unset=True)
+        if not update_fields:
+            return get_empresa_por_id(id_empresa)
+
+        # Constrói a query dinamicamente para atualizar apenas os campos recebidos.
+        set_clause = ", ".join([f"{key} = %s" for key in update_fields.keys()])
+        sql = f"UPDATE empresa SET {set_clause} WHERE id = %s"
+        values = list(update_fields.values()) + [id_empresa]
+
+        cursor.execute(sql, tuple(values))
+        conn.commit()
+        
+        return get_empresa_por_id(id_empresa)
+
+    except mysql.connector.Error as err:
+        raise HTTPException(status_code=500, detail=f"Erro de banco de dados: {err}")
+    finally:
+        if conn and conn.is_connected():
+            cursor.close()
+            conn.close()
+
