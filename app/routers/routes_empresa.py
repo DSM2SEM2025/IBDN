@@ -28,7 +28,7 @@ def adcionar_empresa(empresa: EmpresaCreate):
 def buscar_empresa_por_id(empresa_id: int = Path(..., gt=0)):
     return get_empresa_por_id(empresa_id)
 
-@router.delete("/", status_code=status.HTTP_200_OK, summary="Excluir uma empresa")
+@router.delete("/empresas/{empresa_id}", status_code=status.HTTP_200_OK, summary="Excluir uma empresa")
 def excluir_empresa_endpoint(
     delete_request: Optional[EmpresaDeleteRequest] = Body(None),
     current_user: TokenPayLoad = Depends(get_current_user)

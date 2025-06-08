@@ -169,11 +169,10 @@ def create_tables():
         tables['solicitacao_aprovacao'] = """
         CREATE TABLE IF NOT EXISTS solicitacao_aprovacao (
             id INT AUTO_INCREMENT PRIMARY KEY,
+            id_usuario INT NOT NULL,
             id_empresa INT NOT NULL,
             tipo_dado VARCHAR(50) NOT NULL,
-            id_registro INT NOT NULL,
             status VARCHAR(20) NOT NULL,
-            ip VARCHAR(45),
             acao VARCHAR(20) NOT NULL,
             data_solicitacao DATETIME NOT NULL,
             data_resposta DATETIME,
