@@ -219,7 +219,7 @@ def create_tables():
 
         table_creation_order = [
             'usuario', 'empresa', 'ramo',
-            'empresa_ramo', 'endereco', 'contato',
+            'empresa_ramo', 'endereco',
             'selo', 'alerta_expiracao_selo', 'notificacao',
             'solicitacao_aprovacao', 'log_acesso', 'log_auditoria', 'log_erro'
         ]

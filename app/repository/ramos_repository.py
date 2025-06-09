@@ -2,34 +2,8 @@ import mysql.connector
 from mysql.connector import Error
 from fastapi import HTTPException
 from typing import List
-from contextlib import contextmanager
-from app.database.config import get_db_config 
+from app.database.config import get_cursor
 from app.models.model_ramo import RamoBase,RamoCreate,RamoResponse,RamoUpdate 
-
-def get_db_connection():
-    try:
-        config = get_db_config()
-        connection = mysql.connector.connect(**config)
-        return connection 
-    except Error as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erro ao conectar ao banco de dados: {str(e)}"
-        )
-    
-@contextmanager
-def get_cursor():
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-    try:
-        yield cursor
-        connection.commit()
-    except:
-        connection.rollback()
-        raise
-    finally:
-        cursor.close()
-        connection.close()
  
 def get_ramos() -> List[RamoBase]:
     try:
