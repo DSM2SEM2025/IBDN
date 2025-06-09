@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from app.database.config import get_db_config
 from typing import List
 from app.models.model_ramo import RamoBase,RamoCreate, RamoUpdate, RamoResponse
-from app.repository.ramos_repository import get_ramos, get_ramo_by_id,create_ramo, update_ramo
+from app.repository.ramos_repository import get_ramos, get_ramo_by_id,create_ramo, update_ramo,delete_ramo
 
 def controller_get_ramos():
     try:
@@ -36,22 +36,7 @@ def controller_update_ramo(ramo_id: int, ramo:RamoBase) -> RamoResponse:
 
 def controller_delete_ramo(ramo_id:int) -> None:
     try:
-        config = get_db_config()
-        conn = mysql.connector.connect(**config)
-        cursor = conn.cursor()
-
-        cursor.execute("SELECT id FROM ramo WHERE id = %s", (ramo_id,))
-        if cursor.fetchone() is None:
-            cursor.close()
-            conn.close()
-            raise HTTPException(status_code=404, detail="Ramo não encontrado")
-        
-        cursor.execute("DELETE FROM ramo WHERE id = %s", (ramo_id,))
-        conn.commit()
-
-        cursor.close()
-        conn.close()
-
+        return delete_ramo(ramo_id)
     except Exception as e:
         raise HTTPException(status_code=403, detail=(f"{e}"))
     
