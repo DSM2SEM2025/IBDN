@@ -114,18 +114,6 @@ def create_tables():
         ) ENGINE=InnoDB;
         """
 
-<<<<<<< HEAD
-        tables['contato'] = """
-        CREATE TABLE IF NOT EXISTS contato (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            id_empresa INT NOT NULL,
-            telefone_comercial VARCHAR(20),
-            celular VARCHAR(20),
-            whatsapp VARCHAR(20),
-            FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE
-        ) ENGINE=InnoDB;
-        """
-
         tables['tipo_selo'] = """
         CREATE TABLE IF NOT EXISTS tipo_selo (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -135,8 +123,6 @@ def create_tables():
         ) ENGINE=InnoDB;
         """
 
-=======
->>>>>>> develop
         tables['selo'] = """
         CREATE TABLE IF NOT EXISTS selo (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -252,14 +238,9 @@ def create_tables():
 
         table_creation_order = [
             'usuario', 'empresa', 'ramo',
-<<<<<<< HEAD
             'empresa_ramo', 'endereco', 'contato', 
             'tipo_selo', 'selo', 'empresa_selo',
             'alerta_expiracao_selo', 'notificacao',
-=======
-            'empresa_ramo', 'endereco',
-            'selo', 'alerta_expiracao_selo', 'notificacao',
->>>>>>> develop
             'solicitacao_aprovacao', 'log_acesso', 'log_auditoria', 'log_erro'
         ]
 
