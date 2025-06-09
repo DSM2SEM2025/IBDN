@@ -70,7 +70,7 @@ def create_tables():
             cnpj VARCHAR(18) NOT NULL UNIQUE,
             razao_social VARCHAR(255) NOT NULL,
             nome_fantasia VARCHAR(255),
-            usuario_id INT NOT NULL,
+            usuario_id INT NOT NULL UNIQUE,
             telefone VARCHAR(20),
             responsavel VARCHAR(100),
             cargo_responsavel VARCHAR(100),
@@ -84,11 +84,11 @@ def create_tables():
         tables['ramo'] = """
         CREATE TABLE IF NOT EXISTS ramo (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            nome VARCHAR(100) NOT NULL,
+            nome VARCHAR(100) NOT NULL UNIQUE,
             descricao TEXT
         ) ENGINE=InnoDB;
         """
-        
+
         tables['empresa_ramo'] = """
         CREATE TABLE IF NOT EXISTS empresa_ramo (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -99,7 +99,7 @@ def create_tables():
             UNIQUE (id_empresa, id_ramo)
         ) ENGINE=InnoDB;
         """
-        
+
         tables['endereco'] = """
         CREATE TABLE IF NOT EXISTS endereco (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -114,30 +114,38 @@ def create_tables():
         ) ENGINE=InnoDB;
         """
 
-        tables['contato'] = """
-        CREATE TABLE IF NOT EXISTS contato (
+        tables['tipo_selo'] = """
+        CREATE TABLE IF NOT EXISTS tipo_selo (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            id_empresa INT NOT NULL,
-            telefone_comercial VARCHAR(20),
-            celular VARCHAR(20),
-            whatsapp VARCHAR(20),
-            FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE
+            nome VARCHAR(100) NOT NULL,
+            descricao TEXT NOT NULL,
+            sigla VARCHAR(10) NOT NULL UNIQUE
         ) ENGINE=InnoDB;
         """
 
         tables['selo'] = """
         CREATE TABLE IF NOT EXISTS selo (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            id_empresa INT NOT NULL,
+            id_tipo_selo INT NOT NULL,
             data_emissao DATE NOT NULL,
             data_expiracao DATE NOT NULL,
-            codigo_selo VARCHAR(50) NOT NULL,
+            codigo_selo VARCHAR(50) NOT NULL UNIQUE,
             status VARCHAR(20) NOT NULL,
             documentacao TEXT,
             alerta_enviado BOOLEAN DEFAULT FALSE,
             dias_alerta_previo INT DEFAULT 30,
+            FOREIGN KEY (id_tipo_selo) REFERENCES tipo_selo(id)
+        ) ENGINE=InnoDB;
+        """
+
+        tables['empresa_selo'] = """
+        CREATE TABLE IF NOT EXISTS empresa_selo (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            id_empresa INT NOT NULL,
+            id_selo INT NOT NULL,
+            UNIQUE (id_empresa, id_selo),
             FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE,
-            UNIQUE (codigo_selo)
+            FOREIGN KEY (id_selo) REFERENCES selo(id) ON DELETE CASCADE
         ) ENGINE=InnoDB;
         """
 
@@ -169,14 +177,14 @@ def create_tables():
         tables['solicitacao_aprovacao'] = """
         CREATE TABLE IF NOT EXISTS solicitacao_aprovacao (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            id_usuario INT NOT NULL,
             id_empresa INT NOT NULL,
-            tipo_dado VARCHAR(50) NOT NULL,
+            tipo_selo VARCHAR(50) NOT NULL,
             status VARCHAR(20) NOT NULL,
             acao VARCHAR(20) NOT NULL,
             data_solicitacao DATETIME NOT NULL,
             data_resposta DATETIME,
             comentario_aprovador TEXT,
+            FOREIGN KEY (tipo_selo) REFERENCES selo(id) ON DELETE CASCADE
             FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE
         ) ENGINE=InnoDB;
         """
@@ -230,8 +238,9 @@ def create_tables():
 
         table_creation_order = [
             'usuario', 'empresa', 'ramo',
-            'empresa_ramo', 'endereco', 'contato',
-            'selo', 'alerta_expiracao_selo', 'notificacao',
+            'empresa_ramo', 'endereco', 
+            'tipo_selo', 'selo', 'empresa_selo',
+            'alerta_expiracao_selo', 'notificacao',
             'solicitacao_aprovacao', 'log_acesso', 'log_auditoria', 'log_erro'
         ]
 

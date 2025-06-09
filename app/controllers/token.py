@@ -2,8 +2,6 @@ from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from typing import Optional
-
-
 import jwt
 from datetime import datetime, timedelta, timezone
 
