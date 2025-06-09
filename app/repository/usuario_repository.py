@@ -10,8 +10,9 @@ def login_usuario(email: str):
 
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
+        print(f"Login attempt for email: {email}")
 
-        query = "SELECT * FROM usuario WHERE email = %s"
+        query = "SELECT * FROM ibdn_usuarios WHERE email = %s"
         cursor.execute(query, (email,))
         usuario = cursor.fetchone()
 

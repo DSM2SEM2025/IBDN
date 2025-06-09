@@ -1,5 +1,7 @@
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from pydantic import BaseModel
+from typing import Optional
 
 
 import jwt
@@ -11,10 +13,17 @@ SECRET_KEY = "chave-muito-secreta"
 ALGORITHM = "HS256"
 
 
+class TokenPayLoad(BaseModel):
+    email: str
+    permissoes: Optional[str] = None
+    empresa_id: Optional[int] = None
+    iat: int
+    exp: int
+
+
 def verificar_token(token) -> dict:
     try:
-        payload = jwt.decode(token, SECRET_KEY,
-                             algorithms=[ALGORITM])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(
@@ -24,13 +33,16 @@ def verificar_token(token) -> dict:
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido")
 
 
-def gerar_token(email: str, tipo_usuario: str) -> str:
+def gerar_token(email: str, permissoes: str, usuario_id: Optional[int] = None) -> str:
     payload = {
         'email': email,
-        'tipo_usuario': tipo_usuario,
+        'usuario_id': usuario_id,
         'iat': datetime.now(timezone.utc),
-        'exp': datetime.now(timezone.utc) + timedelta(days=1)}
+        'exp': datetime.now(timezone.utc) + timedelta(days=1),
+        "permissoes": permissoes,
+    }
     jwt_token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    print(f"Token gerado para o usuário {email}: {jwt_token}")
     return jwt_token
 
 
@@ -38,20 +50,12 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     token = credentials.credentials
     try:
         payload = verificar_token(token)
-        exp = payload.get('exp')
-        if exp and datetime.fromtimestamp(exp) < datetime.now(timezone.utc):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token expirado",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        return payload
-    except HTTPException as e:
-        raise e
+        token_data = TokenPayLoad(**payload)
+        return token_data
     except Exception as e:
-        print(f"Erro inesperado ao verificar token: {e}")
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Erro interno ao processar autenticação",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Não foi possível validar as credenciais"
         )

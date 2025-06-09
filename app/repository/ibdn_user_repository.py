@@ -121,6 +121,7 @@ def repo_get_ibdn_usuario_by_email(email: str, include_password_hash: bool = Fal
                 user_db_data["perfil_id"])
 
         return _map_user_db_to_schema(user_db_data, perfil_completo)
+
     finally:
         if cursor:
             cursor.close()
