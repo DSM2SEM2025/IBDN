@@ -114,6 +114,15 @@ def create_tables():
         ) ENGINE=InnoDB;
         """
 
+        tables['tipo_selo'] = """
+        CREATE TABLE IF NOT EXISTS tipo_selo (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            nome VARCHAR(100) NOT NULL,
+            descricao TEXT NOT NULL,
+            sigla VARCHAR(10) NOT NULL UNIQUE
+        ) ENGINE=InnoDB;
+        """
+
         tables['selo'] = """
         CREATE TABLE IF NOT EXISTS selo (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -229,8 +238,9 @@ def create_tables():
 
         table_creation_order = [
             'usuario', 'empresa', 'ramo',
-            'empresa_ramo', 'endereco',
-            'selo', 'alerta_expiracao_selo', 'notificacao',
+            'empresa_ramo', 'endereco', 
+            'tipo_selo', 'selo', 'empresa_selo',
+            'alerta_expiracao_selo', 'notificacao',
             'solicitacao_aprovacao', 'log_acesso', 'log_auditoria', 'log_erro'
         ]
 
