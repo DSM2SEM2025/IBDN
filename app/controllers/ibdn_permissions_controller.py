@@ -6,8 +6,6 @@ from app.models.ibdn_user_model import IbdnPermissaoCreate, IbdnPermissaoUpdate
 
 
 def create_permissao(permissao_data: IbdnPermissaoCreate) -> Dict[str, Any]:
-    # Validações de negócio, se houver, antes de chamar o repositório.
-    # Ex: Verificar se o nome da permissão segue um padrão específico.
     return repo.repo_create_ibdn_permissao(permissao_data.model_dump())
 
 
@@ -33,14 +31,8 @@ def update_permissao(permissao_id: str, permissao_data: IbdnPermissaoUpdate) -> 
 
 
 def delete_permissao(permissao_id: str) -> Dict[str, str]:
-    # Verifica se existe antes
-    if not repo.repo_get_ibdn_permissao_by_id(permissao_id):
+    foi_deletado = repo.repo_delete_ibdn_permissao(permissao_id)
+    if not foi_deletado:
         raise HTTPException(
             status_code=404, detail="Permissão não encontrada para exclusão.")
-
-    if not repo.repo_delete_ibdn_permissao(permissao_id):
-        # Esta condição pode não ser alcançada se a verificação acima for feita,
-        # ou se o repo_delete_ibdn_permissao levantar exceção em caso de falha.
-        raise HTTPException(
-            status_code=500, detail="Falha ao excluir a permissão.")
     return {"message": "Permissão excluída com sucesso."}

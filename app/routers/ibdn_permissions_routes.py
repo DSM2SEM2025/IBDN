@@ -5,7 +5,7 @@ from app.controllers import ibdn_permissions_controller as ctrl
 from app.models.ibdn_user_model import IbdnPermissao, IbdnPermissaoCreate, IbdnPermissaoUpdate
 
 router = APIRouter(
-    prefix="",
+    prefix="/permissoes",
     tags=["IBDN Permissões"],
     responses={404: {"description": "Não encontrado"}},
 )

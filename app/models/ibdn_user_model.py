@@ -1,6 +1,6 @@
 # app/schemas/ibdn_user_schemas.py
 import uuid
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional
 
 # --- Schemas de Permissão da IBDN ---
@@ -17,7 +17,7 @@ class IbdnPermissaoCreate(IbdnPermissaoBase):
 
 
 class IbdnPermissaoUpdate(IbdnPermissaoBase):
-    # Ao atualizar, o nome é o único campo editável além do ID (que não se edita)
+    # Ao atualizar, o nome é o único campo editável
     pass
 
 
@@ -39,7 +39,7 @@ class IbdnPerfilCreate(IbdnPerfilBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()),
                     description="ID único do perfil (UUID)")
     permissoes_ids: Optional[List[str]] = Field(
-        [], description="Lista de IDs de permissões a serem associadas a este perfil na criação")
+        default_factory=list, description="Lista de IDs de permissões a serem associadas a este perfil na criação")
 
 
 class IbdnPerfilUpdate(BaseModel):
@@ -52,7 +52,7 @@ class IbdnPerfilUpdate(BaseModel):
 class IbdnPerfil(IbdnPerfilBase):
     id: str
     permissoes: List[IbdnPermissao] = Field(
-        [], description="Lista de permissões associadas a este perfil")
+        default_factory=list, description="Lista de permissões associadas a este perfil")
 
     class Config:
         from_attributes = True
@@ -64,27 +64,41 @@ class PerfilPermissaoLink(BaseModel):
     permissao_id: str = Field(...,
                               description="ID da permissão a ser vinculada/desvinculada")
 
-# --- Schemas de Usuário da IBDN (Exemplo, você pode expandir) ---
+# --- Schemas de Usuário da IBDN ---
 
 
 class IbdnUsuarioBase(BaseModel):
     nome: str = Field(..., min_length=3, max_length=255)
-    # Use EmailStr para validação de email
-    email: str = Field(..., description="Email do usuário")
-    ativo: Optional[bool] = True
-    twofactor: Optional[bool] = False
+    email: EmailStr = Field(...,
+                            description="Email do usuário (validação automática)")
+    ativo: Optional[bool] = Field(True)
+    twofactor: Optional[bool] = Field(False)
 
 
 class IbdnUsuarioCreate(IbdnUsuarioBase):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    senha: str = Field(..., min_length=6)
-    perfil_id: Optional[str] = None
+    senha: str = Field(..., min_length=6,
+                       description="Senha do usuário (será hasheada)")
+    perfil_id: Optional[str] = Field(
+        None, description="ID do perfil a ser associado")
+
+
+class IbdnUsuarioUpdate(BaseModel):
+    """Schema usado para atualizar um usuário existente. Todos os campos são opcionais."""
+    nome: Optional[str] = Field(None, min_length=3, max_length=255)
+    email: Optional[EmailStr] = None
+    perfil_id: Optional[str] = Field(
+        None, description="Novo ID do perfil para o usuário (pode ser null para desvincular)")
+    ativo: Optional[bool] = None
+    twofactor: Optional[bool] = None
+    senha: Optional[str] = Field(
+        None, min_length=6, description="Nova senha para o usuário (se for alterar)")
 
 
 class IbdnUsuario(IbdnUsuarioBase):
     id: str
-    # Para exibir o perfil completo associado
-    perfil: Optional[IbdnPerfil] = None
+    perfil: Optional[IbdnPerfil] = Field(
+        None, description="Perfil completo associado ao usuário")
 
     class Config:
         from_attributes = True

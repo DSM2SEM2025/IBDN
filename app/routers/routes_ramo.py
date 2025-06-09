@@ -6,6 +6,7 @@ from database import get_db
 
 router = APIRouter(prefix="/ramos", tags=["Ramos"])
 
+
 @router.post("/", response_model=RamoOut)
 def create_ramo(ramo: RamoCreate, db: Session = Depends(get_db)):
     novo_ramo = Ramo(**ramo.dict())
@@ -14,6 +15,7 @@ def create_ramo(ramo: RamoCreate, db: Session = Depends(get_db)):
     db.refresh(novo_ramo)
 
     return novo_ramo
+
 
 @router.put("/{ramo_id}", response_model=RamoOut)
 def update_ramo(ramo_id: int, dados: RamoUpdate, db: Session = Depends(get_db)):
