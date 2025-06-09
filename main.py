@@ -8,7 +8,6 @@ from app.routers import  (
     routes_empresa,
     routes_empresaRamo,
     routes_ramos,
-    routes_contato,
     routes_endereco,
     routes_notificacao
     )
@@ -40,7 +39,6 @@ app.include_router(routes_selo.router)
 app.include_router(routes_empresa.router)
 app.include_router(routes_ramos.router)
 app.include_router(routes_empresaRamo.router)
-app.include_router(routes_contato.router)
 app.include_router(routes_endereco.router)
 app.include_router(routes_notificacao.router)
 
