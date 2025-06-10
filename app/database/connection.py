@@ -2,7 +2,7 @@ import mysql.connector
 from mysql.connector import Error
 from fastapi import HTTPException
 
-from app.config.config import get_db_config
+from app.database.config import get_db_config
 
 
 def get_db_connection():
