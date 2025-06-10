@@ -96,7 +96,7 @@ def create_tables():
             cnpj VARCHAR(18) NOT NULL UNIQUE,
             razao_social VARCHAR(255) NOT NULL,
             nome_fantasia VARCHAR(255),
-            usuario_id CHAR(40) NOT NULL,
+            usuario_id INT NOT NULL UNIQUE,
             telefone VARCHAR(20),
             responsavel VARCHAR(100),
             cargo_responsavel VARCHAR(100),
@@ -107,46 +107,28 @@ def create_tables():
         ) ENGINE=InnoDB;
         """
 
-        tables['tipo_rede_social'] = """
-        CREATE TABLE IF NOT EXISTS tipo_rede_social (
+        tables['ramo'] = """
+        CREATE TABLE IF NOT EXISTS ramo (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            nome VARCHAR(50) NOT NULL,
-            descricao VARCHAR(255),
-            UNIQUE (nome)
+            nome VARCHAR(100) NOT NULL UNIQUE,
+            descricao TEXT
         ) ENGINE=InnoDB;
         """
 
         tables['ramo'] = """
         CREATE TABLE IF NOT EXISTS ramo (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            id_empresa INT NOT NULL,
-            id_tipo_rede_social INT,
-            nome VARCHAR(100) NOT NULL,
-            descricao TEXT,
-            FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE,
-            FOREIGN KEY (id_tipo_rede_social) REFERENCES tipo_rede_social(id) ON DELETE SET NULL
+            nome VARCHAR(100) NOT NULL UNIQUE,
+            descricao TEXT
         ) ENGINE=InnoDB;
         """
 
-        tables['empresa_ramo'] = """
-        CREATE TABLE IF NOT EXISTS empresa_ramo (
+        tables['tipo_rede_social'] = """
+        CREATE TABLE IF NOT EXISTS tipo_rede_social (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            id_empresa INT NOT NULL,
-            id_ramo INT NOT NULL,
-            FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE,
-            FOREIGN KEY (id_ramo) REFERENCES ramo(id) ON DELETE CASCADE,
-            UNIQUE (id_empresa, id_ramo)
-        ) ENGINE=InnoDB;
-        """
-
-        tables['rede_social'] = """
-        CREATE TABLE IF NOT EXISTS rede_social (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            id_empresa INT NOT NULL,
-            id_tipo_rede_social INT NOT NULL,
-            url VARCHAR(255) NOT NULL,
-            FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE,
-            FOREIGN KEY (id_tipo_rede_social) REFERENCES tipo_rede_social(id) ON DELETE CASCADE
+            nome VARCHAR(50) NOT NULL,
+            descricao VARCHAR(255),
+            UNIQUE (nome)
         ) ENGINE=InnoDB;
         """
 
@@ -164,30 +146,38 @@ def create_tables():
         ) ENGINE=InnoDB;
         """
 
-        tables['contato'] = """
-        CREATE TABLE IF NOT EXISTS contato (
+        tables['tipo_selo'] = """
+        CREATE TABLE IF NOT EXISTS tipo_selo (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            id_empresa INT NOT NULL,
-            telefone_comercial VARCHAR(20),
-            celular VARCHAR(20),
-            whatsapp VARCHAR(20),
-            FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE
+            nome VARCHAR(100) NOT NULL,
+            descricao TEXT NOT NULL,
+            sigla VARCHAR(10) NOT NULL UNIQUE
         ) ENGINE=InnoDB;
         """
 
         tables['selo'] = """
         CREATE TABLE IF NOT EXISTS selo (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            id_empresa INT NOT NULL,
+            id_tipo_selo INT NOT NULL,
             data_emissao DATE NOT NULL,
             data_expiracao DATE NOT NULL,
-            codigo_selo VARCHAR(50) NOT NULL,
+            codigo_selo VARCHAR(50) NOT NULL UNIQUE,
             status VARCHAR(20) NOT NULL,
             documentacao TEXT,
             alerta_enviado BOOLEAN DEFAULT FALSE,
             dias_alerta_previo INT DEFAULT 30,
+            FOREIGN KEY (id_tipo_selo) REFERENCES tipo_selo(id)
+        ) ENGINE=InnoDB;
+        """
+
+        tables['empresa_selo'] = """
+        CREATE TABLE IF NOT EXISTS empresa_selo (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            id_empresa INT NOT NULL,
+            id_selo INT NOT NULL,
+            UNIQUE (id_empresa, id_selo),
             FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE,
-            UNIQUE (codigo_selo)
+            FOREIGN KEY (id_selo) REFERENCES selo(id) ON DELETE CASCADE
         ) ENGINE=InnoDB;
         """
 
@@ -220,14 +210,13 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS solicitacao_aprovacao (
             id INT AUTO_INCREMENT PRIMARY KEY,
             id_empresa INT NOT NULL,
-            tipo_dado VARCHAR(50) NOT NULL,
-            id_registro INT NOT NULL,
+            tipo_selo VARCHAR(50) NOT NULL,
             status VARCHAR(20) NOT NULL,
-            ip VARCHAR(45),
             acao VARCHAR(20) NOT NULL,
             data_solicitacao DATETIME NOT NULL,
             data_resposta DATETIME,
             comentario_aprovador TEXT,
+            FOREIGN KEY (tipo_selo) REFERENCES selo(id) ON DELETE CASCADE
             FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE
         ) ENGINE=InnoDB;
         """
@@ -284,20 +273,13 @@ def create_tables():
             'ibdn_perfis',
             'ibdn_perfil_permissoes',
             'ibdn_usuarios',
-            'tipo_rede_social',
             'empresa',
             'ramo',
             'empresa_ramo',
-            'rede_social',
             'endereco',
-            'contato',
-            'selo',
-            'alerta_expiracao_selo',
-            'notificacao',
-            'solicitacao_aprovacao',
-            'log_acesso',
-            'log_auditoria',
-            'log_erro'
+            'tipo_selo', 'selo', 'empresa_selo',
+            'alerta_expiracao_selo', 'notificacao',
+            'solicitacao_aprovacao', 'log_acesso', 'log_auditoria', 'log_erro'
         ]
 
         for table_name in table_creation_order:

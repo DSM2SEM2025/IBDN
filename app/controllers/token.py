@@ -16,7 +16,7 @@ ALGORITHM = "HS256"
 class TokenPayLoad(BaseModel):
     email: str
     permissoes: Optional[str] = None
-    empresa_id: Optional[int] = None
+    usuario_id: Optional[int] = None
     iat: int
     exp: int
 

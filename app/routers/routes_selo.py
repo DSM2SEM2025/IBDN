@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from typing import Optional
-from ..controllers.controller_selo import get_selos_por_empresas, retornar_empresas_com_selos_criados, remover_selos_expirados, controller_renovar_selo, controller_solicitar_renovacao, controller_expirar_selo_automatico
+from ..controllers.controller_selo import get_selos_por_empresas, retornar_empresas_com_selos_criados, remover_selos_expirados, controller_renovar_selo, controller_solicitar_renovacao, controller_expirar_selo_automatico, controller_associa_selo_empresa
+from ..models.selo_model import AssociacaoMultiplaRequest
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -56,11 +57,9 @@ async def rota_remover_selos_expirados():
 def aprovar_selo(selo_id: int):
     return controller_renovar_selo(selo_id)
 
-# Matheus - Criar o rota ou função PUT para Admin(pendente → expirado)
-# Caso a IBDN não aprove que o selo da empresa seja renovado - Olhar o exaclidraw , la eu coloquei um bloco sobre isso
-
-
 # PUT para Cliente (expirado → pendente)
+
+
 @router.put("/solicitar-renovacao/{selo_id}/")
 def solicitar_renovacao(selo_id: int):
     return controller_solicitar_renovacao(selo_id)
@@ -74,10 +73,18 @@ def expirar_selos_automaticamente():
 
 @router.on_event("startup")
 def realizar_evento():
-    scheduler.add_job(expirar_selos_automaticamente, 'interval', minutes=1)
+    scheduler.add_job(expirar_selos_automaticamente, 'interval', hours=24)
     scheduler.start()
 
 
 @router.on_event("shutdown")
 def shutdown_scheduler():
     scheduler.shutdown()
+
+
+@router.post("/{id_empresa}/associar", status_code=201,
+             summary="[Admin] Cria e associa um novo selo a uma empresa",
+             description="Cria uma nova instância de selo com código padronizado e a associa a uma empresa em uma única operação."
+             )
+def associar_multiplos_selos_a_empresa(id_empresa: int, data: AssociacaoMultiplaRequest):
+    return controller_associa_selo_empresa(id_empresa, data)

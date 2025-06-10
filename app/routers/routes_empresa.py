@@ -1,23 +1,18 @@
-from fastapi import APIRouter
-from typing import List
-from app.models.empresas_model import Empresa, EmpresaCreate
-from app.controllers.controller_empresa import get_empresas, criar_empresas
-from fastapi import Path
-from app.controllers.controller_empresa import get_empresas, criar_empresas, get_empresa_por_id
+from fastapi import APIRouter, Path, Depends, Body, status
+from typing import List, Optional
 from app.models.empresas_model import (
-    EmpresaContato, EmpresaContatoUpdate,
-    EmpresaRedeSocial, EmpresaRedeSocialUpdate
+    Empresa,
+    EmpresaCreate,
+    EmpresaDeleteRequest,
+    EmpresaUpdate
 )
-from app.controllers.controller_empresa import (
-    get_empresa_ramos, update_empresa_ramo,
-    get_empresa_contatos, update_empresa_contato,
-    get_empresa_redes_sociais, update_empresa_rede_social
-)
-from app.models.empresa_ramo_model import (
-    EmpresaRamo, EmpresaRamoUpdate
-)
+from app.controllers import controller_empresa
+from app.controllers.token import get_current_user, TokenPayLoad
 
-router = APIRouter()
+router = APIRouter(
+    prefix="",
+    tags=["Empresa"],
+    responses={404: {"description": "Não encontrado"}},)
 
 
 @router.get("/empresas", response_model=List[Empresa])
@@ -30,36 +25,32 @@ def adcionar_empresa(empresa: EmpresaCreate):
     return criar_empresas(empresa)
 
 
-@router.get("/empresa_ramos", response_model=List[EmpresaRamo])
-def listar_empresa_ramos():
-    return get_empresa_ramos()
-
-
-@router.put("/empresa_ramos/{id}")
-def atualizar_empresa_ramo(id: int, data: EmpresaRamoUpdate):
-    return update_empresa_ramo(id, data)
-
-
-@router.get("/empresa_contatos", response_model=List[EmpresaContato])
-def listar_empresa_contatos():
-    return get_empresa_contatos()
-
-
-@router.put("/empresa_contatos/{id}")
-def atualizar_empresa_contato(id: int, data: EmpresaContatoUpdate):
-    return update_empresa_contato(id, data)
-
-
-@router.get("/empresa_redes_sociais", response_model=List[EmpresaRedeSocial])
-def listar_redes_sociais():
-    return get_empresa_redes_sociais()
-
-
-@router.put("/empresa_redes_sociais/{id}")
-def atualizar_rede_social(id: int, data: EmpresaRedeSocialUpdate):
-    return update_empresa_rede_social(id, data)
-
-
 @router.get("/empresas/{empresa_id}", response_model=Empresa)
 def buscar_empresa_por_id(empresa_id: int = Path(..., gt=0)):
     return get_empresa_por_id(empresa_id)
+
+
+@router.delete("/empresas/{empresa_id}", status_code=status.HTTP_200_OK, summary="Excluir uma empresa")
+def excluir_empresa_endpoint(
+    delete_request: Optional[EmpresaDeleteRequest] = Body(None),
+    current_user: TokenPayLoad = Depends(get_current_user)
+):
+    """Permite a exclusão (lógica) de uma empresa."""
+    # Chama diretamente a nova função completa do controller
+    return controller_empresa.delete_empresa(delete_request, current_user)
+
+
+@router.put("/empresas/{id_empresa}", response_model=Empresa, summary="Atualizar dados de uma empresa")
+def atualizar_empresa_endpoint(
+    id_empresa: int = Path(..., gt=0,
+                           description="ID da empresa a ser atualizada"),
+    empresa_update_data: EmpresaUpdate = Body(...),
+    current_user: TokenPayLoad = Depends(get_current_user)
+):
+    """Atualiza os dados de uma empresa existente."""
+    # Chama diretamente a nova função completa do controller
+    return controller_empresa.update_empresa(
+        id_empresa=id_empresa,
+        empresa_data=empresa_update_data,
+        current_user=current_user
+    )
