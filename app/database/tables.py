@@ -31,14 +31,13 @@ def setup_logging():
 
 
 def create_tables():
-
     logger = setup_logging()
     logger.info("Starting database initialization")
+    connection = None
+    cursor = None
 
     try:
-
         config = get_db_config()
-
         logger.info("Connecting to database")
         connection = mysql.connector.connect(**config)
         cursor = connection.cursor()
@@ -52,18 +51,45 @@ def create_tables():
 
         tables = {}
 
-        tables['usuario'] = """
-        CREATE TABLE IF NOT EXISTS usuario (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            nome VARCHAR(100) NOT NULL,
-            email VARCHAR(255) NOT NULL,
-            senha_hash VARCHAR(255) NOT NULL,
-            perfil VARCHAR(50) NOT NULL,
-            is_admin  BOOLEAN DEFAULT FALSE,
-            UNIQUE (email)
+        # Novas tabelas IBDN
+        tables['ibdn_permissoes'] = """
+        CREATE TABLE IF NOT EXISTS ibdn_permissoes (
+            id CHAR(40) PRIMARY KEY,
+            nome VARCHAR(100) NOT NULL UNIQUE
         ) ENGINE=InnoDB;
         """
 
+        tables['ibdn_perfis'] = """
+        CREATE TABLE IF NOT EXISTS ibdn_perfis (
+            id CHAR(40) PRIMARY KEY,
+            nome VARCHAR(50) NOT NULL UNIQUE
+        ) ENGINE=InnoDB;
+        """
+
+        tables['ibdn_perfil_permissoes'] = """
+        CREATE TABLE IF NOT EXISTS ibdn_perfil_permissoes (
+            perfil_id CHAR(40),
+            permissao_id CHAR(40),
+            PRIMARY KEY (perfil_id, permissao_id),
+            FOREIGN KEY (perfil_id) REFERENCES ibdn_perfis(id) ON DELETE CASCADE,
+            FOREIGN KEY (permissao_id) REFERENCES ibdn_permissoes(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB;
+        """
+
+        tables['ibdn_usuarios'] = """
+        CREATE TABLE IF NOT EXISTS ibdn_usuarios (
+            id CHAR(40) PRIMARY KEY,
+            nome VARCHAR(255) NOT NULL,
+            email VARCHAR(255) NOT NULL UNIQUE,
+            senha_hash VARCHAR(255) NOT NULL, 
+            perfil_id CHAR(40) NULL,
+            ativo TINYINT(1) DEFAULT 1,
+            twofactor TINYINT(1) DEFAULT 0,
+            FOREIGN KEY (perfil_id) REFERENCES ibdn_perfis(id) ON DELETE SET NULL
+        ) ENGINE=InnoDB;
+        """
+
+        # Atualize as tabelas existentes para referenciar ibdn_usuarios
         tables['empresa'] = """
         CREATE TABLE IF NOT EXISTS empresa (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -77,7 +103,7 @@ def create_tables():
             site_empresa VARCHAR(255),
             data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             ativo BOOLEAN DEFAULT TRUE,
-            FOREIGN KEY (usuario_id) REFERENCES usuario(id)
+            FOREIGN KEY (usuario_id) REFERENCES ibdn_usuarios(id)
         ) ENGINE=InnoDB;
         """
 
@@ -89,14 +115,20 @@ def create_tables():
         ) ENGINE=InnoDB;
         """
 
-        tables['empresa_ramo'] = """
-        CREATE TABLE IF NOT EXISTS empresa_ramo (
+        tables['ramo'] = """
+        CREATE TABLE IF NOT EXISTS ramo (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            id_empresa INT NOT NULL,
-            id_ramo INT NOT NULL,
-            FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE,
-            FOREIGN KEY (id_ramo) REFERENCES ramo(id) ON DELETE CASCADE,
-            UNIQUE (id_empresa, id_ramo)
+            nome VARCHAR(100) NOT NULL UNIQUE,
+            descricao TEXT
+        ) ENGINE=InnoDB;
+        """
+
+        tables['tipo_rede_social'] = """
+        CREATE TABLE IF NOT EXISTS tipo_rede_social (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            nome VARCHAR(50) NOT NULL,
+            descricao VARCHAR(255),
+            UNIQUE (nome)
         ) ENGINE=InnoDB;
         """
 
@@ -192,7 +224,7 @@ def create_tables():
         tables['log_acesso'] = """
         CREATE TABLE IF NOT EXISTS log_acesso (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            id_usuario INT,
+            id_usuario CHAR(40),
             data_hora DATETIME NOT NULL,
             operacao VARCHAR(50) NOT NULL,
             tabela_afetada VARCHAR(50),
@@ -204,21 +236,21 @@ def create_tables():
             status VARCHAR(20) NOT NULL,
             mensagem TEXT,
             tempo_execucao INT,
-            FOREIGN KEY (id_usuario) REFERENCES usuario(id) ON DELETE SET NULL
+            FOREIGN KEY (id_usuario) REFERENCES ibdn_usuarios(id) ON DELETE SET NULL
         ) ENGINE=InnoDB;
         """
 
         tables['log_auditoria'] = """
         CREATE TABLE IF NOT EXISTS log_auditoria (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            id_usuario INT,
+            id_usuario CHAR(40),
             data_hora DATETIME NOT NULL,
             tipo_evento ENUM('LOGIN', 'LOGOUT', 'TENTATIVA_LOGIN', 'ALTERACAO_PERMISSAO', 'EXCLUSAO', 'APROVACAO') NOT NULL,
             descricao TEXT NOT NULL,
             ip VARCHAR(45) NOT NULL,
             user_agent VARCHAR(255),
             status VARCHAR(20) NOT NULL,
-            FOREIGN KEY (id_usuario) REFERENCES usuario(id) ON DELETE SET NULL
+            FOREIGN KEY (id_usuario) REFERENCES ibdn_usuarios(id) ON DELETE SET NULL
         ) ENGINE=InnoDB;
         """
 
@@ -230,38 +262,46 @@ def create_tables():
             origem VARCHAR(255) NOT NULL,
             mensagem TEXT NOT NULL,
             stack_trace TEXT,
-            id_usuario INT,
+            id_usuario CHAR(40),
             ip VARCHAR(45),
-            FOREIGN KEY (id_usuario) REFERENCES usuario(id) ON DELETE SET NULL
+            FOREIGN KEY (id_usuario) REFERENCES ibdn_usuarios(id) ON DELETE SET NULL
         ) ENGINE=InnoDB;
         """
 
         table_creation_order = [
-            'usuario', 'empresa', 'ramo',
-            'empresa_ramo', 'endereco', 
+            'ibdn_permissoes',
+            'ibdn_perfis',
+            'ibdn_perfil_permissoes',
+            'ibdn_usuarios',
+            'empresa',
+            'ramo',
+            'empresa_ramo',
+            'endereco',
             'tipo_selo', 'selo', 'empresa_selo',
             'alerta_expiracao_selo', 'notificacao',
             'solicitacao_aprovacao', 'log_acesso', 'log_auditoria', 'log_erro'
         ]
 
         for table_name in table_creation_order:
-            logger.info(f"Creating table {table_name}...")
-            cursor.execute(tables[table_name])
+            if table_name in tables:
+                logger.info(f"Creating table {table_name}...")
+                cursor.execute(tables[table_name])
+                log_database_operation(
+                    connection=connection,
+                    operation_type="CREATE_TABLE",
+                    details=f"Table {table_name} created or verified",
+                    status="SUCCESS",
+                    table=table_name
+                )
+            else:
+                logger.warning(
+                    f"Definition for table {table_name} not found in tables dict. Skipping.")
 
-            log_database_operation(
-                connection=connection,
-                operation_type="CREATE_TABLE",
-                details=f"Table {table_name} created or verified",
-                status="SUCCESS",
-                table=table_name
-            )
-
-        logger.info("All tables created successfully!")
+        logger.info("All specified tables created successfully!")
         connection.commit()
 
     except Error as e:
         logger.error(f"Error creating tables: {e}")
-
         if connection and connection.is_connected():
             log_database_operation(
                 connection=connection,
@@ -269,10 +309,10 @@ def create_tables():
                 details=f"Error creating tables: {str(e)}",
                 status="ERROR"
             )
-
     finally:
-        if connection and connection.is_connected():
+        if cursor:
             cursor.close()
+        if connection and connection.is_connected():
             connection.close()
             logger.info("MySQL connection closed")
 

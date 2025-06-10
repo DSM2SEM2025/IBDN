@@ -3,17 +3,25 @@ import uvicorn
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from app.database.tables import create_database_if_not_exists, create_tables, setup_logging
-from app.routers import  (
+from app.routers import (
     routes_selo,
     routes_empresa,
     routes_empresaRamo,
     routes_ramos,
     routes_endereco,
-    routes_notificacao
-    )
+    routes_notificacao,
+    routes_empresa,
+    routes_login,
+    routes_selo,
+    ibdn_profiles_routes,
+    ibdn_permissions_routes,
+    ibdn_users_routes
+)
 
 # Configure logging
 logger = setup_logging()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting application...")
@@ -41,24 +49,35 @@ app.include_router(routes_ramos.router)
 app.include_router(routes_empresaRamo.router)
 app.include_router(routes_endereco.router)
 app.include_router(routes_notificacao.router)
+app.include_router(routes_login.router)
+app.include_router(ibdn_profiles_routes.router)
+app.include_router(ibdn_permissions_routes.router)
+app.include_router(ibdn_users_routes.router)
+
 
 @app.get("/")
 def root():
     return {"message": "Sistema de Gerenciamento de Empresas e Selos API",
             "enpoints": {
                 "empresas": "/empresas",
-                "selos": "/empresas/{empresa_id}/selos"
-        }
-    }
+                "selos": "/empresas/{empresa_id}/selos",
+                "usuarios": "/login",
+                "usuarios": "/usuarios/usuarios",
+                "perfis": "/usuarios/perfis",
+                "permissoes": "/permissoes",
+            }
+            }
+
 
 @app.get("/health")
 def health_check():
     return {"status": "healthy", "database": "initialized"}
 
+
 if __name__ == "__main__":
     uvicorn.run(
-        "main:app", 
-        host="127.0.0.1", 
+        "main:app",
+        host="127.0.0.1",
         port=8000,
-        log_config=None 
+        log_config=None
     )

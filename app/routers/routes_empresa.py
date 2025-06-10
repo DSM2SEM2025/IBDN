@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Path, Depends, Body, status
 from typing import List, Optional
 from app.models.empresas_model import (
-    Empresa, 
-    EmpresaCreate, 
-    EmpresaDeleteRequest, 
+    Empresa,
+    EmpresaCreate,
+    EmpresaDeleteRequest,
     EmpresaUpdate
 )
 from app.controllers import controller_empresa
@@ -14,17 +14,21 @@ router = APIRouter(
     tags=["Empresa"],
     responses={404: {"description": "Não encontrado"}},)
 
+
 @router.get("/empresas", response_model=List[Empresa])
 def listar_empresas():
     return get_empresas()
+
 
 @router.post("/empresas")
 def adcionar_empresa(empresa: EmpresaCreate):
     return criar_empresas(empresa)
 
+
 @router.get("/empresas/{empresa_id}", response_model=Empresa)
 def buscar_empresa_por_id(empresa_id: int = Path(..., gt=0)):
     return get_empresa_por_id(empresa_id)
+
 
 @router.delete("/empresas/{empresa_id}", status_code=status.HTTP_200_OK, summary="Excluir uma empresa")
 def excluir_empresa_endpoint(
@@ -38,7 +42,8 @@ def excluir_empresa_endpoint(
 
 @router.put("/empresas/{id_empresa}", response_model=Empresa, summary="Atualizar dados de uma empresa")
 def atualizar_empresa_endpoint(
-    id_empresa: int = Path(..., gt=0, description="ID da empresa a ser atualizada"),
+    id_empresa: int = Path(..., gt=0,
+                           description="ID da empresa a ser atualizada"),
     empresa_update_data: EmpresaUpdate = Body(...),
     current_user: TokenPayLoad = Depends(get_current_user)
 ):
