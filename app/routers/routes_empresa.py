@@ -6,7 +6,7 @@ from app.models.empresas_model import (
     EmpresaDeleteRequest,
     EmpresaUpdate
 )
-from app.controllers import controller_empresa
+from app.controllers.controller_empresa import criar_empresas, get_empresas, get_empresa_por_id, delete_empresa, update_empresa
 from app.controllers.token import get_current_user, TokenPayLoad
 
 router = APIRouter(
@@ -37,7 +37,7 @@ def excluir_empresa_endpoint(
 ):
     """Permite a exclusão (lógica) de uma empresa."""
     # Chama diretamente a nova função completa do controller
-    return controller_empresa.delete_empresa(delete_request, current_user)
+    return delete_empresa(delete_request, current_user)
 
 
 @router.put("/empresas/{id_empresa}", response_model=Empresa, summary="Atualizar dados de uma empresa")
@@ -49,7 +49,7 @@ def atualizar_empresa_endpoint(
 ):
     """Atualiza os dados de uma empresa existente."""
     # Chama diretamente a nova função completa do controller
-    return controller_empresa.update_empresa(
+    return update_empresa(
         id_empresa=id_empresa,
         empresa_data=empresa_update_data,
         current_user=current_user
