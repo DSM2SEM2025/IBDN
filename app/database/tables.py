@@ -1,24 +1,28 @@
-from app.database.config import get_db_config
-import mysql.connector
-from mysql.connector import Error
-import logging
 import datetime
 import json
+import logging
 import os
 import socket
 
+import mysql.connector
+from mysql.connector import Error
+# Supondo que esta função retorne o dict de config
+from app.database.config import get_db_config
+
 
 def setup_logging():
-    """Configure logging for the database operations"""
+    """Configura o logging para as operações do banco de dados."""
     log_dir = os.path.join(os.path.dirname(
         os.path.dirname(os.path.abspath(__file__))), 'logs')
 
-    # Create logs directory if it doesn't exist
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
-    # Setup logging with rotation
     log_file = os.path.join(log_dir, 'database.log')
+    # Remove handlers antigos para evitar duplicação de logs se a função for chamada múltiplas vezes
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -31,36 +35,57 @@ def setup_logging():
 
 
 def create_tables():
-
+    """Conecta ao banco de dados e cria todas as tabelas na ordem correta."""
     logger = setup_logging()
-    logger.info("Starting database initialization")
+    logger.info("Iniciando a inicialização do banco de dados")
+    connection = None
+    cursor = None
 
     try:
-
         config = get_db_config()
-
-        logger.info("Connecting to database")
+        logger.info("Conectando ao banco de dados...")
         connection = mysql.connector.connect(**config)
         cursor = connection.cursor()
-
-        log_database_operation(
-            connection=connection,
-            operation_type="CONNECT",
-            details="Database connection established",
-            status="SUCCESS"
-        )
+        logger.info("Conexão com o banco de dados estabelecida com sucesso.")
 
         tables = {}
 
-        tables['usuario'] = """
-        CREATE TABLE IF NOT EXISTS usuario (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            nome VARCHAR(100) NOT NULL,
-            email VARCHAR(255) NOT NULL,
+        # --- DEFINIÇÃO DE TABELAS ---
+
+        tables['ibdn_permissoes'] = """
+        CREATE TABLE IF NOT EXISTS ibdn_permissoes (
+            id CHAR(40) PRIMARY KEY,
+            nome VARCHAR(100) NOT NULL UNIQUE
+        ) ENGINE=InnoDB;
+        """
+
+        tables['ibdn_perfis'] = """
+        CREATE TABLE IF NOT EXISTS ibdn_perfis (
+            id CHAR(40) PRIMARY KEY,
+            nome VARCHAR(50) NOT NULL UNIQUE
+        ) ENGINE=InnoDB;
+        """
+
+        tables['ibdn_perfil_permissoes'] = """
+        CREATE TABLE IF NOT EXISTS ibdn_perfil_permissoes (
+            perfil_id CHAR(40),
+            permissao_id CHAR(40),
+            PRIMARY KEY (perfil_id, permissao_id),
+            FOREIGN KEY (perfil_id) REFERENCES ibdn_perfis(id) ON DELETE CASCADE,
+            FOREIGN KEY (permissao_id) REFERENCES ibdn_permissoes(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB;
+        """
+
+        tables['ibdn_usuarios'] = """
+        CREATE TABLE IF NOT EXISTS ibdn_usuarios (
+            id CHAR(40) PRIMARY KEY,
+            nome VARCHAR(255) NOT NULL,
+            email VARCHAR(255) NOT NULL UNIQUE,
             senha_hash VARCHAR(255) NOT NULL,
-            perfil VARCHAR(50) NOT NULL,
-            is_admin  BOOLEAN DEFAULT FALSE,
-            UNIQUE (email)
+            perfil_id CHAR(40) NULL,
+            ativo TINYINT(1) DEFAULT 1,
+            twofactor TINYINT(1) DEFAULT 0,
+            FOREIGN KEY (perfil_id) REFERENCES ibdn_perfis(id) ON DELETE SET NULL
         ) ENGINE=InnoDB;
         """
 
@@ -70,14 +95,14 @@ def create_tables():
             cnpj VARCHAR(18) NOT NULL UNIQUE,
             razao_social VARCHAR(255) NOT NULL,
             nome_fantasia VARCHAR(255),
-            usuario_id INT NOT NULL UNIQUE,
+            usuario_id CHAR(40) NOT NULL UNIQUE,
             telefone VARCHAR(20),
             responsavel VARCHAR(100),
             cargo_responsavel VARCHAR(100),
             site_empresa VARCHAR(255),
             data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             ativo BOOLEAN DEFAULT TRUE,
-            FOREIGN KEY (usuario_id) REFERENCES usuario(id)
+            FOREIGN KEY (usuario_id) REFERENCES ibdn_usuarios(id)
         ) ENGINE=InnoDB;
         """
 
@@ -89,14 +114,10 @@ def create_tables():
         ) ENGINE=InnoDB;
         """
 
-        tables['empresa_ramo'] = """
-        CREATE TABLE IF NOT EXISTS empresa_ramo (
+        tables['tipo_rede_social'] = """
+        CREATE TABLE IF NOT EXISTS tipo_rede_social (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            id_empresa INT NOT NULL,
-            id_ramo INT NOT NULL,
-            FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE,
-            FOREIGN KEY (id_ramo) REFERENCES ramo(id) ON DELETE CASCADE,
-            UNIQUE (id_empresa, id_ramo)
+            nome VARCHAR(50) NOT NULL UNIQUE
         ) ENGINE=InnoDB;
         """
 
@@ -114,18 +135,6 @@ def create_tables():
         ) ENGINE=InnoDB;
         """
 
-<<<<<<< HEAD
-        tables['contato'] = """
-        CREATE TABLE IF NOT EXISTS contato (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            id_empresa INT NOT NULL,
-            telefone_comercial VARCHAR(20),
-            celular VARCHAR(20),
-            whatsapp VARCHAR(20),
-            FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE
-        ) ENGINE=InnoDB;
-        """
-
         tables['tipo_selo'] = """
         CREATE TABLE IF NOT EXISTS tipo_selo (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -135,8 +144,6 @@ def create_tables():
         ) ENGINE=InnoDB;
         """
 
-=======
->>>>>>> develop
         tables['selo'] = """
         CREATE TABLE IF NOT EXISTS selo (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -188,17 +195,18 @@ def create_tables():
         ) ENGINE=InnoDB;
         """
 
+        # [CORREÇÃO] Vírgula adicionada e tipo de dado da chave estrangeira corrigido
         tables['solicitacao_aprovacao'] = """
         CREATE TABLE IF NOT EXISTS solicitacao_aprovacao (
             id INT AUTO_INCREMENT PRIMARY KEY,
             id_empresa INT NOT NULL,
-            tipo_selo VARCHAR(50) NOT NULL,
+            id_selo INT NOT NULL,
             status VARCHAR(20) NOT NULL,
             acao VARCHAR(20) NOT NULL,
             data_solicitacao DATETIME NOT NULL,
             data_resposta DATETIME,
             comentario_aprovador TEXT,
-            FOREIGN KEY (tipo_selo) REFERENCES selo(id) ON DELETE CASCADE
+            FOREIGN KEY (id_selo) REFERENCES selo(id) ON DELETE CASCADE,
             FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE
         ) ENGINE=InnoDB;
         """
@@ -206,11 +214,11 @@ def create_tables():
         tables['log_acesso'] = """
         CREATE TABLE IF NOT EXISTS log_acesso (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            id_usuario INT,
+            id_usuario CHAR(40),
             data_hora DATETIME NOT NULL,
             operacao VARCHAR(50) NOT NULL,
             tabela_afetada VARCHAR(50),
-            id_registro_afetado INT,
+            id_registro_afetado VARCHAR(255),
             dados_anteriores JSON,
             dados_novos JSON,
             ip VARCHAR(45),
@@ -218,21 +226,21 @@ def create_tables():
             status VARCHAR(20) NOT NULL,
             mensagem TEXT,
             tempo_execucao INT,
-            FOREIGN KEY (id_usuario) REFERENCES usuario(id) ON DELETE SET NULL
+            FOREIGN KEY (id_usuario) REFERENCES ibdn_usuarios(id) ON DELETE SET NULL
         ) ENGINE=InnoDB;
         """
 
         tables['log_auditoria'] = """
         CREATE TABLE IF NOT EXISTS log_auditoria (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            id_usuario INT,
+            id_usuario CHAR(40),
             data_hora DATETIME NOT NULL,
             tipo_evento ENUM('LOGIN', 'LOGOUT', 'TENTATIVA_LOGIN', 'ALTERACAO_PERMISSAO', 'EXCLUSAO', 'APROVACAO') NOT NULL,
             descricao TEXT NOT NULL,
             ip VARCHAR(45) NOT NULL,
             user_agent VARCHAR(255),
             status VARCHAR(20) NOT NULL,
-            FOREIGN KEY (id_usuario) REFERENCES usuario(id) ON DELETE SET NULL
+            FOREIGN KEY (id_usuario) REFERENCES ibdn_usuarios(id) ON DELETE SET NULL
         ) ENGINE=InnoDB;
         """
 
@@ -244,127 +252,74 @@ def create_tables():
             origem VARCHAR(255) NOT NULL,
             mensagem TEXT NOT NULL,
             stack_trace TEXT,
-            id_usuario INT,
+            id_usuario CHAR(40),
             ip VARCHAR(45),
-            FOREIGN KEY (id_usuario) REFERENCES usuario(id) ON DELETE SET NULL
+            FOREIGN KEY (id_usuario) REFERENCES ibdn_usuarios(id) ON DELETE SET NULL
         ) ENGINE=InnoDB;
         """
 
         table_creation_order = [
-            'usuario', 'empresa', 'ramo',
-<<<<<<< HEAD
-            'empresa_ramo', 'endereco', 'contato', 
-            'tipo_selo', 'selo', 'empresa_selo',
-            'alerta_expiracao_selo', 'notificacao',
-=======
-            'empresa_ramo', 'endereco',
-            'selo', 'alerta_expiracao_selo', 'notificacao',
->>>>>>> develop
-            'solicitacao_aprovacao', 'log_acesso', 'log_auditoria', 'log_erro'
+            'ibdn_permissoes', 'ibdn_perfis', 'ramo', 'tipo_rede_social', 'tipo_selo',  # Nível 0
+            'ibdn_usuarios', 'selo', 'ibdn_perfil_permissoes',  # Nível 1
+            'empresa',  # Nível 2
+            'endereco', 'empresa_selo', 'notificacao',  # Nível 3
+            'alerta_expiracao_selo', 'solicitacao_aprovacao',  # Nível 4
+            'log_acesso', 'log_auditoria', 'log_erro'  # Nível 5 (Logs)
         ]
 
+        logger.info("Iniciando a criação das tabelas na ordem correta...")
         for table_name in table_creation_order:
-            logger.info(f"Creating table {table_name}...")
-            cursor.execute(tables[table_name])
+            if table_name in tables:
+                logger.info(f"Criando/Verificando tabela: {table_name}...")
+                cursor.execute(tables[table_name])
+            else:
+                logger.warning(
+                    f"Definição para a tabela '{table_name}' não encontrada. Pulando.")
 
-            log_database_operation(
-                connection=connection,
-                operation_type="CREATE_TABLE",
-                details=f"Table {table_name} created or verified",
-                status="SUCCESS",
-                table=table_name
-            )
-
-        logger.info("All tables created successfully!")
+        logger.info("Todas as tabelas foram criadas/verificadas com sucesso!")
         connection.commit()
 
     except Error as e:
-        logger.error(f"Error creating tables: {e}")
-
-        if connection and connection.is_connected():
-            log_database_operation(
-                connection=connection,
-                operation_type="CREATE_TABLE",
-                details=f"Error creating tables: {str(e)}",
-                status="ERROR"
-            )
-
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
-            logger.info("MySQL connection closed")
-
-
-def log_database_operation(connection, operation_type, details, status, table=None):
-
-    try:
-
-        if not connection or not connection.is_connected():
-            logger = logging.getLogger('database_setup')
-            logger.info(f"{operation_type}: {details} - Status: {status}")
-            return
-
-        cursor = connection.cursor()
-
-        current_time = datetime.datetime.now()
-        ip = socket.gethostbyname(socket.gethostname())
-
-        if operation_type != "CREATE_TABLE" or (table and table != "log_acesso"):
-            query = """
-            INSERT INTO log_acesso 
-            (data_hora, operacao, tabela_afetada, ip, status, mensagem) 
-            VALUES (%s, %s, %s, %s, %s, %s)
-            """
-
-            cursor.execute(
-                query,
-                (current_time, operation_type, table, ip, status, details)
-            )
-            connection.commit()
-
-    except Error as e:
-
-        logger = logging.getLogger('database_setup')
-        logger.warning(f"Couldn't log to database: {e}")
-        logger.info(f"{operation_type}: {details} - Status: {status}")
-
+        logger.error(f"ERRO AO CRIAR TABELAS: {e}")
+        if connection:
+            connection.rollback()
     finally:
         if cursor:
             cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
+            logger.info("Conexão com MySQL foi fechada.")
 
 
 def create_database_if_not_exists():
-
+    """Cria o banco de dados se ele ainda não existir."""
     logger = setup_logging()
-    logger.info("Checking if database exists")
-
+    logger.info("Verificando se o banco de dados existe...")
+    connection = None
     try:
-
         config = get_db_config()
         db_name = config.pop('database')
 
         connection = mysql.connector.connect(**config)
         cursor = connection.cursor()
 
-        logger.info(f"Creating database {db_name} if not exists")
+        logger.info(f"Criando banco de dados '{db_name}' se não existir...")
         cursor.execute(
-            f"CREATE DATABASE IF NOT EXISTS `{db_name}`;"
-            "DEFAULT CHARACTER SET utf8mb4;"
-            "COLLATE utf8mb4_general_ci;"
-        )
-        logger.info(f"Database {db_name} created or already exists")
-
-        # Close connection
-        cursor.close()
-        connection.close()
+            f"CREATE DATABASE IF NOT EXISTS `{db_name}` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci")
+        logger.info(f"Banco de dados '{db_name}' pronto para uso.")
 
     except Error as e:
-        logger.error(f"Error creating database: {e}")
+        logger.error(f"ERRO AO CRIAR BANCO DE DADOS: {e}")
         raise
+    finally:
+        if connection and connection.is_connected():
+            connection.close()
 
 
 if __name__ == "__main__":
-    setup_logging()
-    create_database_if_not_exists()
-    create_tables()
+    try:
+        create_database_if_not_exists()
+        create_tables()
+        print("\nScript de inicialização do banco de dados concluído com sucesso.")
+    except Exception as e:
+        print(f"\nOcorreu um erro crítico durante a inicialização: {e}")
