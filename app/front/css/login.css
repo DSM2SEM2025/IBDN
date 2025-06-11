@@ -10,7 +10,7 @@ body {
    display: flex;
    justify-content: center;
    align-items: center;
-   background: url('/Time_Elias/app/static/imagem/maos-protegendo-planta.jpg');
+   background: url('../imagem/maos-protegendo-planta.jpg');
    background-size: 130% 120%;
    background-position: 0% 50%;
    background-repeat: no-repeat;

@@ -1,0 +1,1 @@
+import LoginForm from '.\app\front\js\componentes\LoginForm.js'
