@@ -7,7 +7,7 @@ class Empresa(BaseModel):
     cnpj: str
     razao_social: str
     nome_fantasia: Optional[str] = None
-    usuario_id: int
+    usuario_id: str
     telefone: Optional[str] = None
     responsavel: Optional[str] = None
     cargo_responsavel: Optional[str] = None
@@ -19,7 +19,7 @@ class EmpresaCreate(BaseModel):
     cnpj: str
     razao_social: str
     nome_fantasia: Optional[str] = None
-    usuario_id: int
+    usuario_id: str
     telefone: Optional[str] = None
     responsavel: Optional[str] = None
     cargo_responsavel: Optional[str] = None

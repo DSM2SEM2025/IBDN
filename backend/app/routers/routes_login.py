@@ -25,7 +25,7 @@ async def login_usuario(request: CredenciaisLogin):
             headers={"WWW-Authenticate": "Bearer"}
         )
 
-    return {
+  return {
         "message": "Login bem-sucedido",
-        "token": resultado
+        "access_token": resultado # Mude "token" para "access_token"
     }
