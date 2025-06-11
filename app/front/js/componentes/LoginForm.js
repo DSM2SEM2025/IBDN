@@ -16,10 +16,6 @@ export default class LoginForm {
                         <input type="password" id="loginSenha" name="senha" placeholder="DIGITE SUA SENHA" required>
                     </div>
 
-                    <div class="login-relembrar-senha">
-                        <label><input type="checkbox">Lembre-me</label>
-                        <a href="#recuperar-senha">Esqueceu a Senha?</a>
-                    </div>
 
                     <button type="submit" class="login-botao">Entrar</button>
 
