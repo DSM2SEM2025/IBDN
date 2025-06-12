@@ -3,6 +3,9 @@ import uvicorn
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from app.database.tables import create_database_if_not_exists, create_tables, setup_logging
+from app.service.cors import add_cors
+
+
 from app.routers import (
     routes_selo,
     routes_empresa,
@@ -42,6 +45,8 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+add_cors(app)
 
 app.include_router(routes_selo.router)
 app.include_router(routes_empresa.router)

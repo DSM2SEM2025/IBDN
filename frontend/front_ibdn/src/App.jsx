@@ -1,16 +1,14 @@
 import { Route, Routes } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
-import PrivateRoute from "./components/PrivateRoute"; // 1. Importar o PrivateRoute
+import PrivateRoute from "./components/PrivateRoute";
+import EmpresasPage from "./pages/EmpresasPage"; // 1. Importar a nova página
 
 function App() {
   return (
     <Routes>
-      {/* Rota pública para a página de login */}
       <Route path="/login" element={<LoginPage />} />
 
-      {/* Rota raiz protegida */}
-      {/* Envolvemos a HomePage com o PrivateRoute */}
       <Route
         path="/"
         element={
@@ -20,8 +18,8 @@ function App() {
         }
       />
 
-      {/* Exemplo de como adicionar outra rota protegida no futuro */}
-      {/* <Route
+      {/* 2. Adicionar a nova rota protegida para a página de empresas */}
+      <Route
         path="/empresas"
         element={
           <PrivateRoute>
@@ -29,7 +27,6 @@ function App() {
           </PrivateRoute>
         }
       />
-      */}
     </Routes>
   );
 }
