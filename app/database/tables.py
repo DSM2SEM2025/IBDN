@@ -316,11 +316,10 @@ def create_admin_master_user():
             repo_create_ibdn_usuario
         )
         from app.security.password import get_password_hash
-        from app.models.ibdn_user_model import IbdnUsuarioCreate  # Adicionar esta importação
+        from app.models.ibdn_user_model import IbdnUsuarioCreate  
         import os
         from uuid import uuid4
 
-        # Obter credenciais do admin das variáveis de ambiente
         admin_email = os.getenv('ADMIN_EMAIL')
         admin_password = os.getenv('ADMIN_PASSWORD')
         
@@ -383,7 +382,6 @@ def create_admin_master_user():
                 logger.info(f"Criando usuário admin_master com email {admin_email}...")
                 usuario_id = str(uuid4())
                 
-                # Criar instância do modelo IbdnUsuarioCreate
                 usuario_data = IbdnUsuarioCreate(
                     id=usuario_id,
                     nome='Admin Master',
@@ -400,7 +398,7 @@ def create_admin_master_user():
                 logger.info(f"Usuário admin_master já existe com email {admin_email}. Verificando configuração...")
                 if usuario.get('perfil_id') != perfil_id:
                     logger.warning(f"Usuário admin existe mas não tem o perfil correto. Atualizando...")
-                    # Aqui precisaríamos de uma função de atualização
+
                 
         except Exception as e:
             logger.error(f"Erro durante a criação do admin_master: {str(e)}")
