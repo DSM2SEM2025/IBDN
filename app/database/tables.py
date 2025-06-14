@@ -316,6 +316,7 @@ def create_admin_master_user():
             repo_create_ibdn_usuario
         )
         from app.security.password import get_password_hash
+        from app.models.ibdn_user_model import IbdnUsuarioCreate  # Adicionar esta importação
         import os
         from uuid import uuid4
 
@@ -324,17 +325,18 @@ def create_admin_master_user():
         admin_password = os.getenv('ADMIN_PASSWORD')
         
         if not admin_email or not admin_password:
-            logger.warning("Variáveis ADMIN_EMAIL e/ou ADMIN_PASSWORD não configuradas. Pulando criação do admin_master.")
+            error_msg = "Variáveis ADMIN_EMAIL e ADMIN_PASSWORD não configuradas. É obrigatório configurar estas variáveis."
+            logger.error(error_msg)
+            if os.getenv('ENVIRONMENT') == 'production':
+                raise ValueError(error_msg)
             return
 
-        # 1. Verificar/Criar permissão admin_master
         config = get_db_config()
-
         connection = mysql.connector.connect(**config)
-        cursor = connection.cursor()
+        cursor = connection.cursor(dictionary=True)
         
         try:
-            # Verificar se a permissão já existe
+            # 1. Verificar/Criar permissão admin_master
             cursor.execute("SELECT id FROM ibdn_permissoes WHERE nome = 'admin_master'")
             permissao = cursor.fetchone()
             
@@ -345,8 +347,10 @@ def create_admin_master_user():
                     'id': permissao_id,
                     'nome': 'admin_master'
                 })
+                logger.info(f"Permissão admin_master criada com ID: {permissao_id}")
             else:
                 permissao_id = permissao['id']
+                logger.info(f"Permissão admin_master já existe com ID: {permissao_id}")
             
             # 2. Verificar/Criar perfil admin_master
             cursor.execute("SELECT id FROM ibdn_perfis WHERE nome = 'admin_master'")
@@ -359,8 +363,10 @@ def create_admin_master_user():
                     'id': perfil_id,
                     'nome': 'admin_master'
                 }, [permissao_id])
+                logger.info(f"Perfil admin_master criado com ID: {perfil_id}")
             else:
                 perfil_id = perfil['id']
+                logger.info(f"Perfil admin_master já existe com ID: {perfil_id}")
                 # Verificar se a permissão está associada ao perfil
                 cursor.execute(
                     "SELECT 1 FROM ibdn_perfil_permissoes WHERE perfil_id = %s AND permissao_id = %s",
@@ -369,25 +375,38 @@ def create_admin_master_user():
                 if not cursor.fetchone():
                     logger.info("Associando permissão admin_master ao perfil...")
                     repo_add_permissao_to_perfil(perfil_id, permissao_id)
+                    logger.info("Permissão associada com sucesso.")
             
             # 3. Verificar/Criar usuário admin
             usuario = repo_get_ibdn_usuario_by_email(admin_email)
             if not usuario:
                 logger.info(f"Criando usuário admin_master com email {admin_email}...")
                 usuario_id = str(uuid4())
-                repo_create_ibdn_usuario({
-                    'id': usuario_id,
-                    'nome': 'Admin Master',
-                    'email': admin_email,
-                    'senha': admin_password,
-                    'perfil_id': perfil_id,
-                    'ativo': True,
-                    'twofactor': False
-                })
-                logger.info("Usuário admin_master criado com sucesso!")
-            else:
-                logger.info("Usuário admin_master já existe. Nenhuma ação necessária.")
                 
+                # Criar instância do modelo IbdnUsuarioCreate
+                usuario_data = IbdnUsuarioCreate(
+                    id=usuario_id,
+                    nome='Admin Master',
+                    email=admin_email,
+                    senha=admin_password,
+                    perfil_id=perfil_id,
+                    ativo=True,
+                    twofactor=False
+                )
+                
+                repo_create_ibdn_usuario(usuario_data)
+                logger.info(f"Usuário admin_master criado com sucesso! ID: {usuario_id}")
+            else:
+                logger.info(f"Usuário admin_master já existe com email {admin_email}. Verificando configuração...")
+                if usuario.get('perfil_id') != perfil_id:
+                    logger.warning(f"Usuário admin existe mas não tem o perfil correto. Atualizando...")
+                    # Aqui precisaríamos de uma função de atualização
+                
+        except Exception as e:
+            logger.error(f"Erro durante a criação do admin_master: {str(e)}")
+            if connection:
+                connection.rollback()
+            raise
         finally:
             if cursor:
                 cursor.close()
