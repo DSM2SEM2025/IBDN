@@ -1,12 +1,12 @@
 import mysql.connector
 from fastapi import HTTPException, status
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from app.database.config import get_db_config
 from app.models.empresas_model import (
     Empresa, EmpresaCreate, EmpresaDeleteRequest, EmpresaUpdate
 )
 from app.controllers.token import TokenPayLoad
-
+from app.repository import empresa_repository, ibdn_user_repository
 
 def get_empresas() -> List[Empresa]:
     try:
@@ -27,44 +27,49 @@ def get_empresas() -> List[Empresa]:
             status_code=500, detail=f"Erro ao acessar banco {err}")
 
 
-def criar_empresas(empresa: EmpresaCreate):
+async def criar_empresa(empresa_data: EmpresaCreate, current_user: TokenPayLoad) -> Dict[str, Any]:
+    """
+    Controller para criar uma nova empresa.
+    - Se o usuário for admin, ele pode especificar um usuario_id.
+    - Se não for admin, a empresa é associada ao seu próprio usuario_id.
+    """
+    usuario_id_associado = None
+    permissoes_do_usuario = set(current_user.permissoes)
+
+    # Verifica se o usuário é admin ou admin_master
+    if permissoes_do_usuario.intersection({"admin", "admin_master"}):
+        # Se for admin, ele PODE fornecer um usuario_id no payload
+        if empresa_data.usuario_id:
+            # Verificação extra: O usuário que ele está tentando associar existe?
+            usuario_alvo = await ibdn_user_repository.repo_get_ibdn_usuario_by_id(empresa_data.usuario_id)
+            if not usuario_alvo:
+                raise HTTPException(status_code=404, detail=f"Usuário com ID {empresa_data.usuario_id} não encontrado.")
+            usuario_id_associado = empresa_data.usuario_id
+        else:
+            # Se o admin não especificar, associa a ele mesmo
+            usuario_id_associado = current_user.usuario_id
+    else:
+        # Se NÃO for admin (ex: um usuário 'empresa' ou outro perfil)
+        # Verificação de segurança: impede que um usuário já ligado a uma empresa crie outra
+        if current_user.empresa_id:
+             raise HTTPException(status_code=403, detail="Você já está associado a uma empresa.")
+        
+        # A empresa será associada OBRIGATORIAMENTE ao seu próprio ID
+        usuario_id_associado = current_user.usuario_id
+
+    # O controller não fala com o banco, ele chama o repositório
+    # Passamos o 'usuario_id_associado' validado para o repositório
     try:
-        config = get_db_config()
-        conn = mysql.connector.connect(**config)
-        cursor = conn.cursor(dictionary=True)
-        sql = """
-            INSERT INTO empresa(
-            cnpj, razao_social, nome_fantasia,
-            usuario_id, telefone, responsavel,
-            cargo_responsavel, site_empresa, ativo
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """
+        nova_empresa_id = await empresa_repository.criar_nova_empresa(empresa_data, usuario_id_associado)
+        
+        # Opcional: Após criar a empresa, atualize o token do usuário para incluir o novo empresa_id
+        # (Isso exigiria uma lógica de atualização de usuário aqui)
 
-        values = (
-            empresa.cnpj,
-            empresa.razao_social,
-            empresa.nome_fantasia,
-            empresa.usuario_id,
-            empresa.telefone,
-            empresa.responsavel,
-            empresa.cargo_responsavel,
-            empresa.site_empresa,
-            empresa.ativo
-        )
+        return {"id": nova_empresa_id, "mensagem": "Empresa criada com sucesso"}
 
-        cursor.execute(sql, values)
-        conn.commit()
-
-        empresa_id = cursor.lastrowid
-
-        cursor.close()
-        conn.close()
-
-        return {"id": empresa_id, "mensagem": "Empresa criada com sucesso"}
-    except mysql.connector.Error as err:
-        raise HTTPException(
-            status_code=500, detail=f"Erro ao criar empresa: {err}")
+    except Exception as e:
+        # O repositório pode levantar exceções (ex: CNPJ duplicado)
+        raise HTTPException(status_code=500, detail=f"Erro ao criar empresa: {e}")
 
 
 def get_empresa_por_id(empresa_id: int) -> Empresa:
