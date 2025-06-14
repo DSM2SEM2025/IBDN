@@ -30,20 +30,15 @@ def login(email_route: str, senha: str):
         if verify_password(senha, senha_hash) is True:
 
             perfil = usuario.get('perfil_id')
+            print(type(perfil))
+            
+            usuario_id = usuario.get('usuario_id')
+            
             permissoes = repo_get_ibdn_perfil_by_id_with_permissions(perfil)
-
             # O repositório já aninhou o perfil
-
             if perfil:
                 permissoes_do_usuario = [
                     p.get("nome") for p in permissoes.get("permissoes", [])]
-
-            usuario_id = usuario.get('usuario_id')
-
-            if not perfil:
-                raise HTTPException(
-                    status_code=400, detail="Perfil não encontrado para o usuário.")
-
             jwt = gerar_token(email_route, permissoes_do_usuario, usuario_id)
 
             return jwt

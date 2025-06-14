@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from typing import Optional
 from ..controllers.controller_selo import get_selos_por_empresas, retornar_empresas_com_selos_criados, remover_selos_expirados, controller_renovar_selo, controller_solicitar_renovacao, controller_expirar_selo_automatico, controller_associa_selo_empresa
 from ..models.selo_model import AssociacaoMultiplaRequest
-
+from app.controllers.token import require_permission
 from apscheduler.schedulers.background import BackgroundScheduler
 
 scheduler = BackgroundScheduler()
@@ -14,7 +14,7 @@ router = APIRouter(
 )
 
 
-@router.get("/empresa/{empresa_id}", summary="Lista selos fornecidos por uma empresa")
+@router.get("/empresa/{empresa_id}", summary="Lista selos fornecidos por uma empresa", dependencies=[Depends(require_permission("empresa","admin"))])
 async def listar_selos_empresa(
     empresa_id: int,
     pagina: int = Query(1, gt=0, description="Número da página"),
@@ -35,7 +35,7 @@ async def listar_selos_empresa(
     )
 
 
-@router.get("/todos_selos", summary="Listar todos os selos e quais empresas adquiriram", status_code=200)
+@router.get("/todos_selos", summary="Listar todos os selos e quais empresas adquiriram", status_code=200, dependencies=[Depends(require_permission("admin"))])
 async def pegar_todos_selos_empresas_existentes():
     try:
         selos = retornar_empresas_com_selos_criados()
@@ -46,21 +46,21 @@ async def pegar_todos_selos_empresas_existentes():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/selos_expirados/remover", summary="Remover selos expirados há mais de 30 dias")
+@router.delete("/selos_expirados/remover", summary="Remover selos expirados há mais de 30 dias", dependencies=[Depends(require_permission("admin"))])
 async def rota_remover_selos_expirados():
     return remover_selos_expirados()
 
 # PUT para Admin (pendente → ativo)
 
 
-@router.put("/aprovar/{selo_id}")
+@router.put("/aprovar/{selo_id}", dependencies=[Depends(require_permission("admin"))])
 def aprovar_selo(selo_id: int):
     return controller_renovar_selo(selo_id)
 
 # PUT para Cliente (expirado → pendente)
 
 
-@router.put("/solicitar-renovacao/{selo_id}/")
+@router.put("/solicitar_renovacao/{selo_id}/", dependencies=[Depends(require_permission("empresa"))])
 def solicitar_renovacao(selo_id: int):
     return controller_solicitar_renovacao(selo_id)
 
@@ -84,7 +84,8 @@ def shutdown_scheduler():
 
 @router.post("/{id_empresa}/associar", status_code=201,
              summary="[Admin] Cria e associa um novo selo a uma empresa",
-             description="Cria uma nova instância de selo com código padronizado e a associa a uma empresa em uma única operação."
+             description="Cria uma nova instância de selo com código padronizado e a associa a uma empresa em uma única operação.",
+             dependencies=[Depends(require_permission("admin"))]
              )
 def associar_multiplos_selos_a_empresa(id_empresa: int, data: AssociacaoMultiplaRequest):
     return controller_associa_selo_empresa(id_empresa, data)

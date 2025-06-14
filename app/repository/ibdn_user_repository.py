@@ -38,6 +38,9 @@ def repo_create_ibdn_usuario(usuario_data: IbdnUsuarioCreate) -> Optional[Dict[s
     cursor = conn.cursor(dictionary=True)
     hashed_password = get_password_hash(usuario_data.senha)
     try:
+        if usuario_data.perfil_id is None:
+            print(usuario_data.perfil_id)
+            usuario_data.perfil_id = "empresa"
         query = """
             INSERT INTO ibdn_usuarios (id, nome, email, senha_hash, perfil_id, ativo, twofactor)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
