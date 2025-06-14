@@ -1,7 +1,7 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import useAuthStore from "../store/authStore";
-import Layout from "../pages/Layout";
+import Layout from "./Layout";
 
 // Este componente verifica se o utilizador está autenticado.
 // Se estiver, renderiza a página solicitada dentro do Layout.

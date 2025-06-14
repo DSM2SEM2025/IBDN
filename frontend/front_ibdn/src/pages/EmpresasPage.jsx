@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import * as empresaService from "../services/empresaService";
+import * as seloService from "../services/seloService"; // Importar serviço de selo
 import EmpresasTable from "../components/EmpresasTable";
 import Modal from "../components/Modal";
 import EmpresaForm from "../components/EmpresaForm";
+import AssociarSeloForm from "../components/AssociarSeloForm"; // Importar novo formulário
 
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center p-10">
@@ -15,8 +17,11 @@ function EmpresasPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingEmpresa, setEditingEmpresa] = useState(null);
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    mode: null,
+    data: null,
+  });
   const [isSaving, setIsSaving] = useState(false);
 
   const fetchEmpresas = async () => {
@@ -27,7 +32,7 @@ function EmpresasPage() {
       setError(null);
     } catch (err) {
       setError(
-        `Falha ao carregar os dados das empresas. Tente novamente mais tarde. Erro: ${err.message}`
+        "Falha ao carregar os dados das empresas. Tente novamente mais tarde."
       );
     } finally {
       setLoading(false);
@@ -38,38 +43,59 @@ function EmpresasPage() {
     fetchEmpresas();
   }, []);
 
-  const handleOpenModalForAdd = () => {
-    setEditingEmpresa(null);
-    setIsModalOpen(true);
-  };
-
-  const handleOpenModalForEdit = (empresaId) => {
-    const empresaToEdit = empresas.find((e) => e.id === empresaId);
-    setEditingEmpresa(empresaToEdit);
-    setIsModalOpen(true);
-  };
-
   const handleCloseModal = () => {
     if (isSaving) return;
-    setIsModalOpen(false);
-    setEditingEmpresa(null);
+    setModalState({ isOpen: false, mode: null, data: null });
   };
 
-  const handleFormSubmit = async (formData) => {
+  // --- Funções para gerir Modais ---
+  const handleOpenAddEmpresaModal = () =>
+    setModalState({ isOpen: true, mode: "ADD_EDIT_EMPRESA", data: null });
+  const handleOpenEditEmpresaModal = (empresaId) => {
+    const empresaToEdit = empresas.find((e) => e.id === empresaId);
+    setModalState({
+      isOpen: true,
+      mode: "ADD_EDIT_EMPRESA",
+      data: empresaToEdit,
+    });
+  };
+  const handleOpenAssociateSeloModal = (empresaId) => {
+    setModalState({
+      isOpen: true,
+      mode: "ASSOCIATE_SELO",
+      data: { empresaId },
+    });
+  };
+
+  // --- Funções de Submissão ---
+  const handleEmpresaFormSubmit = async (formData) => {
     setIsSaving(true);
     try {
-      if (editingEmpresa) {
-        await empresaService.atualizarEmpresa(editingEmpresa.id, formData);
+      if (modalState.data?.id) {
+        await empresaService.atualizarEmpresa(modalState.data.id, formData);
       } else {
         await empresaService.adicionarEmpresa(formData);
       }
       handleCloseModal();
-      await fetchEmpresas(); // Recarrega a lista para mostrar as alterações
-    } catch (submitError) {
-      console.error("Erro ao salvar empresa:", submitError);
-      alert(
-        "Não foi possível salvar a empresa. Verifique o console para mais detalhes."
+      await fetchEmpresas();
+    } catch (err) {
+      alert("Não foi possível salvar a empresa.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSeloFormSubmit = async (formData) => {
+    setIsSaving(true);
+    try {
+      await seloService.associarSeloAEmpresa(
+        modalState.data.empresaId,
+        formData
       );
+      alert("Selo associado com sucesso!");
+      handleCloseModal();
+    } catch (err) {
+      alert("Não foi possível associar o selo.");
     } finally {
       setIsSaving(false);
     }
@@ -79,9 +105,8 @@ function EmpresasPage() {
     if (window.confirm("Tem a certeza que deseja excluir esta empresa?")) {
       try {
         await empresaService.excluirEmpresa(id);
-        await fetchEmpresas(); // Recarrega a lista
-      } catch (deleteError) {
-        console.error("Erro ao excluir empresa:", deleteError);
+        await fetchEmpresas();
+      } catch (err) {
         alert("Não foi possível excluir a empresa.");
       }
     }
@@ -98,10 +123,24 @@ function EmpresasPage() {
     return (
       <EmpresasTable
         empresas={empresas}
-        onEdit={handleOpenModalForEdit}
+        onEdit={handleOpenEditEmpresaModal}
         onDelete={handleDelete}
+        onAssociateSelo={handleOpenAssociateSeloModal}
       />
     );
+  };
+
+  const getModalTitle = () => {
+    switch (modalState.mode) {
+      case "ADD_EDIT_EMPRESA":
+        return modalState.data?.id
+          ? "Editar Empresa"
+          : "Adicionar Nova Empresa";
+      case "ASSOCIATE_SELO":
+        return "Associar Novo Selo";
+      default:
+        return "";
+    }
   };
 
   return (
@@ -109,7 +148,7 @@ function EmpresasPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Gerir Empresas</h1>
         <button
-          onClick={handleOpenModalForAdd}
+          onClick={handleOpenAddEmpresaModal}
           className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
           Adicionar Empresa
@@ -119,16 +158,25 @@ function EmpresasPage() {
       {renderContent()}
 
       <Modal
-        isOpen={isModalOpen}
+        isOpen={modalState.isOpen}
         onClose={handleCloseModal}
-        title={editingEmpresa ? "Editar Empresa" : "Adicionar Nova Empresa"}
+        title={getModalTitle()}
       >
-        <EmpresaForm
-          initialData={editingEmpresa || {}}
-          onSubmit={handleFormSubmit}
-          onCancel={handleCloseModal}
-          isSaving={isSaving}
-        />
+        {modalState.mode === "ADD_EDIT_EMPRESA" && (
+          <EmpresaForm
+            initialData={modalState.data || {}}
+            onSubmit={handleEmpresaFormSubmit}
+            onCancel={handleCloseModal}
+            isSaving={isSaving}
+          />
+        )}
+        {modalState.mode === "ASSOCIATE_SELO" && (
+          <AssociarSeloForm
+            onSubmit={handleSeloFormSubmit}
+            onCancel={handleCloseModal}
+            isSaving={isSaving}
+          />
+        )}
       </Modal>
     </div>
   );

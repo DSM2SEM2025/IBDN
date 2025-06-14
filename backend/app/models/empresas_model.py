@@ -39,7 +39,7 @@ class EmpresaCreate(BaseModel):
         return x
 
 class EmpresaDeleteRequest(BaseModel):
-    empresa_id: Optional[int] = None
+    empresa_id: Optional[str] = None
 
 
 class EmpresaUpdate(BaseModel):

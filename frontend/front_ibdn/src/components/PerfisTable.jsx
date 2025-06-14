@@ -1,5 +1,4 @@
 import React from "react";
-import { Link } from "react-router-dom"; // 1. Importar o Link
 
 // --- Ícones SVG ---
 const EditIcon = (props) => (
@@ -18,6 +17,7 @@ const EditIcon = (props) => (
     />
   </svg>
 );
+
 const DeleteIcon = (props) => (
   <svg
     {...props}
@@ -34,7 +34,8 @@ const DeleteIcon = (props) => (
     />
   </svg>
 );
-const SealIcon = (props) => (
+
+const ManageIcon = (props) => (
   <svg
     {...props}
     fill="none"
@@ -46,28 +47,28 @@ const SealIcon = (props) => (
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth="2"
-      d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+      d="M12 6V4m0 16v-2m0-8v-2m0 4h.01M6 12H4m16 0h-2m-8-2h.01M12 18h.01M8 8h.01M16 16h.01M16 8h.01M8 16h.01"
     ></path>
   </svg>
 );
 
 /**
- * Componente para exibir uma tabela de empresas.
+ * Componente para exibir uma tabela de perfis de utilizador.
  * @param {Object} props
- * @param {Array} props.empresas - A lista de empresas a ser exibida.
- * @param {Function} props.onEdit - Função para editar a empresa.
- * @param {Function} props.onDelete - Função para excluir a empresa.
- * @param {Function} props.onAssociateSelo - Função para associar um selo à empresa.
+ * @param {Array} props.perfis - A lista de perfis a ser exibida.
+ * @param {Function} props.onEdit - Função para editar o nome do perfil.
+ * @param {Function} props.onDelete - Função para excluir o perfil.
+ * @param {Function} props.onManagePermissions - Função para gerir as permissões do perfil.
  */
-function EmpresasTable({ empresas, onEdit, onDelete, onAssociateSelo }) {
-  if (!empresas || empresas.length === 0) {
+function PerfisTable({ perfis, onEdit, onDelete, onManagePermissions }) {
+  if (!perfis || perfis.length === 0) {
     return (
       <div className="text-center p-10 bg-white rounded-lg shadow">
         <h3 className="text-lg font-semibold text-gray-700">
-          Nenhuma empresa encontrada
+          Nenhum perfil encontrado
         </h3>
         <p className="mt-1 text-sm text-gray-500">
-          Pode começar por adicionar uma nova empresa.
+          Pode começar por adicionar um novo perfil.
         </p>
       </div>
     );
@@ -82,19 +83,13 @@ function EmpresasTable({ empresas, onEdit, onDelete, onAssociateSelo }) {
               scope="col"
               className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
-              Razão Social
+              Nome do Perfil
             </th>
             <th
               scope="col"
               className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
-              CNPJ
-            </th>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Status
+              Permissões
             </th>
             <th scope="col" className="relative px-6 py-3">
               <span className="sr-only">Ações</span>
@@ -102,54 +97,36 @@ function EmpresasTable({ empresas, onEdit, onDelete, onAssociateSelo }) {
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {empresas.map((empresa) => (
-            <tr key={empresa.id} className="hover:bg-gray-50 transition-colors">
+          {perfis.map((perfil) => (
+            <tr key={perfil.id} className="hover:bg-gray-50 transition-colors">
               <td className="px-6 py-4 whitespace-nowrap">
-                {/* 2. Transformar o nome num Link */}
-                <Link
-                  to={`/empresas/${empresa.id}`}
-                  className="hover:underline"
-                >
-                  <div className="text-sm font-medium text-indigo-600 hover:text-indigo-800">
-                    {empresa.razao_social}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {empresa.nome_fantasia || "-"}
-                  </div>
-                </Link>
+                <div className="text-sm font-medium text-gray-900">
+                  {perfil.nome}
+                </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-900">{empresa.cnpj}</div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                {empresa.ativo ? (
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                    Ativo
-                  </span>
-                ) : (
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                    Inativo
-                  </span>
-                )}
+                <div className="text-sm text-gray-500">
+                  {perfil.permissoes?.length || 0}
+                </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div className="flex items-center justify-end space-x-4">
                   <button
-                    onClick={() => onAssociateSelo(empresa.id)}
-                    className="text-blue-600 hover:text-blue-900"
-                    title="Associar Selo"
+                    onClick={() => onManagePermissions(perfil)}
+                    className="text-gray-500 hover:text-indigo-600"
+                    title="Gerir Permissões"
                   >
-                    <SealIcon className="w-5 h-5" />
+                    <ManageIcon className="w-5 h-5" />
                   </button>
                   <button
-                    onClick={() => onEdit(empresa.id)}
+                    onClick={() => onEdit(perfil)}
                     className="text-indigo-600 hover:text-indigo-900"
                     title="Editar"
                   >
                     <EditIcon className="w-5 h-5" />
                   </button>
                   <button
-                    onClick={() => onDelete(empresa.id)}
+                    onClick={() => onDelete(perfil.id)}
                     className="text-red-600 hover:text-red-900"
                     title="Excluir"
                   >
@@ -165,4 +142,4 @@ function EmpresasTable({ empresas, onEdit, onDelete, onAssociateSelo }) {
   );
 }
 
-export default EmpresasTable;
+export default PerfisTable;

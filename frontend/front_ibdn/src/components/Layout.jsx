@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import useAuthStore from "../store/authStore";
 
-// --- Ícones em SVG para um design mais limpo ---
+// --- Ícones em SVG ---
 const MenuIcon = (props) => (
   <svg {...props} stroke="currentColor" fill="none" viewBox="0 0 24 24">
     <path
@@ -56,7 +56,27 @@ function Layout({ children }) {
           <span className="mr-3">🏢</span>
           Empresas
         </NavLink>
-        {/* Adicione outros links aqui */}
+        <NavLink to="/ramos" className={linkClass}>
+          <span className="mr-3">🌿</span>
+          Ramos
+        </NavLink>
+        <NavLink to="/permissoes" className={linkClass}>
+          <span className="mr-3">🛡️</span>
+          Permissões
+        </NavLink>
+        <NavLink to="/perfis" className={linkClass}>
+          <span className="mr-3">👥</span>
+          Perfis
+        </NavLink>
+        <NavLink to="/utilizadores" className={linkClass}>
+          <span className="mr-3">👤</span>
+          Utilizadores
+        </NavLink>
+        {/* Adicionado o novo link para Selos */}
+        <NavLink to="/selos" className={linkClass}>
+          <span className="mr-3">🌟</span>
+          Selos
+        </NavLink>
       </nav>
       <div className="p-4 border-t border-gray-700">
         <button
@@ -108,7 +128,9 @@ function Layout({ children }) {
           <h1 className="text-xl font-semibold text-gray-800">Dashboard</h1>
 
           <div className="flex items-center">
-            <p className="text-gray-600 hidden sm:block">Bem-vindo, Usuário!</p>
+            <p className="text-gray-600 hidden sm:block">
+              Bem-vindo, Utilizador!
+            </p>
           </div>
         </header>
 
