@@ -2,7 +2,7 @@ import logging
 import uvicorn
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from app.database.tables import create_database_if_not_exists, create_tables, setup_logging
+from app.database.tables import create_database_if_not_exists, create_tables, setup_logging, create_admin_master_user
 from app.routers import (
     routes_selo,
     routes_empresa,
@@ -28,6 +28,7 @@ async def lifespan(app: FastAPI):
     try:
         create_database_if_not_exists()
         create_tables()
+        create_admin_master_user()
         logger.info("Database initialized successfully")
         yield
     except Exception as e:

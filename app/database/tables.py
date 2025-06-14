@@ -299,6 +299,103 @@ def create_database_if_not_exists():
         if connection and connection.is_connected():
             connection.close()
 
+def create_admin_master_user():
+    """Cria o usuário administrador mestre padrão se não existir"""
+    logger = setup_logging()
+    logger.info("Verificando/Configurando usuário admin_master...")
+    
+    try:
+        from app.repository.ibdn_permissions_repository import repo_create_ibdn_permissao
+        from app.repository.ibdn_profiles_repository import (
+            repo_create_ibdn_perfil,
+            repo_get_ibdn_perfil_by_id_with_permissions,
+            repo_add_permissao_to_perfil
+        )
+        from app.repository.ibdn_user_repository import (
+            repo_get_ibdn_usuario_by_email,
+            repo_create_ibdn_usuario
+        )
+        from app.security.password import get_password_hash
+        import os
+        from uuid import uuid4
+
+        # Obter credenciais do admin das variáveis de ambiente
+        admin_email = os.getenv('ADMIN_EMAIL')
+        admin_password = os.getenv('ADMIN_PASSWORD')
+        
+        if not admin_email or not admin_password:
+            logger.warning("Variáveis ADMIN_EMAIL e/ou ADMIN_PASSWORD não configuradas. Pulando criação do admin_master.")
+            return
+
+        # 1. Verificar/Criar permissão admin_master
+        conn = get_db_config()
+        cursor = conn.cursor(dictionary=True)
+        
+        try:
+            # Verificar se a permissão já existe
+            cursor.execute("SELECT id FROM ibdn_permissoes WHERE nome = 'admin_master'")
+            permissao = cursor.fetchone()
+            
+            if not permissao:
+                logger.info("Criando permissão admin_master...")
+                permissao_id = str(uuid4())
+                repo_create_ibdn_permissao({
+                    'id': permissao_id,
+                    'nome': 'admin_master'
+                })
+            else:
+                permissao_id = permissao['id']
+            
+            # 2. Verificar/Criar perfil admin_master
+            cursor.execute("SELECT id FROM ibdn_perfis WHERE nome = 'admin_master'")
+            perfil = cursor.fetchone()
+            
+            if not perfil:
+                logger.info("Criando perfil admin_master...")
+                perfil_id = str(uuid4())
+                repo_create_ibdn_perfil({
+                    'id': perfil_id,
+                    'nome': 'admin_master'
+                }, [permissao_id])
+            else:
+                perfil_id = perfil['id']
+                # Verificar se a permissão está associada ao perfil
+                cursor.execute(
+                    "SELECT 1 FROM ibdn_perfil_permissoes WHERE perfil_id = %s AND permissao_id = %s",
+                    (perfil_id, permissao_id)
+                )
+                if not cursor.fetchone():
+                    logger.info("Associando permissão admin_master ao perfil...")
+                    repo_add_permissao_to_perfil(perfil_id, permissao_id)
+            
+            # 3. Verificar/Criar usuário admin
+            usuario = repo_get_ibdn_usuario_by_email(admin_email)
+            if not usuario:
+                logger.info(f"Criando usuário admin_master com email {admin_email}...")
+                usuario_id = str(uuid4())
+                repo_create_ibdn_usuario({
+                    'id': usuario_id,
+                    'nome': 'Admin Master',
+                    'email': admin_email,
+                    'senha': admin_password,
+                    'perfil_id': perfil_id,
+                    'ativo': True,
+                    'twofactor': False
+                })
+                logger.info("Usuário admin_master criado com sucesso!")
+            else:
+                logger.info("Usuário admin_master já existe. Nenhuma ação necessária.")
+                
+        finally:
+            if cursor:
+                cursor.close()
+            if conn and conn.is_connected():
+                conn.close()
+                
+    except Exception as e:
+        logger.error(f"Erro ao configurar admin_master: {str(e)}")
+        raise
+
 
 if __name__ == "__main__":
     try:
