@@ -7,7 +7,7 @@ class EmpresaRamoCreate(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "ids_ramos": [1, 3, 5]
+                "ids_ramo": [1, 3, 5]
             }
         }
 

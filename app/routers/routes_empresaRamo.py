@@ -26,3 +26,18 @@ def get_ramos_por_empresa(id_empresa:int =Path(...,gt=0)):
 @router.delete("/{id_empresa}/ramos/{id_ramo}/",status_code=204, dependencies=[Depends(require_permission("empresa", "admin"))])
 def delete_associacao(id_empresa: int = Path(..., gt=0),id_ramo:int = Path(...,gt=0)):
     return controller_remover_associacao(id_empresa, id_ramo)
+
+# Rota para associar ramos a uma empresa
+@router.post("/{id_empresa}/ramos/", response_model=List[EmpresaRamoResponse], status_code=201)
+def atrelar_ramos(id_empresa:int = Path(...,gt=0), dados: EmpresaRamoCreate = None):
+    return controller_associar_ramos(id_empresa, dados)
+
+# Rota para listar os ramos de uma empresa
+@router.get("/{id_empresa}/ramos/", response_model=List[RamoBase])
+def get_ramos_por_empresa(id_empresa:int = Path(...,gt=0)):
+    return controller_listar_ramos_por_empresas(id_empresa)
+
+# Rota para remover uma associação
+@router.delete("/{id_empresa}/ramos/{id_ramo}/", status_code=204)
+def delete_associacao(id_empresa: int = Path(..., gt=0), id_ramo:int = Path(...,gt=0)):
+    return controller_remover_associacao(id_empresa, id_ramo)

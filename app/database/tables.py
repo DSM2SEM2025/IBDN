@@ -113,6 +113,25 @@ def create_tables():
             descricao TEXT
         ) ENGINE=InnoDB;
         """
+        tables['empresa_ramo'] = """
+        CREATE TABLE IF NOT EXISTS empresa_ramo (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            id_empresa INT NOT NULL,
+            id_ramo INT NOT NULL,
+            UNIQUE KEY uk_empresa_ramo (id_empresa, id_ramo),
+            FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE,
+            FOREIGN KEY (id_ramo) REFERENCES ramo(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB;
+        """
+        table_creation_order = [
+    'ibdn_permissoes', 'ibdn_perfis', 'ramo', 'tipo_rede_social', 'tipo_selo',
+    'ibdn_usuarios', 'selo', 'ibdn_perfil_permissoes',
+    'empresa',
+    'endereco', 'empresa_selo', 'notificacao', 'empresa_ramo',
+    'alerta_expiracao_selo',
+    'log_acesso', 'log_auditoria', 'log_erro'
+    ]
+
 
         tables['tipo_rede_social'] = """
         CREATE TABLE IF NOT EXISTS tipo_rede_social (
