@@ -328,8 +328,10 @@ def create_admin_master_user():
             return
 
         # 1. Verificar/Criar permissão admin_master
-        conn = get_db_config()
-        cursor = conn.cursor(dictionary=True)
+        config = get_db_config()
+
+        connection = mysql.connector.connect(**config)
+        cursor = connection.cursor()
         
         try:
             # Verificar se a permissão já existe
@@ -389,8 +391,8 @@ def create_admin_master_user():
         finally:
             if cursor:
                 cursor.close()
-            if conn and conn.is_connected():
-                conn.close()
+            if connection and connection.is_connected():
+                connection.close()
                 
     except Exception as e:
         logger.error(f"Erro ao configurar admin_master: {str(e)}")
