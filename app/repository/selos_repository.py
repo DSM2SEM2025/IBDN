@@ -199,3 +199,22 @@ def repo_get_empresa_selo_por_id(empresa_selo_id: int) -> Optional[dict]:
     finally:
         cursor.close()
         conn.close()
+
+def repo_revogar_selo_empresa(empresa_selo_id: int) -> bool:
+    """Exclui (revoga) uma instância de selo concedido do banco de dados."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        query = "DELETE FROM empresa_selo WHERE id = %s"
+        cursor.execute(query, (empresa_selo_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+    except Error as e:
+        conn.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erro de banco de dados ao revogar o selo: {e}"
+        )
+    finally:
+        cursor.close()
+        conn.close()

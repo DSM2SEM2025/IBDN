@@ -70,3 +70,11 @@ def solicitar_renovacao(
     status para 'Em Renovação' para que um administrador possa avaliá-lo.
     """
     return ctrl.solicitar_renovacao_de_selo(empresa_selo_id, current_user)
+
+@router.delete("/empresa-selos/{empresa_selo_id}", status_code=status.HTTP_200_OK, summary="Revoga um selo concedido", dependencies=[Depends(require_permission("admin", "admin_master"))])
+def revogar_selo(empresa_selo_id: int = Path(..., description="O ID da instância do selo a ser revogado")):
+    """
+    Exclui permanentemente a instância de um selo que foi concedido a uma empresa.
+    Esta ação é restrita a administradores e não pode ser desfeita.
+    """
+    return ctrl.revogar_selo_da_empresa(empresa_selo_id)

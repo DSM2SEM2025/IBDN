@@ -90,3 +90,28 @@ def solicitar_renovacao_de_selo(empresa_selo_id: int, current_user: TokenPayLoad
             status_code=404, detail="Não foi possível solicitar a renovação. Selo não encontrado ou status inválido.")
             
     return {"message": "Solicitação de renovação enviada com sucesso."}
+
+def revogar_selo_da_empresa(empresa_selo_id: int) -> dict:
+    """
+    Revoga (exclui) um selo que foi concedido a uma empresa.
+    Apenas administradores podem realizar esta ação.
+    """
+    # Verifica se a instância do selo existe antes de tentar deletar
+    selo_existente = repo.repo_get_empresa_selo_por_id(empresa_selo_id)
+    if not selo_existente:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Selo concedido não encontrado para revogação."
+        )
+
+    # Se existir, prossegue com a exclusão
+    sucesso = repo.repo_revogar_selo_empresa(empresa_selo_id)
+    if not sucesso:
+        # Medida de segurança caso a exclusão falhe por um motivo inesperado
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ocorreu um erro ao tentar revogar o selo."
+        )
+
+    return {"message": "Selo revogado com sucesso."}
+
