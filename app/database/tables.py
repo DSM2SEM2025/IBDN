@@ -126,18 +126,25 @@ def create_tables():
                 FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE
             ) ENGINE=InnoDB;
         """
-        # CORREÇÃO: Tabela ajustada para corresponder ao DER
+        
+        # ATUALIZAÇÃO: Tabela ajustada para corresponder ao último DER.
         tables['empresa_selo'] = """
             CREATE TABLE IF NOT EXISTS empresa_selo (
+                id INT AUTO_INCREMENT PRIMARY KEY,
                 id_empresa INT NOT NULL,
                 id_selo INT NOT NULL,
+                status VARCHAR(20),
                 data_emissao DATE,
-                data_vencimento DATE,
-                PRIMARY KEY (id_empresa, id_selo),
+                data_expiracao DATE,
+                codigo_selo VARCHAR(50) UNIQUE,
+                documentacao TEXT,
+                alerta_enviado BOOLEAN,
+                dias_alerta_previo INT,
                 FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE,
                 FOREIGN KEY (id_selo) REFERENCES selo(id) ON DELETE CASCADE
             ) ENGINE=InnoDB;
         """
+
         tables['notificacao'] = """
             CREATE TABLE IF NOT EXISTS notificacao (
                 id INT AUTO_INCREMENT PRIMARY KEY,
