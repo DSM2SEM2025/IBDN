@@ -18,10 +18,6 @@ def get_db_connection():
             detail=f"Erro ao conectar ao banco de dados: {str(e)}"
         )
 
-# REMOVA a função antiga 'select_selo_empresa' completamente.
-
-# NOVA FUNÇÃO 1: Para buscar um selo específico.
-
 
 def get_selo_by_id(selo_id: int):
     """Busca os dados de um único selo pelo seu ID, sem join com empresa."""
@@ -41,8 +37,6 @@ def get_selo_by_id(selo_id: int):
         if connection and connection.is_connected():
             connection.close()
 
-# NOVA FUNÇÃO 2: Para listar todas as associações.
-
 
 def get_all_associacoes():
     """Busca todas as associações existentes entre empresas e selos."""
@@ -50,8 +44,8 @@ def get_all_associacoes():
     try:
         cursor = connection.cursor(dictionary=True)
         query = """
-            SELECT 
-                s.id, s.codigo_selo, s.status,
+            SELECT
+                s.id, s.codigo_selo, s.status, s.data_emissao, s.data_expiracao,
                 e.id AS id_empresa, e.razao_social
             FROM empresa_selo es
             JOIN selo s ON es.id_selo = s.id
@@ -90,7 +84,7 @@ async def get_selos_por_empresas(
             )
         # Query base
         query = """
-                SELECT 
+                SELECT
                     s.id,
                     s.codigo_selo,
                     s.data_emissao,
@@ -182,49 +176,73 @@ def update_renovar_selo(selo_id: int):
     config = get_db_config()
     conn = mysql.connector.connect(**config)
     cursor = conn.cursor(dictionary=True)
-    # Verifica o status atual
-    cursor.execute("SELECT status FROM selo WHERE id = %s", (selo_id,))
-    result = cursor.fetchone()
+    try:
+        # Verifica o status atual
+        cursor.execute(
+            "SELECT status FROM selo WHERE id = %s FOR UPDATE", (selo_id,))
+        result = cursor.fetchone()
 
-    if not result:
-        raise HTTPException(status_code=404, detail="Selo não encontrado")
-    if result["status"].lower() != "pendente":
-        raise HTTPException(status_code=400, detail="Selo não está pendente")
+        if not result:
+            raise HTTPException(status_code=404, detail="Selo não encontrado")
+        if result["status"].lower() != "pendente":
+            raise HTTPException(
+                status_code=400, detail="Apenas selos com status 'pendente' podem ser renovados/aprovados.")
 
-    # Atualiza status e datas
-    hoje = datetime.now().date()
-    nova_expiracao = hoje + timedelta(days=30)
+        # Atualiza status e datas
+        hoje = datetime.now().date()
+        # Padrão de 1 ano de validade
+        nova_expiracao = hoje + timedelta(days=365)
 
-    cursor.execute(
-        """
-        UPDATE selo 
-        SET status = 'ativo', data_emissao = %s, data_expiracao = %s
-        WHERE id = %s
-        """,
-        (hoje, nova_expiracao, selo_id)
-    )
-    conn.commit()
-    return {"message": "Selo aprovado e ativado com sucesso!"}
+        cursor.execute(
+            """
+            UPDATE selo
+            SET status = 'ativo', data_emissao = %s, data_expiracao = %s
+            WHERE id = %s
+            """,
+            (hoje, nova_expiracao, selo_id)
+        )
+        conn.commit()
+        return {"message": "Selo aprovado e ativado com sucesso!"}
+    except Error as e:
+        conn.rollback()
+        raise HTTPException(
+            status_code=500, detail=f"Erro de banco de dados ao renovar selo: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
 
 
 def update_solicitar_renovacao(selo_id: int):
     config = get_db_config()
     connection = mysql.connector.connect(**config)
-
     cursor = connection.cursor(dictionary=True)
-    cursor.execute("SELECT status FROM selo WHERE id = %s", (selo_id,))
-    result = cursor.fetchone()
-    if not result:
-        raise HTTPException(status_code=404, detail="Selo não encontrado")
-    if result["status"].lower() != "expirado":
-        raise HTTPException(status_code=400, detail="Selo não está expirado")
+    try:
+        cursor.execute(
+            "SELECT status FROM selo WHERE id = %s FOR UPDATE", (selo_id,))
+        result = cursor.fetchone()
+        if not result:
+            raise HTTPException(status_code=404, detail="Selo não encontrado")
+        if result["status"].lower() != "expirado":
+            raise HTTPException(
+                status_code=400, detail="Apenas selos expirados podem solicitar renovação.")
 
-    cursor.execute(
-        "UPDATE selo SET status = 'pendente' WHERE id = %s",
-        (selo_id,)
-    )
-    connection.commit()
-    return {"message": "Renovação solicitada (pendente de aprovação)"}
+        cursor.execute(
+            "UPDATE selo SET status = 'pendente' WHERE id = %s",
+            (selo_id,)
+        )
+        connection.commit()
+        return {"message": "Renovação solicitada (pendente de aprovação)"}
+    except Error as e:
+        connection.rollback()
+        raise HTTPException(
+            status_code=500, detail=f"Erro de banco de dados ao solicitar renovação: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
 
 
 def update_expirar_selo_automatico():
@@ -237,68 +255,78 @@ def update_expirar_selo_automatico():
 
         cursor.execute(
             """
-        UPDATE selo 
-        SET status = 'expirado'
-        WHERE status = 'ativo' AND data_expiracao < %s
-        """,
+            UPDATE selo
+            SET status = 'expirado'
+            WHERE status = 'ativo' AND data_expiracao < %s
+            """,
             (hoje,)
         )
         connection.commit()
-        print(f"Selos expirados: {cursor.rowcount}")
+        print(f"Selos expirados automaticamente: {cursor.rowcount}")
+        return cursor.rowcount
     except Exception as e:
-        print({"error": f"erro realizar a expiração: {e}"})
+        print({"error": f"Erro ao realizar a expiração automática: {e}"})
+        return 0
     finally:
         if cursor:
             cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
 
 
 def update_rejeitar_renovacao(selo_id: int, motivo: str = ""):
     """
-    Rejeita a renovação de um selo, alterando o status de pendente para expirado.
+    Rejeita a renovação de um selo, alterando o status de pendente para expirado
+    e enviando uma notificação para a empresa.
     """
     config = get_db_config()
     connection = mysql.connector.connect(**config)
-
+    cursor = connection.cursor(dictionary=True)
     try:
-        cursor = connection.cursor(dictionary=True)
-        cursor.execute("SELECT status FROM selo WHERE id = %s", (selo_id,))
+        connection.start_transaction()
+
+        cursor.execute(
+            "SELECT status FROM selo WHERE id = %s FOR UPDATE", (selo_id,))
         result = cursor.fetchone()
 
         if not result:
             raise HTTPException(status_code=404, detail="Selo não encontrado")
         if result["status"].lower() != "pendente":
             raise HTTPException(
-                status_code=400, detail="Selo não está pendente")
+                status_code=400, detail="Apenas selos com status 'pendente' podem ter a renovação rejeitada")
 
         cursor.execute(
             "UPDATE selo SET status = 'expirado' WHERE id = %s",
             (selo_id,)
         )
-        if motivo:
-            empresa_query = "SELECT id_empresa FROM selo WHERE id = %s"
-            cursor.execute(empresa_query, (selo_id,))
-            empresa_result = cursor.fetchone()
 
-            if empresa_result:
-                empresa_id = empresa_result["id_empresa"]
-                data_envio = datetime.now()
-                mensagem = f"Renovação de selo rejeitada. Motivo: {motivo}"
+        # CORREÇÃO: Busca o id_empresa na tabela de associação
+        empresa_query = "SELECT id_empresa FROM empresa_selo WHERE id_selo = %s"
+        cursor.execute(empresa_query, (selo_id,))
+        empresa_result = cursor.fetchone()
 
-                notificacao_query = """
-                INSERT INTO notificacao (id_empresa, mensagem, data_envio, tipo, lida)
-                VALUES (%s, %s, %s, %s, %s)
-                """
-                cursor.execute(
-                    notificacao_query,
-                    (empresa_id, mensagem, data_envio, "rejeicao_renovacao", False)
-                )
+        if empresa_result and motivo:
+            empresa_id = empresa_result["id_empresa"]
+            data_envio = datetime.now()
+            mensagem = f"A solicitação de renovação do seu selo foi rejeitada. Motivo: {motivo}"
+
+            notificacao_query = """
+            INSERT INTO notificacao (id_empresa, mensagem, data_envio, tipo, lida)
+            VALUES (%s, %s, %s, %s, %s)
+            """
+            cursor.execute(
+                notificacao_query,
+                (empresa_id, mensagem, data_envio, "rejeicao_renovacao", False)
+            )
 
         connection.commit()
         return {"message": "Renovação de selo rejeitada com sucesso"}
 
     except HTTPException as e:
+        connection.rollback()
         raise e
     except Error as e:
+        connection.rollback()
         raise HTTPException(
             status_code=500,
             detail=f"Erro ao rejeitar renovação do selo: {str(e)}"
@@ -312,12 +340,13 @@ def update_rejeitar_renovacao(selo_id: int, motivo: str = ""):
 
 def repo_associa_selos_empresa(id_empresa: int, data: AssociacaoMultiplaRequest):
     """
-    Cria uma nova instância de selo com código padronizado e a associa
-    imediatamente a uma empresa dentro de uma única transação.
+    Cria uma nova instância de selo e a associa a uma empresa em uma única transação.
     """
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
     try:
+        connection.start_transaction()
+
         cursor.execute("SELECT id FROM empresa WHERE id = %s", (id_empresa,))
         if not cursor.fetchone():
             raise HTTPException(
@@ -330,15 +359,21 @@ def repo_associa_selos_empresa(id_empresa: int, data: AssociacaoMultiplaRequest)
             raise HTTPException(
                 status_code=400, detail=f"Tipo de selo com ID {data.id_tipo_selo} não existe.")
 
-        query_conflito = "SELECT 1 FROM empresa_selo es JOIN selo s ON es.id_selo = s.id WHERE es.id_empresa = %s AND s.id_tipo_selo = %s"
+        query_conflito = """
+            SELECT 1 FROM empresa_selo es
+            JOIN selo s ON es.id_selo = s.id
+            WHERE es.id_empresa = %s AND s.id_tipo_selo = %s AND s.status IN ('ativo', 'pendente')
+        """
         cursor.execute(query_conflito, (id_empresa, data.id_tipo_selo))
         if cursor.fetchone():
             raise HTTPException(
-                status_code=409, detail=f"Conflito: A empresa já possui um selo do tipo '{tipo_selo['nome']}'.")
+                status_code=409, detail=f"Conflito: A empresa já possui um selo ativo ou pendente do tipo '{tipo_selo['nome']}'.")
 
         ano_atual = datetime.now().year
         sigla = tipo_selo['sigla']
-        codigo_selo_gerado = f"{sigla}-{ano_atual}-{id_empresa}"
+        # Adiciona um timestamp para garantir unicidade em caso de recriação no mesmo ano
+        timestamp = int(datetime.now().timestamp())
+        codigo_selo_gerado = f"{sigla}-{ano_atual}-{id_empresa}-{timestamp}"
 
         data_emissao = datetime.now().date()
         data_expiracao = data_emissao + timedelta(days=data.dias_validade)
@@ -374,6 +409,9 @@ def repo_associa_selos_empresa(id_empresa: int, data: AssociacaoMultiplaRequest)
         raise http_exc
     except Error as db_err:
         connection.rollback()
+        if db_err.errno == 1062:  # Erro de chave duplicada
+            raise HTTPException(
+                status_code=409, detail=f"Conflito: Já existe um selo com o código gerado. Tente novamente.")
         raise HTTPException(
             status_code=500, detail=f"Erro de banco de dados: {str(db_err)}")
     finally:
