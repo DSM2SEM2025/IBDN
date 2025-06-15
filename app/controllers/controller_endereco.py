@@ -4,11 +4,11 @@ from app.models.model_endereco import EmpresaEnderecoUpdate, EmpresaEnderecoCrea
 from app.controllers.token import TokenPayLoad
 
 
-def get_empresa_enderecos_by_empresa_id(empresa_id: int):
-    rows = repo.get_enderecos_by_empresa(empresa_id)
-    if not rows:
-        raise HTTPException(status_code=404, detail="Nenhum endereço encontrado para esta empresa")
-    return rows
+def get_empresa_enderecos_by_empresa_id(empresa_id: int, current_user: TokenPayLoad):
+    is_admin = "admin" in current_user.permissoes or "admin_master" in current_user.permissoes
+    if not is_admin and current_user.empresa_id != empresa_id:
+        raise HTTPException(status_code=403, detail="Acesso negado.")
+
 
 def update_empresa_endereco(empresa_id: int, data: EmpresaEnderecoUpdate, current_user: TokenPayLoad):
     # --- INÍCIO DO BLOCO DE SEGURANÇA ---

@@ -11,8 +11,16 @@ router = APIRouter(
 )
 
 @router.get("/empresas/{empresa_id}/enderecos", response_model=List[EmpresaEndereco], dependencies=[Depends(require_permission("empresa", "admin", "admin_master"))])
-def listar_enderecos_da_empresa(empresa_id: int = Path(..., gt=0)):
-    return get_empresa_enderecos_by_empresa_id(empresa_id)
+def listar_enderecos_da_empresa(
+    empresa_id: int = Path(..., gt=0),
+    current_user: TokenPayLoad = Depends(get_current_user)
+):
+    """
+    Lista os endereços de uma empresa.
+    - Administradores podem ver qualquer um.
+    - Usuários 'empresa' só podem ver o seu próprio.
+    """
+    return get_empresa_enderecos_by_empresa_id(empresa_id, current_user)
 
 @router.post("/empresas/{empresa_id}/endereco", status_code=201, dependencies=[Depends(require_permission("empresa", "admin", "admin_master"))])
 def criar_novo_endereco(

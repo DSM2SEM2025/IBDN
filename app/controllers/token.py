@@ -4,10 +4,13 @@ from pydantic import BaseModel, ValidationError
 from typing import Optional, List
 import jwt
 from datetime import datetime, timedelta, timezone
+import os
 
 security = HTTPBearer()
 
-SECRET_KEY = "chave-muito-secreta"
+SECRET_KEY = os.getenv("SECRET_KEY", "uma-chave-padrao-para-desenvolvimento")
+if SECRET_KEY == "uma-chave-padrao-para-desenvolvimento":
+    print("AVISO: Usando chave secreta de desenvolvimento. Defina a variável de ambiente SECRET_KEY em produção.")
 ALGORITHM = "HS256"
 
 
