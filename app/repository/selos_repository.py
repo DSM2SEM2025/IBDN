@@ -188,6 +188,50 @@ def repo_atualizar_status_selo(empresa_selo_id: int, novo_status: str) -> bool:
         cursor.close()
         conn.close()
 
+def repo_solicitar_selo_empresa(id_empresa: int, id_selo: int) -> dict:
+    """Cria uma solicitação de selo para uma empresa com status 'Pendente'."""
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        # 1. Verificar se a empresa e o tipo de selo existem
+        cursor.execute("SELECT id FROM empresa WHERE id = %s AND ativo = TRUE", (id_empresa,))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="Empresa não encontrada ou inativa.")
+
+        cursor.execute("SELECT sigla FROM selo WHERE id = %s", (id_selo,))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="Tipo de selo não encontrado no catálogo.")
+
+        # 2. VERIFICAR DUPLICIDADE: Impede que a empresa solicite um selo que já possui ou que já está pendente.
+        cursor.execute(
+            "SELECT id, status FROM empresa_selo WHERE id_empresa = %s AND id_selo = %s",
+            (id_empresa, id_selo)
+        )
+        selo_existente = cursor.fetchone()
+        if selo_existente:
+            status_existente = selo_existente['status']
+            raise HTTPException(
+                status_code=409, # Conflito
+                detail=f"Não é possível solicitar este selo. Você já possui uma instância com o status: '{status_existente}'."
+            )
+
+        # 3. Inserir com status Pendente. Datas e código ficam nulos até a aprovação.
+        query = "INSERT INTO empresa_selo (id_empresa, id_selo, status) VALUES (%s, %s, %s)"
+        cursor.execute(query, (id_empresa, id_selo, 'Pendente'))
+        novo_id = cursor.lastrowid
+        conn.commit()
+
+        return {"id_solicitacao": novo_id, "mensagem": "Selo solicitado com sucesso. Aguardando aprovação do administrador."}
+
+    except HTTPException:
+        raise
+    except Error as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro de banco de dados: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
 def repo_get_empresa_selo_por_id(empresa_selo_id: int) -> Optional[dict]:
     """Busca uma instância de selo concedido pelo seu ID."""
     conn = get_db_connection()

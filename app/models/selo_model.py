@@ -32,9 +32,12 @@ class SeloInDB(SeloBase):
     class Config:
         from_attributes = True
 
+# --- NOVO MODELO PARA SOLICITAÇÃO DE SELO PELA EMPRESA ---
+class SolicitarSeloRequest(BaseModel):
+    """Corpo da requisição para uma empresa solicitar um selo do catálogo."""
+    id_selo: int = Field(..., description="ID do selo do catálogo que a empresa deseja solicitar.")
 
 # --- Modelos para a Instância de Selo Concedido (tabela 'empresa_selo') ---
-
 class ConcederSeloRequest(BaseModel):
     """Corpo da requisição para um admin conceder um selo a uma empresa."""
     id_selo: int = Field(...,
@@ -51,7 +54,7 @@ class SeloConcedido(BaseModel):
     status: str
     data_emissao: Optional[date]
     data_expiracao: Optional[date]
-    codigo_selo: str
+    codigo_selo: Optional[str] = None
 
     # Adicionando detalhes do catálogo e da empresa para respostas completas
     nome_selo: str

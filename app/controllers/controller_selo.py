@@ -1,7 +1,8 @@
 # app/controllers/controller_selo.py
 from fastapi import HTTPException, status
 from typing import List
-from app.models.selo_model import SeloCreate, SeloUpdate, SeloInDB, ConcederSeloRequest, SeloConcedido
+from app.models.selo_model import SeloCreate, SeloUpdate, SeloInDB, ConcederSeloRequest, SeloConcedido, SolicitarSeloRequest
+
 # CORREÇÃO: O nome do arquivo importado agora está no plural para corresponder ao nome do arquivo real.
 from app.repository import selos_repository as repo
 from app.controllers.token import TokenPayLoad
@@ -115,3 +116,22 @@ def revogar_selo_da_empresa(empresa_selo_id: int) -> dict:
 
     return {"message": "Selo revogado com sucesso."}
 
+def solicitar_selo_para_minha_empresa(data: SolicitarSeloRequest, current_user: TokenPayLoad) -> dict:
+    """
+    Permite que um usuário logado (perfil empresa) solicite um selo para sua própria empresa.
+    """
+    # Adiciona uma verificação explícita para garantir que o usuário tem a permissão 'empresa'.
+    if "empresa" not in current_user.permissoes:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Esta ação é permitida apenas para usuários do tipo empresa."
+        )
+
+    id_empresa = current_user.empresa_id
+    if not id_empresa:
+        # Esta verificação agora serve como uma segurança secundária.
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Usuário do tipo empresa não está associado a nenhuma empresa."
+        )
+    return repo.repo_solicitar_selo_empresa(id_empresa, data.id_selo)

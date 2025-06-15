@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, Path, status
 from typing import List
 from app.controllers import controller_selo as ctrl
-from app.models.selo_model import ConcederSeloRequest, SeloConcedido
+from app.models.selo_model import ConcederSeloRequest, SeloConcedido, SolicitarSeloRequest
 from app.controllers.token import require_permission, get_current_user, TokenPayLoad
 
 router = APIRouter(
@@ -13,6 +13,16 @@ router = APIRouter(
 
 # Rota para um admin conceder um selo a uma empresa
 
+@router.post("/selos/solicitar", status_code=status.HTTP_201_CREATED, summary="Empresa solicita um selo do catálogo", dependencies=[Depends(require_permission("empresa"))])
+def solicitar_selo(
+    data: SolicitarSeloRequest,
+    current_user: TokenPayLoad = Depends(get_current_user)
+):
+    """
+    Cria uma nova solicitação de selo para a empresa associada ao usuário logado.
+    A solicitação é criada com o status 'Pendente' e aguarda a aprovação de um administrador.
+    """
+    return ctrl.solicitar_selo_para_minha_empresa(data, current_user)
 
 @router.post("/empresas/{id_empresa}/selos", status_code=status.HTTP_201_CREATED, summary="Concede um selo a uma empresa", dependencies=[Depends(require_permission("admin", "admin_master"))])
 def conceder_selo(id_empresa: int, data: ConcederSeloRequest):
