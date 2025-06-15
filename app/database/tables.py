@@ -114,13 +114,6 @@ def create_tables():
         ) ENGINE=InnoDB;
         """
 
-        tables['tipo_rede_social'] = """
-        CREATE TABLE IF NOT EXISTS tipo_rede_social (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            nome VARCHAR(50) NOT NULL UNIQUE
-        ) ENGINE=InnoDB;
-        """
-
         tables['endereco'] = """
         CREATE TABLE IF NOT EXISTS endereco (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -170,19 +163,6 @@ def create_tables():
         ) ENGINE=InnoDB;
         """
 
-        tables['alerta_expiracao_selo'] = """
-        CREATE TABLE IF NOT EXISTS alerta_expiracao_selo (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            id_selo INT NOT NULL,
-            data_envio DATE NOT NULL,
-            email_destino VARCHAR(255) NOT NULL,
-            email_enviado BOOLEAN DEFAULT FALSE,
-            conteudo_email TEXT,
-            status VARCHAR(20) NOT NULL,
-            FOREIGN KEY (id_selo) REFERENCES selo(id) ON DELETE CASCADE
-        ) ENGINE=InnoDB;
-        """
-
         tables['notificacao'] = """
         CREATE TABLE IF NOT EXISTS notificacao (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -192,53 +172,6 @@ def create_tables():
             tipo VARCHAR(50) NOT NULL,
             lida BOOLEAN DEFAULT FALSE,
             FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE
-        ) ENGINE=InnoDB;
-        """
-
-        tables['log_acesso'] = """
-        CREATE TABLE IF NOT EXISTS log_acesso (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            id_usuario CHAR(40),
-            data_hora DATETIME NOT NULL,
-            operacao VARCHAR(50) NOT NULL,
-            tabela_afetada VARCHAR(50),
-            id_registro_afetado VARCHAR(255),
-            dados_anteriores JSON,
-            dados_novos JSON,
-            ip VARCHAR(45),
-            user_agent VARCHAR(255),
-            status VARCHAR(20) NOT NULL,
-            mensagem TEXT,
-            tempo_execucao INT,
-            FOREIGN KEY (id_usuario) REFERENCES ibdn_usuarios(id) ON DELETE SET NULL
-        ) ENGINE=InnoDB;
-        """
-
-        tables['log_auditoria'] = """
-        CREATE TABLE IF NOT EXISTS log_auditoria (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            id_usuario CHAR(40),
-            data_hora DATETIME NOT NULL,
-            tipo_evento ENUM('LOGIN', 'LOGOUT', 'TENTATIVA_LOGIN', 'ALTERACAO_PERMISSAO', 'EXCLUSAO', 'APROVACAO') NOT NULL,
-            descricao TEXT NOT NULL,
-            ip VARCHAR(45) NOT NULL,
-            user_agent VARCHAR(255),
-            status VARCHAR(20) NOT NULL,
-            FOREIGN KEY (id_usuario) REFERENCES ibdn_usuarios(id) ON DELETE SET NULL
-        ) ENGINE=InnoDB;
-        """
-
-        tables['log_erro'] = """
-        CREATE TABLE IF NOT EXISTS log_erro (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            data_hora DATETIME NOT NULL,
-            nivel ENUM('INFO', 'WARNING', 'ERROR', 'CRITICAL') NOT NULL,
-            origem VARCHAR(255) NOT NULL,
-            mensagem TEXT NOT NULL,
-            stack_trace TEXT,
-            id_usuario CHAR(40),
-            ip VARCHAR(45),
-            FOREIGN KEY (id_usuario) REFERENCES ibdn_usuarios(id) ON DELETE SET NULL
         ) ENGINE=InnoDB;
         """
 
