@@ -94,6 +94,22 @@ def create_tables():
                 validade_selo DATE
             ) ENGINE=InnoDB;
         """
+        tables['ramo'] = """
+            CREATE TABLE IF NOT EXISTS ramo (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nome VARCHAR(100) NOT NULL UNIQUE,
+                descricao TEXT
+            ) ENGINE=InnoDB;
+        """
+        tables['selo'] = """
+            CREATE TABLE IF NOT EXISTS selo (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nome VARCHAR(100) NOT NULL UNIQUE,
+                descricao TEXT,
+                validade_selo DATE
+            ) ENGINE=InnoDB;
+        """
+        # ATUALIZAÇÃO: Removida a coluna 'ramo_id' para dar lugar à tabela de junção.
         tables['empresa'] = """
             CREATE TABLE IF NOT EXISTS empresa (
                 id INT AUTO_INCREMENT PRIMARY KEY,
