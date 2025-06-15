@@ -33,7 +33,7 @@ def listar_selos_empresa(id_empresa: int, current_user: TokenPayLoad = Depends(g
     """
     # A lógica de segurança para impedir que uma empresa veja os selos de outra
     # foi implementada no controller.
-    return ctrl.listar_selos_de_empresa(id_empresa)
+    return ctrl.listar_selos_de_empresa(id_empresa, current_user)
 
 # Rota para admin listar solicitações pendentes
 
@@ -60,10 +60,13 @@ def aprovar_selo(empresa_selo_id: int = Path(..., description="O ID da tabela 'e
 # Rota para empresa solicitar renovação de um selo
 
 
-@router.put("/empresa-selos/{empresa_selo_id}/solicitar-renovacao", summary="Solicita a renovação de um selo expirado", dependencies=[Depends(require_permission("empresa"))])
-def solicitar_renovacao(empresa_selo_id: int = Path(..., description="O ID da tabela 'empresa_selo'")):
+@router.put("/empresa-selos/{empresa_selo_id}/solicitar-renovacao", summary="Solicita a renovação de um selo", dependencies=[Depends(require_permission("empresa"))])
+def solicitar_renovacao(
+    empresa_selo_id: int = Path(..., description="O ID da tabela 'empresa_selo'"),
+    current_user: TokenPayLoad = Depends(get_current_user) # Adicionar esta dependência
+):
     """
     Permite que uma empresa solicite a renovação de um selo, mudando seu
     status para 'Em Renovação' para que um administrador possa avaliá-lo.
     """
-    return ctrl.solicitar_renovacao_de_selo(empresa_selo_id)
+    return ctrl.solicitar_renovacao_de_selo(empresa_selo_id, current_user)

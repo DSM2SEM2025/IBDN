@@ -105,8 +105,8 @@ def create_tables():
             CREATE TABLE IF NOT EXISTS selo (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 nome VARCHAR(100) NOT NULL UNIQUE,
-                descricao TEXT,
-                validade_selo DATE
+                sigla VARCHAR(3) NOT NULL UNIQUE,
+                descricao TEXT
             ) ENGINE=InnoDB;
         """
         # ATUALIZAÇÃO: Removida a coluna 'ramo_id' para dar lugar à tabela de junção.

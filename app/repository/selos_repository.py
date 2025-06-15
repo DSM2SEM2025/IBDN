@@ -187,3 +187,15 @@ def repo_atualizar_status_selo(empresa_selo_id: int, novo_status: str) -> bool:
     finally:
         cursor.close()
         conn.close()
+
+def repo_get_empresa_selo_por_id(empresa_selo_id: int) -> Optional[dict]:
+    """Busca uma instância de selo concedido pelo seu ID."""
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        query = "SELECT id, id_empresa, id_selo, status FROM empresa_selo WHERE id = %s"
+        cursor.execute(query, (empresa_selo_id,))
+        return cursor.fetchone()
+    finally:
+        cursor.close()
+        conn.close()
