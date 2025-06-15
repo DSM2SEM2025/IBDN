@@ -24,12 +24,10 @@ def listar_empresas():
     response_model=Dict[str, Any],
     status_code=status.HTTP_201_CREATED,
     summary="Cria uma nova empresa",
-    # A permissão "empresa" permite que um usuário (ainda não associado) crie sua própria empresa.
-    # Admins também podem criar empresas.
     dependencies=[Depends(require_permission(
         "empresa", "admin", "admin_master"))]
 )
-async def rota_criar_empresa(
+def rota_criar_empresa(
     empresa: EmpresaCreate,
     current_user: TokenPayLoad = Depends(get_current_user)
 ):
@@ -38,7 +36,7 @@ async def rota_criar_empresa(
     - Se o usuário logado for um **administrador**, ele pode opcionalmente especificar um `usuario_id` no corpo da requisição para associar a empresa a outro usuário. Se não especificar, a empresa será associada a ele mesmo.
     - Se o usuário logado **não for administrador** (tiver a permissão 'empresa'), a empresa será obrigatoriamente associada a ele.
     """
-    return await controller_empresa.criar_empresa(empresa, current_user)
+    return controller_empresa.criar_empresa(empresa, current_user)
 
 
 @router.get("/{empresa_id}", response_model=Empresa, dependencies=[Depends(require_permission("empresa", "admin", "admin_master"))])

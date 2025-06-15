@@ -16,6 +16,7 @@ def setup_logging():
         os.makedirs(log_dir)
 
     log_file = os.path.join(log_dir, 'database.log')
+    # Limpa handlers existentes para evitar duplicação de logs
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
 
@@ -35,6 +36,7 @@ def create_tables():
     logger = setup_logging()
     logger.info("Iniciando a criação das tabelas do banco de dados")
     connection = None
+    cursor = None
     try:
         config = get_db_config()
         logger.info("Conectando ao banco de dados...")
@@ -95,6 +97,18 @@ def create_tables():
         ) ENGINE=InnoDB;
         """
         tables['ramo'] = "CREATE TABLE IF NOT EXISTS ramo (id INT AUTO_INCREMENT PRIMARY KEY, nome VARCHAR(100) NOT NULL UNIQUE, descricao TEXT) ENGINE=InnoDB;"
+        
+        # --- NOVA TABELA DE ASSOCIAÇÃO ---
+        tables['empresa_ramo'] = """
+        CREATE TABLE IF NOT EXISTS empresa_ramo (
+            id_empresa INT NOT NULL,
+            id_ramo INT NOT NULL,
+            PRIMARY KEY (id_empresa, id_ramo),
+            FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE,
+            FOREIGN KEY (id_ramo) REFERENCES ramo(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB;
+        """
+        
         tables['tipo_rede_social'] = "CREATE TABLE IF NOT EXISTS tipo_rede_social (id INT AUTO_INCREMENT PRIMARY KEY, nome VARCHAR(50) NOT NULL UNIQUE) ENGINE=InnoDB;"
         tables['endereco'] = "CREATE TABLE IF NOT EXISTS endereco (id INT AUTO_INCREMENT PRIMARY KEY, id_empresa INT NOT NULL, logradouro VARCHAR(255) NOT NULL, bairro VARCHAR(100) NOT NULL, cep VARCHAR(10) NOT NULL, cidade VARCHAR(100) NOT NULL, uf VARCHAR(2) NOT NULL, complemento VARCHAR(255), FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE) ENGINE=InnoDB;"
         tables['tipo_selo'] = "CREATE TABLE IF NOT EXISTS tipo_selo (id INT AUTO_INCREMENT PRIMARY KEY, nome VARCHAR(100) NOT NULL, descricao TEXT NOT NULL, sigla VARCHAR(10) NOT NULL UNIQUE) ENGINE=InnoDB;"
@@ -106,12 +120,12 @@ def create_tables():
         tables['log_auditoria'] = "CREATE TABLE IF NOT EXISTS log_auditoria (id INT AUTO_INCREMENT PRIMARY KEY, id_usuario CHAR(40), data_hora DATETIME NOT NULL, tipo_evento ENUM('LOGIN', 'LOGOUT', 'TENTATIVA_LOGIN', 'ALTERACAO_PERMISSAO', 'EXCLUSAO', 'APROVACAO') NOT NULL, descricao TEXT NOT NULL, ip VARCHAR(45) NOT NULL, user_agent VARCHAR(255), status VARCHAR(20) NOT NULL, FOREIGN KEY (id_usuario) REFERENCES ibdn_usuarios(id) ON DELETE SET NULL) ENGINE=InnoDB;"
         tables['log_erro'] = "CREATE TABLE IF NOT EXISTS log_erro (id INT AUTO_INCREMENT PRIMARY KEY, data_hora DATETIME NOT NULL, nivel ENUM('INFO', 'WARNING', 'ERROR', 'CRITICAL') NOT NULL, origem VARCHAR(255) NOT NULL, mensagem TEXT NOT NULL, stack_trace TEXT, id_usuario CHAR(40), ip VARCHAR(45), FOREIGN KEY (id_usuario) REFERENCES ibdn_usuarios(id) ON DELETE SET NULL) ENGINE=InnoDB;"
 
-        # CORREÇÃO: Removida a tabela 'solicitacao_aprovacao' que não existe no schema.
+        # --- ORDEM DE CRIAÇÃO DAS TABELAS (ATUALIZADA) ---
         table_creation_order = [
             'ibdn_permissoes', 'ibdn_perfis', 'ramo', 'tipo_rede_social', 'tipo_selo',
             'ibdn_usuarios', 'selo', 'ibdn_perfil_permissoes',
             'empresa',
-            'endereco', 'empresa_selo', 'notificacao',
+            'endereco', 'empresa_selo', 'empresa_ramo', 'notificacao',
             'alerta_expiracao_selo',
             'log_acesso', 'log_auditoria', 'log_erro'
         ]
@@ -171,6 +185,7 @@ def create_initial_data():
     logger.info("Verificando/Configurando dados iniciais...")
 
     connection = None
+    cursor = None
     try:
         config = get_db_config()
         connection = mysql.connector.connect(**config)
@@ -211,23 +226,28 @@ def create_initial_data():
         # 3. Associar Permissão 'admin_master' ao Perfil 'admin_master'
         cursor.execute(
             "SELECT id FROM ibdn_perfis WHERE nome = 'admin_master'")
-        perfil_master_id = cursor.fetchone()['id']
+        perfil_master_result = cursor.fetchone()
+        
         cursor.execute(
             "SELECT id FROM ibdn_permissoes WHERE nome = 'admin_master'")
-        permissao_master_id = cursor.fetchone()['id']
+        permissao_master_result = cursor.fetchone()
 
-        cursor.execute("SELECT 1 FROM ibdn_perfil_permissoes WHERE perfil_id = %s AND permissao_id = %s",
-                       (perfil_master_id, permissao_master_id))
-        if not cursor.fetchone():
-            cursor.execute("INSERT INTO ibdn_perfil_permissoes (perfil_id, permissao_id) VALUES (%s, %s)",
+        if perfil_master_result and permissao_master_result:
+            perfil_master_id = perfil_master_result['id']
+            permissao_master_id = permissao_master_result['id']
+
+            cursor.execute("SELECT 1 FROM ibdn_perfil_permissoes WHERE perfil_id = %s AND permissao_id = %s",
                            (perfil_master_id, permissao_master_id))
-            logger.info(
-                "Permissão 'admin_master' associada ao perfil 'admin_master'.")
-            connection.commit()
+            if not cursor.fetchone():
+                cursor.execute("INSERT INTO ibdn_perfil_permissoes (perfil_id, permissao_id) VALUES (%s, %s)",
+                               (perfil_master_id, permissao_master_id))
+                logger.info(
+                    "Permissão 'admin_master' associada ao perfil 'admin_master'.")
+                connection.commit()
 
         # 4. Criar Usuário Admin Master
-        admin_email = os.getenv('ADMIN_EMAIL')
-        admin_password = os.getenv('ADMIN_PASSWORD')
+        admin_email = os.getenv('ADMIN_EMAIL', 'admin@example.com') # Adicionado valor padrão
+        admin_password = os.getenv('ADMIN_PASSWORD', 'strongpassword123') # Adicionado valor padrão
 
         if not admin_email or not admin_password:
             logger.warning(
@@ -237,17 +257,23 @@ def create_initial_data():
         cursor.execute(
             "SELECT id FROM ibdn_usuarios WHERE email = %s", (admin_email,))
         if not cursor.fetchone():
-            logger.info(
-                f"Criando usuário admin_master com email {admin_email}...")
-            usuario_id = str(uuid4())
-            senha_hash = get_password_hash(admin_password)
+            cursor.execute(
+                "SELECT id FROM ibdn_perfis WHERE nome = 'admin_master'"
+            )
+            perfil_master_result = cursor.fetchone()
+            if perfil_master_result:
+                perfil_master_id = perfil_master_result['id']
+                logger.info(
+                    f"Criando usuário admin_master com email {admin_email}...")
+                usuario_id = str(uuid4())
+                senha_hash = get_password_hash(admin_password)
 
-            query = "INSERT INTO ibdn_usuarios (id, nome, email, senha_hash, perfil_id, ativo) VALUES (%s, %s, %s, %s, %s, 1)"
-            cursor.execute(query, (usuario_id, 'Admin Master',
-                           admin_email, senha_hash, perfil_master_id))
-            logger.info(
-                f"Usuário admin_master criado com sucesso! ID: {usuario_id}")
-            connection.commit()
+                query = "INSERT INTO ibdn_usuarios (id, nome, email, senha_hash, perfil_id, ativo) VALUES (%s, %s, %s, %s, %s, 1)"
+                cursor.execute(query, (usuario_id, 'Admin Master',
+                                       admin_email, senha_hash, perfil_master_id))
+                logger.info(
+                    f"Usuário admin_master criado com sucesso! ID: {usuario_id}")
+                connection.commit()
         else:
             logger.info(
                 f"Usuário admin_master com email {admin_email} já existe.")
@@ -265,6 +291,23 @@ def create_initial_data():
 
 if __name__ == "__main__":
     try:
+        # Funções para simular dependências (remover em ambiente real)
+        def get_db_config():
+            return {
+                'host': 'localhost',
+                'user': 'root',
+                'password': '',
+                'database': 'ibdn_db_test'
+            }
+        
+        def get_password_hash(password):
+            import hashlib
+            return hashlib.sha256(password.encode()).hexdigest()
+
+        # Sobrescrevendo as funções importadas para o teste
+        globals()['get_db_config'] = get_db_config
+        globals()['get_password_hash'] = get_password_hash
+
         create_database_if_not_exists()
         create_tables()
         create_initial_data()

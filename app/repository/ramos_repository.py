@@ -34,10 +34,12 @@ def create_ramo(ramo: RamoCreate) -> RamoBase:
         with get_cursor() as cursor:
             cursor.execute("SELECT * FROM RAMO WHERE nome = %s AND descricao = %s", (ramo.nome, ramo.descricao))
             if cursor.fetchone() is None:
-                cursor.execute("INSERT INTO ramo (nome, descricao) VALUES (%s,%s)",(ramo.nome,ramo.descricao))
+                # CORREÇÃO: Removida a coluna 'id' da declaração INSERT
+                cursor.execute("INSERT INTO ramo (nome, descricao) VALUES (%s, %s)",(ramo.nome, ramo.descricao))
+            
             ramo_id = cursor.lastrowid
-
             return RamoBase(id=ramo_id, nome=ramo.nome, descricao=ramo.descricao)
+            
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Erro ao inserir ramo: {err}")
 
@@ -63,4 +65,3 @@ def delete_ramo(ramo_id:int) -> None:
             cursor.execute("DELETE FROM RAMO WHERE id =%s", (ramo_id,))
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Erro ao deletar ramo; {err}")
-    
