@@ -51,7 +51,7 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS ibdn_permissoes (
             id CHAR(40) PRIMARY KEY,
             nome VARCHAR(100) NOT NULL UNIQUE
-        ) ENGINE=InnoDB;
+        ) ENGINE=InnoDB;s
         """
         tables['ibdn_perfis'] = """
         CREATE TABLE IF NOT EXISTS ibdn_perfis (
@@ -80,6 +80,9 @@ def create_tables():
             FOREIGN KEY (perfil_id) REFERENCES ibdn_perfis(id) ON DELETE SET NULL
         ) ENGINE=InnoDB;
         """
+        
+        # ## INÍCIO DAS ALTERAÇÕES NO DER ##
+
         tables['empresa'] = """
         CREATE TABLE IF NOT EXISTS empresa (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -90,7 +93,7 @@ def create_tables():
             telefone VARCHAR(20),
             responsavel VARCHAR(100),
             cargo_responsavel VARCHAR(100),
-            site_empresa VARCHAR(255),
+            site VARCHAR(255),
             data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             ativo BOOLEAN DEFAULT TRUE,
             FOREIGN KEY (usuario_id) REFERENCES ibdn_usuarios(id) ON DELETE CASCADE
@@ -108,18 +111,47 @@ def create_tables():
         ) ENGINE=InnoDB;
         """
         tables['endereco'] = "CREATE TABLE IF NOT EXISTS endereco (id INT AUTO_INCREMENT PRIMARY KEY, id_empresa INT NOT NULL, logradouro VARCHAR(255) NOT NULL, bairro VARCHAR(100) NOT NULL, cep VARCHAR(10) NOT NULL, cidade VARCHAR(100) NOT NULL, uf VARCHAR(2) NOT NULL, complemento VARCHAR(255), FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE) ENGINE=InnoDB;"
-        tables['tipo_selo'] = "CREATE TABLE IF NOT EXISTS tipo_selo (id INT AUTO_INCREMENT PRIMARY KEY, nome VARCHAR(100) NOT NULL, descricao TEXT NOT NULL, sigla VARCHAR(10) NOT NULL UNIQUE) ENGINE=InnoDB;"
-        tables['selo'] = "CREATE TABLE IF NOT EXISTS selo (id INT AUTO_INCREMENT PRIMARY KEY, id_tipo_selo INT NOT NULL, data_emissao DATE NOT NULL, data_expiracao DATE NOT NULL, codigo_selo VARCHAR(50) NOT NULL UNIQUE, status VARCHAR(20) NOT NULL, documentacao TEXT, alerta_enviado BOOLEAN DEFAULT FALSE, dias_alerta_previo INT DEFAULT 30, FOREIGN KEY (id_tipo_selo) REFERENCES tipo_selo(id)) ENGINE=InnoDB;"
-        tables['empresa_selo'] = "CREATE TABLE IF NOT EXISTS empresa_selo (id INT AUTO_INCREMENT PRIMARY KEY, id_empresa INT NOT NULL, id_selo INT NOT NULL, UNIQUE (id_empresa, id_selo), FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE, FOREIGN KEY (id_selo) REFERENCES selo(id) ON DELETE CASCADE) ENGINE=InnoDB;"
+        
+        # Tabela 'selo' atualizada para ser o catálogo de tipos de selos.
+        tables['selo'] = """
+        CREATE TABLE IF NOT EXISTS selo (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            nome VARCHAR(100) NOT NULL UNIQUE,
+            descricao TEXT,
+            sigla VARCHAR(10) NOT NULL UNIQUE
+        ) ENGINE=InnoDB;
+        """
+        
+        # Tabela 'empresa_selo' atualizada para guardar a instância do selo.
+        tables['empresa_selo'] = """
+        CREATE TABLE IF NOT EXISTS empresa_selo (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            id_empresa INT NOT NULL,
+            id_selo INT NOT NULL,
+            status ENUM('Ativo', 'Pendente', 'Em Renovação', 'Expirado', 'Cancelado') NOT NULL,
+            data_emissao DATE,
+            data_expiracao DATE,
+            codigo_selo VARCHAR(50) NOT NULL UNIQUE,
+            documentacao TEXT,
+            alerta_enviado BOOLEAN NOT NULL DEFAULT FALSE,
+            dias_alerta_previo INT DEFAULT 30,
+            FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE,
+            FOREIGN KEY (id_selo) REFERENCES selo(id) ON DELETE RESTRICT
+        ) ENGINE=InnoDB;
+        """
+
         tables['notificacao'] = "CREATE TABLE IF NOT EXISTS notificacao (id INT AUTO_INCREMENT PRIMARY KEY, id_empresa INT NOT NULL, mensagem TEXT NOT NULL, data_envio DATETIME NOT NULL, tipo VARCHAR(50) NOT NULL, lida BOOLEAN DEFAULT FALSE, FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE) ENGINE=InnoDB;"
         
-        # --- ORDEM DE CRIAÇÃO DAS TABELAS (ATUALIZADA) ---
+        # Ordem de criação ajustada para refletir as dependências corretas.
+        # 'tipo_selo' foi removida.
         table_creation_order = [
-            'ibdn_permissoes', 'ibdn_perfis', 'ramo', 'tipo_rede_social', 'tipo_selo',
-            'ibdn_usuarios', 'selo', 'ibdn_perfil_permissoes',
-            'empresa',
-            'endereco', 'empresa_selo', 'empresa_ramo', 'notificacao',
+            'ibdn_permissoes', 'ibdn_perfis', 'ramo', 'selo', # Tabelas sem dependências externas
+            'ibdn_perfil_permissoes', 'ibdn_usuarios', # Dependem de perfis/permissões
+            'empresa', # Depende de usuários
+            'endereco', 'empresa_ramo', 'notificacao', 'empresa_selo' # Dependem de empresa e/ou outras tabelas
         ]
+
+        # ## FIM DAS ALTERAÇÕES NO DER ##
 
         logger.info("Iniciando a criação das tabelas na ordem correta...")
         for table_name in table_creation_order:
