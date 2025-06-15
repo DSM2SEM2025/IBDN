@@ -45,20 +45,114 @@ def create_tables():
 
         tables = {}
 
-        # --- DEFINIÇÃO DE TABELAS ---
-        tables['ibdn_permissoes'] = "CREATE TABLE IF NOT EXISTS ibdn_permissoes (id CHAR(40) PRIMARY KEY, nome VARCHAR(100) NOT NULL UNIQUE) ENGINE=InnoDB;"
-        tables['ibdn_perfis'] = "CREATE TABLE IF NOT EXISTS ibdn_perfis (id CHAR(40) PRIMARY KEY, nome VARCHAR(50) NOT NULL UNIQUE) ENGINE=InnoDB;"
-        tables['ibdn_perfil_permissoes'] = "CREATE TABLE IF NOT EXISTS ibdn_perfil_permissoes (perfil_id CHAR(40), permissao_id CHAR(40), PRIMARY KEY (perfil_id, permissao_id), FOREIGN KEY (perfil_id) REFERENCES ibdn_perfis(id) ON DELETE CASCADE, FOREIGN KEY (permissao_id) REFERENCES ibdn_permissoes(id) ON DELETE CASCADE) ENGINE=InnoDB;"
-        tables['ibdn_usuarios'] = "CREATE TABLE IF NOT EXISTS ibdn_usuarios (id CHAR(40) PRIMARY KEY, nome VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL UNIQUE, senha_hash VARCHAR(255) NOT NULL, perfil_id CHAR(40) NULL, ativo TINYINT(1) DEFAULT 1, twofactor TINYINT(1) DEFAULT 0, FOREIGN KEY (perfil_id) REFERENCES ibdn_perfis(id) ON DELETE SET NULL) ENGINE=InnoDB;"
-        tables['empresa'] = "CREATE TABLE IF NOT EXISTS empresa (id INT AUTO_INCREMENT PRIMARY KEY, cnpj VARCHAR(18) NOT NULL UNIQUE, razao_social VARCHAR(255) NOT NULL, nome_fantasia VARCHAR(255), usuario_id CHAR(40) NOT NULL UNIQUE, telefone VARCHAR(20), responsavel VARCHAR(100), cargo_responsavel VARCHAR(100), site_empresa VARCHAR(255), data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP, ativo BOOLEAN DEFAULT TRUE, FOREIGN KEY (usuario_id) REFERENCES ibdn_usuarios(id) ON DELETE CASCADE) ENGINE=InnoDB;"
-        tables['ramo'] = "CREATE TABLE IF NOT EXISTS ramo (id INT AUTO_INCREMENT PRIMARY KEY, nome VARCHAR(100) NOT NULL UNIQUE, descricao TEXT) ENGINE=InnoDB;"
-        tables['endereco'] = "CREATE TABLE IF NOT EXISTS endereco (id INT AUTO_INCREMENT PRIMARY KEY, id_empresa INT NOT NULL, logradouro VARCHAR(255) NOT NULL, numero VARCHAR(20) NOT NULL, bairro VARCHAR(100) NOT NULL, cep VARCHAR(10) NOT NULL, cidade VARCHAR(100) NOT NULL, uf VARCHAR(2) NOT NULL, complemento VARCHAR(255), FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE) ENGINE=InnoDB;"
-        tables['empresa_selo'] = "CREATE TABLE IF NOT EXISTS empresa_selo (id INT AUTO_INCREMENT PRIMARY KEY, id_empresa INT NOT NULL, id_selo INT NOT NULL, UNIQUE (id_empresa, id_selo), FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE, FOREIGN KEY (id_selo) REFERENCES selo(id) ON DELETE CASCADE) ENGINE=InnoDB;"
-        tables['notificacao'] = "CREATE TABLE IF NOT EXISTS notificacao (id INT AUTO_INCREMENT PRIMARY KEY, id_empresa INT NOT NULL, mensagem TEXT NOT NULL, data_envio DATETIME NOT NULL, tipo VARCHAR(50) NOT NULL, lida BOOLEAN DEFAULT FALSE, FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE) ENGINE=InnoDB;"
-      
+        # --- DEFINIÇÃO DE TABELAS (COM FORMATAÇÃO PADRONIZADA) ---
+        tables['ibdn_permissoes'] = """
+            CREATE TABLE IF NOT EXISTS ibdn_permissoes (
+                id CHAR(40) PRIMARY KEY,
+                nome VARCHAR(100) NOT NULL UNIQUE
+            ) ENGINE=InnoDB;
+        """
+        tables['ibdn_perfis'] = """
+            CREATE TABLE IF NOT EXISTS ibdn_perfis (
+                id CHAR(40) PRIMARY KEY,
+                nome VARCHAR(50) NOT NULL UNIQUE
+            ) ENGINE=InnoDB;
+        """
+        tables['ibdn_perfil_permissoes'] = """
+            CREATE TABLE IF NOT EXISTS ibdn_perfil_permissoes (
+                perfil_id CHAR(40),
+                permissao_id CHAR(40),
+                PRIMARY KEY (perfil_id, permissao_id),
+                FOREIGN KEY (perfil_id) REFERENCES ibdn_perfis(id) ON DELETE CASCADE,
+                FOREIGN KEY (permissao_id) REFERENCES ibdn_permissoes(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB;
+        """
+        tables['ibdn_usuarios'] = """
+            CREATE TABLE IF NOT EXISTS ibdn_usuarios (
+                id CHAR(40) PRIMARY KEY,
+                nome VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL UNIQUE,
+                senha_hash VARCHAR(255) NOT NULL,
+                perfil_id CHAR(40) NULL,
+                ativo TINYINT(1) DEFAULT 1,
+                twofactor TINYINT(1) DEFAULT 0,
+                FOREIGN KEY (perfil_id) REFERENCES ibdn_perfis(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB;
+        """
+        tables['ramo'] = """
+            CREATE TABLE IF NOT EXISTS ramo (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nome VARCHAR(100) NOT NULL UNIQUE,
+                descricao TEXT
+            ) ENGINE=InnoDB;
+        """
+        tables['selo'] = """
+            CREATE TABLE IF NOT EXISTS selo (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nome VARCHAR(100) NOT NULL UNIQUE,
+                descricao TEXT,
+                validade_selo DATE
+            ) ENGINE=InnoDB;
+        """
+        tables['empresa'] = """
+            CREATE TABLE IF NOT EXISTS empresa (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                cnpj VARCHAR(18) NOT NULL UNIQUE,
+                razao_social VARCHAR(255) NOT NULL,
+                nome_fantasia VARCHAR(255),
+                usuario_id CHAR(40) NOT NULL UNIQUE,
+                telefone VARCHAR(20),
+                responsavel VARCHAR(100),
+                cargo_responsavel VARCHAR(100),
+                site_empresa VARCHAR(255),
+                data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                ativo BOOLEAN DEFAULT TRUE,
+                ramo_id INT,
+                FOREIGN KEY (usuario_id) REFERENCES ibdn_usuarios(id) ON DELETE CASCADE,
+                FOREIGN KEY (ramo_id) REFERENCES ramo(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB;
+        """
+        tables['endereco'] = """
+            CREATE TABLE IF NOT EXISTS endereco (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                id_empresa INT NOT NULL,
+                logradouro VARCHAR(255) NOT NULL,
+                numero VARCHAR(20) NOT NULL,
+                bairro VARCHAR(100) NOT NULL,
+                cep VARCHAR(10) NOT NULL,
+                cidade VARCHAR(100) NOT NULL,
+                uf VARCHAR(2) NOT NULL,
+                complemento VARCHAR(255),
+                FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB;
+        """
+        # CORREÇÃO: Tabela ajustada para corresponder ao DER
+        tables['empresa_selo'] = """
+            CREATE TABLE IF NOT EXISTS empresa_selo (
+                id_empresa INT NOT NULL,
+                id_selo INT NOT NULL,
+                data_emissao DATE,
+                data_vencimento DATE,
+                PRIMARY KEY (id_empresa, id_selo),
+                FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE,
+                FOREIGN KEY (id_selo) REFERENCES selo(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB;
+        """
+        tables['notificacao'] = """
+            CREATE TABLE IF NOT EXISTS notificacao (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                id_empresa INT NOT NULL,
+                mensagem TEXT NOT NULL,
+                data_envio DATETIME NOT NULL,
+                tipo VARCHAR(50) NOT NULL,
+                lida BOOLEAN DEFAULT FALSE,
+                FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB;
+        """
+        
         table_creation_order = [
-            'ibdn_permissoes', 'ibdn_perfis', 'ramo',
-            'ibdn_usuarios', 'selo', 'ibdn_perfil_permissoes',
+            'ibdn_permissoes', 'ibdn_perfis', 'ramo', 'selo',
+            'ibdn_usuarios', 'ibdn_perfil_permissoes',
             'empresa',
             'endereco', 'empresa_selo', 'notificacao',
         ]
@@ -80,7 +174,7 @@ def create_tables():
         if connection:
             connection.rollback()
     finally:
-        if cursor:
+        if 'cursor' in locals() and cursor:
             cursor.close()
         if connection and connection.is_connected():
             connection.close()
@@ -145,7 +239,7 @@ def create_initial_data():
 
         connection.commit()
 
-        # 3. MODIFICAÇÃO: Associar permissões aos seus respectivos perfis
+        # 3. Associar permissões aos seus respectivos perfis
         perfis_e_permissoes = {
             "admin_master": ["admin_master"],
             "admin": ["admin"],
@@ -195,7 +289,7 @@ def create_initial_data():
 
             query = "INSERT INTO ibdn_usuarios (id, nome, email, senha_hash, perfil_id, ativo) VALUES (%s, %s, %s, %s, %s, 1)"
             cursor.execute(query, (usuario_id, 'Admin Master',
-                           admin_email, senha_hash, perfil_master_id))
+                                   admin_email, senha_hash, perfil_master_id))
             logger.info(
                 f"Usuário admin_master criado com sucesso! ID: {usuario_id}")
             connection.commit()
@@ -208,7 +302,7 @@ def create_initial_data():
         if connection:
             connection.rollback()
     finally:
-        if cursor:
+        if 'cursor' in locals() and cursor:
             cursor.close()
         if connection and connection.is_connected():
             connection.close()
