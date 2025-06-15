@@ -98,7 +98,6 @@ def create_tables():
         """
         tables['ramo'] = "CREATE TABLE IF NOT EXISTS ramo (id INT AUTO_INCREMENT PRIMARY KEY, nome VARCHAR(100) NOT NULL UNIQUE, descricao TEXT) ENGINE=InnoDB;"
         
-        # --- NOVA TABELA DE ASSOCIAÇÃO ---
         tables['empresa_ramo'] = """
         CREATE TABLE IF NOT EXISTS empresa_ramo (
             id_empresa INT NOT NULL,
@@ -108,26 +107,18 @@ def create_tables():
             FOREIGN KEY (id_ramo) REFERENCES ramo(id) ON DELETE CASCADE
         ) ENGINE=InnoDB;
         """
-        
-        tables['tipo_rede_social'] = "CREATE TABLE IF NOT EXISTS tipo_rede_social (id INT AUTO_INCREMENT PRIMARY KEY, nome VARCHAR(50) NOT NULL UNIQUE) ENGINE=InnoDB;"
         tables['endereco'] = "CREATE TABLE IF NOT EXISTS endereco (id INT AUTO_INCREMENT PRIMARY KEY, id_empresa INT NOT NULL, logradouro VARCHAR(255) NOT NULL, bairro VARCHAR(100) NOT NULL, cep VARCHAR(10) NOT NULL, cidade VARCHAR(100) NOT NULL, uf VARCHAR(2) NOT NULL, complemento VARCHAR(255), FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE) ENGINE=InnoDB;"
         tables['tipo_selo'] = "CREATE TABLE IF NOT EXISTS tipo_selo (id INT AUTO_INCREMENT PRIMARY KEY, nome VARCHAR(100) NOT NULL, descricao TEXT NOT NULL, sigla VARCHAR(10) NOT NULL UNIQUE) ENGINE=InnoDB;"
         tables['selo'] = "CREATE TABLE IF NOT EXISTS selo (id INT AUTO_INCREMENT PRIMARY KEY, id_tipo_selo INT NOT NULL, data_emissao DATE NOT NULL, data_expiracao DATE NOT NULL, codigo_selo VARCHAR(50) NOT NULL UNIQUE, status VARCHAR(20) NOT NULL, documentacao TEXT, alerta_enviado BOOLEAN DEFAULT FALSE, dias_alerta_previo INT DEFAULT 30, FOREIGN KEY (id_tipo_selo) REFERENCES tipo_selo(id)) ENGINE=InnoDB;"
         tables['empresa_selo'] = "CREATE TABLE IF NOT EXISTS empresa_selo (id INT AUTO_INCREMENT PRIMARY KEY, id_empresa INT NOT NULL, id_selo INT NOT NULL, UNIQUE (id_empresa, id_selo), FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE, FOREIGN KEY (id_selo) REFERENCES selo(id) ON DELETE CASCADE) ENGINE=InnoDB;"
-        tables['alerta_expiracao_selo'] = "CREATE TABLE IF NOT EXISTS alerta_expiracao_selo (id INT AUTO_INCREMENT PRIMARY KEY, id_selo INT NOT NULL, data_envio DATE NOT NULL, email_destino VARCHAR(255) NOT NULL, email_enviado BOOLEAN DEFAULT FALSE, conteudo_email TEXT, status VARCHAR(20) NOT NULL, FOREIGN KEY (id_selo) REFERENCES selo(id) ON DELETE CASCADE) ENGINE=InnoDB;"
         tables['notificacao'] = "CREATE TABLE IF NOT EXISTS notificacao (id INT AUTO_INCREMENT PRIMARY KEY, id_empresa INT NOT NULL, mensagem TEXT NOT NULL, data_envio DATETIME NOT NULL, tipo VARCHAR(50) NOT NULL, lida BOOLEAN DEFAULT FALSE, FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE) ENGINE=InnoDB;"
-        tables['log_acesso'] = "CREATE TABLE IF NOT EXISTS log_acesso (id INT AUTO_INCREMENT PRIMARY KEY, id_usuario CHAR(40), data_hora DATETIME NOT NULL, operacao VARCHAR(50) NOT NULL, tabela_afetada VARCHAR(50), id_registro_afetado VARCHAR(255), dados_anteriores JSON, dados_novos JSON, ip VARCHAR(45), user_agent VARCHAR(255), status VARCHAR(20) NOT NULL, mensagem TEXT, tempo_execucao INT, FOREIGN KEY (id_usuario) REFERENCES ibdn_usuarios(id) ON DELETE SET NULL) ENGINE=InnoDB;"
-        tables['log_auditoria'] = "CREATE TABLE IF NOT EXISTS log_auditoria (id INT AUTO_INCREMENT PRIMARY KEY, id_usuario CHAR(40), data_hora DATETIME NOT NULL, tipo_evento ENUM('LOGIN', 'LOGOUT', 'TENTATIVA_LOGIN', 'ALTERACAO_PERMISSAO', 'EXCLUSAO', 'APROVACAO') NOT NULL, descricao TEXT NOT NULL, ip VARCHAR(45) NOT NULL, user_agent VARCHAR(255), status VARCHAR(20) NOT NULL, FOREIGN KEY (id_usuario) REFERENCES ibdn_usuarios(id) ON DELETE SET NULL) ENGINE=InnoDB;"
-        tables['log_erro'] = "CREATE TABLE IF NOT EXISTS log_erro (id INT AUTO_INCREMENT PRIMARY KEY, data_hora DATETIME NOT NULL, nivel ENUM('INFO', 'WARNING', 'ERROR', 'CRITICAL') NOT NULL, origem VARCHAR(255) NOT NULL, mensagem TEXT NOT NULL, stack_trace TEXT, id_usuario CHAR(40), ip VARCHAR(45), FOREIGN KEY (id_usuario) REFERENCES ibdn_usuarios(id) ON DELETE SET NULL) ENGINE=InnoDB;"
-
+        
         # --- ORDEM DE CRIAÇÃO DAS TABELAS (ATUALIZADA) ---
         table_creation_order = [
             'ibdn_permissoes', 'ibdn_perfis', 'ramo', 'tipo_rede_social', 'tipo_selo',
             'ibdn_usuarios', 'selo', 'ibdn_perfil_permissoes',
             'empresa',
             'endereco', 'empresa_selo', 'empresa_ramo', 'notificacao',
-            'alerta_expiracao_selo',
-            'log_acesso', 'log_auditoria', 'log_erro'
         ]
 
         logger.info("Iniciando a criação das tabelas na ordem correta...")
