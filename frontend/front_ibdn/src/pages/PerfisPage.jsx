@@ -72,7 +72,7 @@ function PerfisPage() {
         await perfilService.atualizarPerfil(modalState.data.id, formData);
       } else {
         // Modo de Criação
-        await perfilService.criarPerfil(formData);
+        await perfilService.criarPerfil({ ...formData, permissoes_ids: [] });
       }
       handleCloseModal();
       await fetchData();
@@ -83,53 +83,38 @@ function PerfisPage() {
     }
   };
 
+  // Lógica de submissão de permissões simplificada
   const handlePermissionsSubmit = async (novasPermissoesIds) => {
     setIsSaving(true);
     const perfilId = modalState.data.id;
-    const permissoesAtuaisIds = new Set(
-      modalState.data.permissoes.map((p) => p.id)
-    );
-
-    // Transforma o array de IDs em um Set para facilitar a comparação
-    const novasPermissoesSet = new Set(novasPermissoesIds);
-
     try {
-      // Permissões para adicionar: estão no novo set, mas não no antigo
-      const paraAdicionar = novasPermissoesIds.filter(
-        (id) => !permissoesAtuaisIds.has(id)
-      );
-
-      // Permissões para remover: estão no antigo set, mas não no novo
-      const paraRemover = [...permissoesAtuaisIds].filter(
-        (id) => !novasPermissoesSet.has(id)
-      );
-
-      // Executa as chamadas à API em paralelo
-      await Promise.all([
-        ...paraAdicionar.map((id) =>
-          perfilService.adicionarPermissaoAoPerfil(perfilId, id)
-        ),
-        ...paraRemover.map((id) =>
-          perfilService.removerPermissaoDoPerfil(perfilId, id)
-        ),
-      ]);
+      // Envia a lista completa de IDs para o endpoint de atualização do perfil
+      await perfilService.atualizarPerfil(perfilId, {
+        permissoes_ids: novasPermissoesIds,
+      });
 
       handleCloseModal();
-      await fetchData();
+      await fetchData(); // Recarrega os dados para refletir as mudanças
     } catch (err) {
-      alert("Ocorreu um erro ao atualizar as permissões.");
+      alert("Ocorreu um erro ao atualizar as permissões do perfil.");
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleDelete = async (perfilId) => {
-    if (window.confirm("Tem a certeza que deseja excluir este perfil?")) {
+    if (
+      window.confirm(
+        "Tem a certeza que deseja excluir este perfil? Esta ação não pode ser desfeita."
+      )
+    ) {
       try {
         await perfilService.deletarPerfil(perfilId);
         await fetchData();
       } catch (err) {
-        alert("Não foi possível excluir o perfil.");
+        alert(
+          "Não foi possível excluir o perfil. Verifique se ele não está em uso por algum usuário."
+        );
       }
     }
   };
@@ -155,7 +140,8 @@ function PerfisPage() {
   const getModalTitle = () => {
     if (modalState.mode === "ADD_EDIT_PERFIL")
       return modalState.data ? "Editar Perfil" : "Adicionar Novo Perfil";
-    if (modalState.mode === "MANAGE_PERMISSIONS") return "Gerir Permissões";
+    if (modalState.mode === "MANAGE_PERMISSIONS")
+      return `Gerir Permissões para "${modalState.data?.nome}"`;
     return "";
   };
 

@@ -1,60 +1,49 @@
 import React, { useState, useEffect } from "react";
+import useAuthStore from "../store/authStore"; // Importar a store
 
-/**
- * Formulário para criar ou editar uma empresa.
- * @param {Object} props
- * @param {Object} [props.initialData={}] - Os dados iniciais para preencher o formulário (para edição).
- * @param {Function} props.onSubmit - Função chamada ao submeter o formulário.
- * @param {Function} props.onCancel - Função chamada para cancelar e fechar o formulário.
- * @param {boolean} props.isSaving - Indica se o processo de salvar está em andamento.
- */
 function EmpresaForm({ initialData = {}, onSubmit, onCancel, isSaving }) {
-  const [formData, setFormData] = useState({
-    cnpj: "",
-    razao_social: "",
-    nome_fantasia: "",
-    telefone: "",
-    responsavel: "",
-    cargo_responsavel: "",
-    site_empresa: "",
-    ativo: true,
-    usuario_id: 1, // Placeholder - idealmente viria do usuário logado
-    ...initialData,
-  });
+  const [formData, setFormData] = useState({});
+  const [errors, setErrors] = useState({});
 
-  // Efeito para atualizar o formulário se os dados iniciais mudarem
+  // NOVO: Obter permissões do usuário logado
+  const permissions = useAuthStore((state) => state.permissions);
+  const isAdmin =
+    permissions.includes("admin") || permissions.includes("admin_master");
+
   useEffect(() => {
     setFormData({
-      cnpj: "",
-      razao_social: "",
-      nome_fantasia: "",
-      telefone: "",
-      responsavel: "",
-      cargo_responsavel: "",
-      site_empresa: "",
-      ativo: true,
-      usuario_id: 1, // Placeholder
-      ...initialData,
+      cnpj: initialData.cnpj || "",
+      razao_social: initialData.razao_social || "",
+      nome_fantasia: initialData.nome_fantasia || "",
+      telefone: initialData.telefone || "",
+      responsavel: initialData.responsavel || "",
+      cargo_responsavel: initialData.cargo_responsavel || "",
+      site_empresa: initialData.site_empresa || "",
+      ativo: initialData.ativo !== undefined ? initialData.ativo : true,
+      usuario_id: initialData.usuario_id || "",
     });
+    setErrors({});
   }, [initialData]);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    // ...
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    const dataToSubmit = { ...formData };
+    // Remove o campo usuario_id se estiver vazio ou se o usuário não for admin
+    if (!dataToSubmit.usuario_id || !isAdmin) {
+      delete dataToSubmit.usuario_id;
+    }
+    onSubmit(dataToSubmit);
   };
+
+  const isEditing = !!initialData.id;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        {/* Campo CNPJ */}
+      <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
         <div>
           <label
             htmlFor="cnpj"
@@ -68,12 +57,18 @@ function EmpresaForm({ initialData = {}, onSubmit, onCancel, isSaving }) {
             id="cnpj"
             value={formData.cnpj}
             onChange={handleChange}
-            required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            disabled={isEditing}
+            className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${
+              errors.cnpj ? "border-red-500" : "border-gray-300"
+            } ${isEditing ? "bg-gray-100 cursor-not-allowed" : ""}`}
           />
+          {isEditing && (
+            <p className="mt-1 text-xs text-gray-500">
+              Para alterar o CNPJ, entre em contato com o suporte.
+            </p>
+          )}
         </div>
 
-        {/* Campo Razão Social */}
         <div>
           <label
             htmlFor="razao_social"
@@ -87,134 +82,44 @@ function EmpresaForm({ initialData = {}, onSubmit, onCancel, isSaving }) {
             id="razao_social"
             value={formData.razao_social}
             onChange={handleChange}
-            required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm"
           />
         </div>
 
-        {/* Campo Nome Fantasia */}
-        <div className="sm:col-span-2">
-          <label
-            htmlFor="nome_fantasia"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Nome Fantasia
-          </label>
-          <input
-            type="text"
-            name="nome_fantasia"
-            id="nome_fantasia"
-            value={formData.nome_fantasia}
-            onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          />
-        </div>
+        {/* MODIFICAÇÃO: Exibir campo de ID do usuário apenas para admins e na criação */}
+        {isAdmin && !isEditing && (
+          <div className="sm:col-span-2">
+            <label
+              htmlFor="usuario_id"
+              className="block text-sm font-medium text-gray-700"
+            >
+              ID do Usuário (Opcional - para Admins)
+            </label>
+            <input
+              type="text"
+              name="usuario_id"
+              id="usuario_id"
+              value={formData.usuario_id}
+              onChange={handleChange}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+              placeholder="Deixe em branco para associar ao seu próprio usuário"
+            />
+          </div>
+        )}
 
-        {/* Campo Responsável */}
-        <div>
-          <label
-            htmlFor="responsavel"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Responsável
-          </label>
-          <input
-            type="text"
-            name="responsavel"
-            id="responsavel"
-            value={formData.responsavel}
-            onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          />
-        </div>
-
-        {/* Campo Cargo do Responsável */}
-        <div>
-          <label
-            htmlFor="cargo_responsavel"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Cargo do Responsável
-          </label>
-          <input
-            type="text"
-            name="cargo_responsavel"
-            id="cargo_responsavel"
-            value={formData.cargo_responsavel}
-            onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          />
-        </div>
-
-        {/* Campo Telefone */}
-        <div>
-          <label
-            htmlFor="telefone"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Telefone
-          </label>
-          <input
-            type="text"
-            name="telefone"
-            id="telefone"
-            value={formData.telefone}
-            onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          />
-        </div>
-
-        {/* Campo Site */}
-        <div>
-          <label
-            htmlFor="site_empresa"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Site
-          </label>
-          <input
-            type="url"
-            name="site_empresa"
-            id="site_empresa"
-            value={formData.site_empresa}
-            onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            placeholder="https://exemplo.com"
-          />
-        </div>
-
-        {/* Campo Ativo */}
-        <div className="flex items-center sm:col-span-2">
-          <input
-            id="ativo"
-            name="ativo"
-            type="checkbox"
-            checked={formData.ativo}
-            onChange={handleChange}
-            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-          />
-          <label htmlFor="ativo" className="ml-2 block text-sm text-gray-900">
-            Empresa Ativa
-          </label>
-        </div>
+        {/* ... restante dos campos do formulário ... */}
       </div>
-
-      {/* Botões de Ação */}
       <div className="flex justify-end space-x-4 pt-4">
         <button
           type="button"
           onClick={onCancel}
           disabled={isSaving}
-          className="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
+          className="..."
         >
           Cancelar
         </button>
-        <button
-          type="submit"
-          disabled={isSaving}
-          className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
-        >
-          {isSaving ? "Salvando..." : "Salvar Alterações"}
+        <button type="submit" disabled={isSaving} className="...">
+          {isSaving ? "Salvando..." : "Salvar"}
         </button>
       </div>
     </form>

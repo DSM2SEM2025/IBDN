@@ -14,6 +14,28 @@ export const listarTodosSelos = async () => {
     }
 };
 
+// NEW: Function to get seals for a specific company
+export const getSelosByEmpresa = async (empresaId) => {
+    try {
+        const response = await api.get(`/selos/por-empresa/${empresaId}`);
+        return response.data;
+    } catch (error) {
+        console.error(`Erro ao buscar selos para a empresa ${empresaId}:`, error.response?.data || error.message);
+        throw error;
+    }
+}
+
+// NEW: Function to get all pending seal solicitations
+export const getSolicitacoesSelo = async () => {
+    try {
+        const response = await api.get('/selos/solicitacoes');
+        return response.data;
+    } catch (error) {
+        console.error('Erro ao listar solicitações de selo:', error.response?.data || error.message);
+        throw error;
+    }
+}
+
 /**
  * Aprova um selo específico.
  * @param {number} seloId - O ID do selo a ser aprovado.
@@ -21,6 +43,7 @@ export const listarTodosSelos = async () => {
  */
 export const aprovarSelo = async (seloId) => {
     try {
+        // MODIFIED: Endpoint permission changed to admin/admin_master
         const response = await api.put(`/selos/aprovar/${seloId}`);
         return response.data;
     } catch (error) {
@@ -36,7 +59,8 @@ export const aprovarSelo = async (seloId) => {
  */
 export const solicitarRenovacaoSelo = async (seloId) => {
     try {
-        const response = await api.put(`/selos/solicitar-renovacao/${seloId}/`);
+        // Corrected the endpoint to match the backend route
+        const response = await api.put(`/selos/solicitar_renovacao/${seloId}/`);
         return response.data;
     } catch (error) {
         console.error(`Erro ao solicitar renovação para o selo ${seloId}:`, error.response?.data || error.message);
@@ -52,6 +76,7 @@ export const solicitarRenovacaoSelo = async (seloId) => {
  */
 export const associarSeloAEmpresa = async (idEmpresa, dadosAssociacao) => {
     try {
+        // MODIFIED: Endpoint permission changed to admin/admin_master
         const response = await api.post(`/selos/${idEmpresa}/associar`, dadosAssociacao);
         return response.data;
     } catch (error) {

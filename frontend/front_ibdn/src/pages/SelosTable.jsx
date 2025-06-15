@@ -1,95 +1,166 @@
-import React, { useState, useEffect } from "react";
-import * as seloService from "../services/seloService";
-import SelosTable from "../components/SelosTable";
+import React from "react";
 
-const LoadingSpinner = () => (
-  <div className="flex justify-center items-center p-10">
-    <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-indigo-600"></div>
-  </div>
+// --- Ícones SVG ---
+const ApproveIcon = (props) => (
+  <svg
+    {...props}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+    ></path>
+  </svg>
 );
 
-function SelosPage() {
-  const [selos, setSelos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const RenewIcon = (props) => (
+  <svg
+    {...props}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M4 4v5h5M20 20v-5h-5M4 4l5 5M20 20l-5-5"
+    ></path>
+  </svg>
+);
 
-  // Função para carregar ou recarregar os dados da tabela
-  const fetchSelos = async () => {
-    try {
-      setLoading(true);
-      const data = await seloService.listarTodosSelos();
-      // A API pode retornar um objeto com uma chave, vamos garantir que estamos a passar um array
-      setSelos(Array.isArray(data) ? data : []);
-      setError(null);
-    } catch (err) {
-      setError(
-        "Falha ao carregar os dados dos selos. Tente novamente mais tarde."
-      );
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchSelos();
-  }, []);
-
-  // --- Funções para as Ações ---
-  const handleApprove = async (seloId) => {
-    if (window.confirm("Tem a certeza que deseja aprovar este selo?")) {
-      try {
-        await seloService.aprovarSelo(seloId);
-        await fetchSelos(); // Recarrega a lista para mostrar o novo status
-      } catch (err) {
-        alert("Ocorreu um erro ao aprovar o selo.");
-      }
-    }
-  };
-
-  const handleRenew = async (seloId) => {
-    if (
-      window.confirm(
-        "Tem a certeza que deseja solicitar a renovação para este selo?"
-      )
-    ) {
-      try {
-        await seloService.solicitarRenovacaoSelo(seloId);
-        alert("Pedido de renovação enviado com sucesso!");
-        await fetchSelos();
-      } catch (err) {
-        alert("Ocorreu um erro ao solicitar a renovação.");
-      }
-    }
-  };
-
-  const renderContent = () => {
-    if (loading) return <LoadingSpinner />;
-    if (error)
-      return (
-        <div className="text-center p-10 bg-red-100 text-red-700 rounded-lg shadow">
-          <h3 className="text-lg font-semibold">{error}</h3>
-        </div>
-      );
+/**
+ * Componente para exibir uma tabela de selos.
+ * @param {Object} props
+ * @param {Array} props.selos - A lista de selos a ser exibida (já formatada).
+ * @param {Function} props.onApprove - Função para aprovar um selo.
+ * @param {Function} props.onRenew - Função para solicitar renovação de um selo.
+ */
+function SelosTable({ selos, onApprove, onRenew }) {
+  if (!selos || selos.length === 0) {
     return (
-      <SelosTable
-        selos={selos}
-        onApprove={handleApprove}
-        onRenew={handleRenew}
-      />
+      <div className="text-center p-10 bg-white rounded-lg shadow">
+        <h3 className="text-lg font-semibold text-gray-700">
+          Nenhum selo encontrado
+        </h3>
+        <p className="mt-1 text-sm text-gray-500">
+          Nenhum selo foi associado a uma empresa ainda.
+        </p>
+      </div>
     );
+  }
+
+  const getStatusClass = (status) => {
+    switch (status) {
+      case "ativo":
+        return "bg-green-100 text-green-800";
+      case "pendente":
+        return "bg-yellow-100 text-yellow-800";
+      case "expirado":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Gerir Selos</h1>
-        {/* O botão para adicionar selo será implementado na página de empresas */}
-      </div>
-
-      {renderContent()}
+    <div className="overflow-x-auto bg-white rounded-lg shadow">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th
+              scope="col"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Empresa
+            </th>
+            <th
+              scope="col"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Código do Selo
+            </th>
+            <th
+              scope="col"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Status
+            </th>
+            <th
+              scope="col"
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Validade
+            </th>
+            <th scope="col" className="relative px-6 py-3">
+              <span className="sr-only">Ações</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {selos.map((selo) => (
+            <tr key={selo.id} className="hover:bg-gray-50 transition-colors">
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="text-sm font-medium text-gray-900">
+                  {selo.empresa.razao_social}
+                </div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="text-sm text-gray-500 font-mono">
+                  {selo.codigo}
+                </div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <span
+                  className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(
+                    selo.status
+                  )}`}
+                >
+                  {selo.status}
+                </span>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="text-sm text-gray-900">
+                  Expira em: {selo.data_validade}
+                </div>
+                <div className="text-sm text-gray-500">
+                  Emitido em: {selo.data_emissao}
+                </div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <div className="flex items-center justify-end space-x-4">
+                  {selo.status === "pendente" && (
+                    <button
+                      onClick={() => onApprove(selo.id)}
+                      className="text-green-600 hover:text-green-900"
+                      title="Aprovar Selo"
+                    >
+                      <ApproveIcon className="w-5 h-5" />
+                    </button>
+                  )}
+                  {selo.status === "expirado" && (
+                    <button
+                      onClick={() => onRenew(selo.id)}
+                      className="text-blue-600 hover:text-blue-900"
+                      title="Solicitar Renovação"
+                    >
+                      <RenewIcon className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-export default SelosPage;
+export default SelosTable;

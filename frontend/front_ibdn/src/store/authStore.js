@@ -1,15 +1,24 @@
-import { create } from 'zustand'; // Correção: Importando como um módulo nomeado
+import { create } from 'zustand';
+import { jwtDecode } from 'jwt-decode'; // Precisaremos de uma biblioteca para decodificar o token
 
 const useAuthStore = create((set) => ({
     token: null,
     isAuthenticated: false,
-    // Ação para fazer login: salva o token e atualiza o estado de autenticação
+    permissions: [], // NOVO: Estado para armazenar as permissões
+    // Ação para fazer login: salva o token e extrai as permissões
     login: (token) => {
-        console.log("Salvando token na store:", token);
-        set({ token, isAuthenticated: true });
+        try {
+            const decodedToken = jwtDecode(token);
+            const permissions = decodedToken.permissoes || [];
+            console.log("Salvando token e permissões:", permissions);
+            set({ token, isAuthenticated: true, permissions });
+        } catch (error) {
+            console.error("Token inválido:", error);
+            set({ token: null, isAuthenticated: false, permissions: [] });
+        }
     },
-    // Ação para fazer logout: limpa o token e o estado de autenticação
-    logout: () => set({ token: null, isAuthenticated: false }),
+    // Ação para fazer logout: limpa tudo
+    logout: () => set({ token: null, isAuthenticated: false, permissions: [] }),
 }));
 
 export default useAuthStore;

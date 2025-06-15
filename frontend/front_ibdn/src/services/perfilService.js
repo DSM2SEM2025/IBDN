@@ -30,13 +30,14 @@ export const criarPerfil = async (dadosPerfil) => {
 };
 
 /**
- * Atualiza os dados de um perfil existente.
+ * Atualiza os dados de um perfil existente, incluindo suas permissões.
  * @param {string} perfilId - O ID do perfil a ser atualizado.
- * @param {Object} dadosAtualizacao - Os dados a serem atualizados (ex: { nome }).
+ * @param {Object} dadosAtualizacao - Os dados a serem atualizados (ex: { nome, permissoes_ids: [...] }).
  * @returns {Promise<Object>} Os dados do perfil atualizado.
  */
 export const atualizarPerfil = async (perfilId, dadosAtualizacao) => {
     try {
+        // Esta função agora pode atualizar tanto o nome quanto as permissões em uma única chamada.
         const response = await api.put(`/perfis/${perfilId}`, dadosAtualizacao);
         return response.data;
     } catch (error) {
@@ -59,6 +60,9 @@ export const deletarPerfil = async (perfilId) => {
         throw error;
     }
 };
+
+// As funções abaixo (adicionar/remover) ainda podem ser úteis para outras funcionalidades,
+// mas não são mais necessárias para a lógica do formulário principal de gestão de permissões.
 
 /**
  * Adiciona uma permissão a um perfil específico.

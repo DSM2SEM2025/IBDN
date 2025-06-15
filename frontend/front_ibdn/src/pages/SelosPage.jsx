@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import * as seloService from "../services/seloService";
 import SelosTable from "../components/SelosTable";
 
@@ -7,6 +7,22 @@ const LoadingSpinner = () => (
     <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-indigo-600"></div>
   </div>
 );
+
+// Helper para formatar a data string (YYYY-MM-DD) para o formato local (DD/MM/YYYY).
+const formatDate = (dateString) => {
+  if (!dateString) return "-";
+  try {
+    const date = new Date(dateString);
+    // Adiciona o fuso horário para corrigir a exibição da data que vem como UTC
+    const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString(
+      "pt-BR"
+    );
+  } catch (error) {
+    console.error("Data inválida:", dateString, error);
+    return "Inválida";
+  }
+};
 
 function SelosPage() {
   const [selos, setSelos] = useState([]);
@@ -18,8 +34,8 @@ function SelosPage() {
     try {
       setLoading(true);
       const data = await seloService.listarTodosSelos();
-      // A API pode retornar um objeto com uma chave, vamos garantir que estamos a passar um array
-      setSelos(Array.isArray(data) ? data : []);
+      // A API pode retornar um objeto com uma chave `dados`
+      setSelos(Array.isArray(data.dados) ? data.dados : []);
       setError(null);
     } catch (err) {
       setError(
@@ -34,6 +50,21 @@ function SelosPage() {
   useEffect(() => {
     fetchSelos();
   }, []);
+
+  // Mapeia os dados da API para um formato ideal para a tabela de visualização
+  // useMemo evita que o mapeamento seja refeito a cada renderização, apenas quando `selos` mudar.
+  const selosMapeados = useMemo(() => {
+    return selos.map((selo) => ({
+      id: selo.id,
+      codigo: selo.codigo_selo,
+      status: selo.status,
+      empresa: {
+        razao_social: selo.razao_social || "N/A",
+      },
+      data_emissao: formatDate(selo.data_emissao),
+      data_validade: formatDate(selo.data_expiracao),
+    }));
+  }, [selos]);
 
   // --- Funções para as Ações ---
   const handleApprove = async (seloId) => {
@@ -73,7 +104,7 @@ function SelosPage() {
       );
     return (
       <SelosTable
-        selos={selos}
+        selos={selosMapeados} // Passa os dados já mapeados para a tabela
         onApprove={handleApprove}
         onRenew={handleRenew}
       />

@@ -1,31 +1,32 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { login } from "../services/authService"; // 1. Importar o serviço de login
-import useAuthStore from "../store/authStore"; // 2. Importar a store de autenticação
+import { login as authServiceLogin } from "../services/authService";
+import useAuthStore from "../store/authStore";
 
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(""); // Estado para mensagens de erro
-  const navigate = useNavigate(); // Hook para navegação
-  const authLogin = useAuthStore((state) => state.login); // Ação de login da store
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const loginToStore = useAuthStore((state) => state.login);
 
-  // 3. Atualizar a função para ser assíncrona e chamar a API
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError(""); // Limpa erros anteriores
+    setError("");
 
     try {
-      const data = await login(email, password); // Chama a função da API
-      authLogin(data.access_token); // Salva o token no estado global
-      navigate("/"); // Redireciona para a página inicial em caso de sucesso
+      const data = await authServiceLogin(email, password);
+      // MODIFICAÇÃO: Passar o token completo para a store
+      loginToStore(data.access_token);
+      navigate("/");
     } catch (err) {
-      // Define uma mensagem de erro amigável em caso de falha
       setError("Falha na autenticação. Verifique seu e-mail e senha.");
       console.error(err);
     }
   };
 
+  // ... (o resto do componente JSX permanece o mesmo)
+  // ...
   return (
     <main className="flex items-center justify-center min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-md p-8 space-y-6 bg-white sm:rounded-xl sm:shadow-lg">
@@ -39,7 +40,6 @@ function LoginPage() {
         </div>
 
         <form className="space-y-6" onSubmit={handleSubmit}>
-          {/* Campo de Email */}
           <div>
             <label
               htmlFor="email"
@@ -62,7 +62,6 @@ function LoginPage() {
             </div>
           </div>
 
-          {/* Campo de Senha */}
           <div>
             <label
               htmlFor="password"
@@ -85,14 +84,12 @@ function LoginPage() {
             </div>
           </div>
 
-          {/* Exibição de Erro */}
           {error && (
             <div className="p-3 text-sm text-red-700 bg-red-100 border border-red-400 rounded-md">
               {error}
             </div>
           )}
 
-          {/* Botão de Login */}
           <div>
             <button
               type="submit"
