@@ -1,17 +1,47 @@
 import mysql.connector
-from typing import Dict, Any
-from app.database.connection import get_db_connection # Sua função de conexão
-from app.models.empresas_model import EmpresaCreate
+from typing import List, Dict, Any, Optional
+from app.database.connection import get_db_connection
+from app.models.empresas_model import Empresa, EmpresaCreate, EmpresaUpdate
 
-async def criar_nova_empresa(empresa: EmpresaCreate, usuario_id: int) -> int:
+
+def repo_get_empresa_by_id(empresa_id: int) -> Optional[Dict[str, Any]]:
+    """Busca uma empresa pelo seu ID."""
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT * FROM empresa WHERE id = %s", (empresa_id,))
+        return cursor.fetchone()
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def repo_get_all_empresas() -> List[Dict[str, Any]]:
+    """Busca todas as empresas ativas."""
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT * FROM empresa WHERE ativo = TRUE")
+        return cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# Removido o 'async'
+def repo_criar_nova_empresa(empresa: EmpresaCreate, usuario_id: str) -> int:
     """
     Insere uma nova empresa no banco de dados.
-    Esta função só lida com a lógica de banco de dados.
     """
-    conn = None
+    conn = get_db_connection()
+    cursor = conn.cursor()
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM empresa WHERE cnpj = %s",
+                       (empresa.cnpj,))
+        if cursor.fetchone():
+            raise mysql.connector.Error(
+                errno=1062, msg=f"CNPJ '{empresa.cnpj}' já cadastrado.")
+
         sql = """
             INSERT INTO empresa(
             cnpj, razao_social, nome_fantasia,
@@ -24,7 +54,7 @@ async def criar_nova_empresa(empresa: EmpresaCreate, usuario_id: int) -> int:
             empresa.cnpj,
             empresa.razao_social,
             empresa.nome_fantasia,
-            usuario_id, # Usamos o ID que o controller validou
+            usuario_id,
             empresa.telefone,
             empresa.responsavel,
             empresa.cargo_responsavel,
@@ -35,8 +65,51 @@ async def criar_nova_empresa(empresa: EmpresaCreate, usuario_id: int) -> int:
         conn.commit()
         return cursor.lastrowid
     except mysql.connector.Error as err:
-        # Relança o erro para ser tratado pelo controller
-        raise Exception(f"Erro de banco de dados: {err}")
+        conn.rollback()
+        raise Exception(f"Erro de banco de dados: {err.msg}")
+    finally:
+        if conn and conn.is_connected():
+            cursor.close()
+            conn.close()
+
+
+def repo_update_empresa(empresa_id: int, update_data: EmpresaUpdate) -> bool:
+    """Atualiza os dados de uma empresa no banco."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        update_fields = update_data.model_dump(exclude_unset=True)
+        if not update_fields:
+            return True
+
+        set_clause = ", ".join([f"{key} = %s" for key in update_fields.keys()])
+        sql = f"UPDATE empresa SET {set_clause} WHERE id = %s"
+        values = list(update_fields.values()) + [empresa_id]
+
+        cursor.execute(sql, tuple(values))
+        conn.commit()
+        return cursor.rowcount > 0
+    except mysql.connector.Error as err:
+        conn.rollback()
+        raise Exception(f"Erro de banco de dados ao atualizar empresa: {err}")
+    finally:
+        if conn and conn.is_connected():
+            cursor.close()
+            conn.close()
+
+
+def repo_delete_empresa(empresa_id: int) -> bool:
+    """Realiza a exclusão lógica (inativação) de uma empresa."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        sql = "UPDATE empresa SET ativo = FALSE WHERE id = %s AND ativo = TRUE"
+        cursor.execute(sql, (empresa_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+    except mysql.connector.Error as err:
+        conn.rollback()
+        raise Exception(f"Erro de banco de dados ao inativar empresa: {err}")
     finally:
         if conn and conn.is_connected():
             cursor.close()

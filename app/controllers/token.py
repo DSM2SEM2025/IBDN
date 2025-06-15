@@ -1,8 +1,8 @@
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel
-from typing import Optional
-import jwt 
+from pydantic import BaseModel, ValidationError
+from typing import Optional, List
+import jwt
 from datetime import datetime, timedelta, timezone
 
 security = HTTPBearer()
@@ -12,14 +12,22 @@ ALGORITHM = "HS256"
 
 
 class TokenPayLoad(BaseModel):
+    """
+    Define a estrutura de dados (payload) contida dentro do token JWT.
+    """
     email: str
-    permissoes: Optional[str] = None
-    usuario_id: Optional[int] = None
+    # CORREÇÃO: O ID do usuário é uma string (UUID), não um inteiro.
+    usuario_id: str
+    empresa_id: Optional[int] = None
+    permissoes: List[str] = []
     iat: int
     exp: int
 
 
-def verificar_token(token) -> dict:
+def verificar_token(token: str) -> dict:
+    """
+    Decodifica e valida um token JWT.
+    """
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
@@ -31,28 +39,41 @@ def verificar_token(token) -> dict:
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido")
 
 
-def gerar_token(email: str, permissoes: list, usuario_id: Optional[int] = None) -> str:
+def gerar_token(email: str, usuario_id: str, permissoes: List[str], empresa_id: Optional[int] = None) -> str:
+    """
+    Gera um novo token JWT para um usuário.
+    CORREÇÃO: A assinatura da função agora aceita usuario_id como string.
+    """
     payload = {
         'email': email,
         'usuario_id': usuario_id,
+        'empresa_id': empresa_id,
+        'permissoes': permissoes,
         'iat': datetime.now(timezone.utc),
         'exp': datetime.now(timezone.utc) + timedelta(days=1),
-        "permissoes": permissoes,
     }
     jwt_token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
     print(f"Token gerado para o usuário {email}: {jwt_token}")
     return jwt_token
 
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> TokenPayLoad:
+    """
+    Dependência FastAPI para obter o usuário atual a partir do token no header.
+    """
     token = credentials.credentials
     try:
         payload = verificar_token(token)
         token_data = TokenPayLoad(**payload)
         return token_data
-    except Exception as e:
-        if isinstance(e, HTTPException):
-            raise e
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Token malformado ou com dados inválidos: {e.errors()}"
+        )
+    except HTTPException as e:
+        raise e
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Não foi possível validar as credenciais"
@@ -61,52 +82,20 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 
 def require_permission(*permissoes_necessarias: str):
     """
-    Fábrica de dependências que aceita MÚLTIPLAS permissões e verifica 
-    se o usuário possui PELO MENOS UMA delas.
-
-    Args:
-        *permissoes_necessarias (str): Uma ou mais strings de permissão.
-                                        Ex: require_permission("admin", "empresa")
+    Fábrica de dependências para verificar permissões.
     """
-    def permission_checker(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
-        token = credentials.credentials
-        try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            permissoes_usuario = payload.get("permissoes", []) # Esta é a LISTA de permissões do usuário
+    def permission_checker(current_user: TokenPayLoad = Depends(get_current_user)) -> dict:
+        permissoes_usuario = set(current_user.permissoes)
+        permissoes_requeridas = set(permissoes_necessarias)
 
-            if not isinstance(permissoes_usuario, list):
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Formato de permissões inválido no token."
-                )
+        if "*" in permissoes_usuario or "admin_master" in permissoes_usuario:
+            return current_user.model_dump()
 
-            # --- A LÓGICA DO 'IF' CORRIGIDA PARA LISTAS ---
-
-            # 1. Checa se o usuário é um super admin com permissão coringa ("*")
-            if "*" in permissoes_usuario:
-                return payload # Se for, libera o acesso imediatamente.
-
-            # 2. Converte as duas listas para 'sets' para uma verificação eficiente.
-            permissoes_usuario_set = set(permissoes_usuario)
-            # 'permissoes_necessarias' aqui é um tuple, ex: ("admin", "empresa")
-            permissoes_necessarias_set = set(permissoes_necessarias)
-
-            # 3. O 'if' agora checa se não há NENHUM item em comum entre os dois sets.
-            #    A função .isdisjoint() faz exatamente isso e é muito rápida.
-            if permissoes_usuario_set.isdisjoint(permissoes_necessarias_set):
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Você não tem permissão para executar esta ação."
-                )
-            
-            # Se chegou até aqui, o usuário tem pelo menos uma das permissões necessárias.
-            return payload
-
-        except (jwt.PyJWTError, AttributeError):
-             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Não foi possível validar as credenciais.",
-                headers={"WWW-Authenticate": "Bearer"},
+        if permissoes_usuario.isdisjoint(permissoes_requeridas):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Você não tem permissão para executar esta ação."
             )
-    
+        return current_user.model_dump()
+
     return permission_checker
