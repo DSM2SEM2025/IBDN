@@ -34,7 +34,7 @@ Siga os passos abaixo para colocar o projeto em funcionamento.
 ### 1. Clonar o Repositório
 
 ```bash
-git clone (https://github.com/DSM2SEM2025/IBDN.git)
+git clone https://github.com/DSM2SEM2025/IBDN.git
 cd IBDN
 ```
 
