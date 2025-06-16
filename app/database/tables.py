@@ -1,13 +1,11 @@
-import datetime
-import json
+# teste_1/back/app/database/tables.py
 import logging
 import os
-import socket
-
 import mysql.connector
 from mysql.connector import Error
-# Supondo que esta função retorne o dict de config
 from app.database.config import get_db_config
+from app.security.password import get_password_hash
+from uuid import uuid4
 
 
 def setup_logging():
@@ -19,7 +17,6 @@ def setup_logging():
         os.makedirs(log_dir)
 
     log_file = os.path.join(log_dir, 'database.log')
-    # Remove handlers antigos para evitar duplicação de logs se a função for chamada múltiplas vezes
     for handler in logging.root.handlers[:]:
         logging.root.removeHandler(handler)
 
@@ -37,10 +34,8 @@ def setup_logging():
 def create_tables():
     """Conecta ao banco de dados e cria todas as tabelas na ordem correta."""
     logger = setup_logging()
-    logger.info("Iniciando a inicialização do banco de dados")
+    logger.info("Iniciando a criação das tabelas do banco de dados")
     connection = None
-    cursor = None
-
     try:
         config = get_db_config()
         logger.info("Conectando ao banco de dados...")
@@ -50,205 +45,139 @@ def create_tables():
 
         tables = {}
 
-        # --- DEFINIÇÃO DE TABELAS ---
-
+        # --- DEFINIÇÃO DE TABELAS (COM FORMATAÇÃO PADRONIZADA) ---
         tables['ibdn_permissoes'] = """
-        CREATE TABLE IF NOT EXISTS ibdn_permissoes (
-            id CHAR(40) PRIMARY KEY,
-            nome VARCHAR(100) NOT NULL UNIQUE
-        ) ENGINE=InnoDB;
+            CREATE TABLE IF NOT EXISTS ibdn_permissoes (
+                id CHAR(40) PRIMARY KEY,
+                nome VARCHAR(100) NOT NULL UNIQUE
+            ) ENGINE=InnoDB;
         """
-
         tables['ibdn_perfis'] = """
-        CREATE TABLE IF NOT EXISTS ibdn_perfis (
-            id CHAR(40) PRIMARY KEY,
-            nome VARCHAR(50) NOT NULL UNIQUE
-        ) ENGINE=InnoDB;
+            CREATE TABLE IF NOT EXISTS ibdn_perfis (
+                id CHAR(40) PRIMARY KEY,
+                nome VARCHAR(50) NOT NULL UNIQUE
+            ) ENGINE=InnoDB;
         """
-
         tables['ibdn_perfil_permissoes'] = """
-        CREATE TABLE IF NOT EXISTS ibdn_perfil_permissoes (
-            perfil_id CHAR(40),
-            permissao_id CHAR(40),
-            PRIMARY KEY (perfil_id, permissao_id),
-            FOREIGN KEY (perfil_id) REFERENCES ibdn_perfis(id) ON DELETE CASCADE,
-            FOREIGN KEY (permissao_id) REFERENCES ibdn_permissoes(id) ON DELETE CASCADE
-        ) ENGINE=InnoDB;
+            CREATE TABLE IF NOT EXISTS ibdn_perfil_permissoes (
+                perfil_id CHAR(40),
+                permissao_id CHAR(40),
+                PRIMARY KEY (perfil_id, permissao_id),
+                FOREIGN KEY (perfil_id) REFERENCES ibdn_perfis(id) ON DELETE CASCADE,
+                FOREIGN KEY (permissao_id) REFERENCES ibdn_permissoes(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB;
         """
-
         tables['ibdn_usuarios'] = """
-        CREATE TABLE IF NOT EXISTS ibdn_usuarios (
-            id CHAR(40) PRIMARY KEY,
-            nome VARCHAR(255) NOT NULL,
-            email VARCHAR(255) NOT NULL UNIQUE,
-            senha_hash VARCHAR(255) NOT NULL,
-            perfil_id CHAR(40) NULL,
-            ativo TINYINT(1) DEFAULT 1,
-            twofactor TINYINT(1) DEFAULT 0,
-            FOREIGN KEY (perfil_id) REFERENCES ibdn_perfis(id) ON DELETE SET NULL
-        ) ENGINE=InnoDB;
+            CREATE TABLE IF NOT EXISTS ibdn_usuarios (
+                id CHAR(40) PRIMARY KEY,
+                nome VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL UNIQUE,
+                senha_hash VARCHAR(255) NOT NULL,
+                perfil_id CHAR(40) NULL,
+                ativo TINYINT(1) DEFAULT 1,
+                twofactor TINYINT(1) DEFAULT 0,
+                FOREIGN KEY (perfil_id) REFERENCES ibdn_perfis(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB;
         """
-
-        tables['empresa'] = """
-        CREATE TABLE IF NOT EXISTS empresa (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            cnpj VARCHAR(18) NOT NULL UNIQUE,
-            razao_social VARCHAR(255) NOT NULL,
-            nome_fantasia VARCHAR(255),
-            usuario_id CHAR(40) NOT NULL UNIQUE,
-            telefone VARCHAR(20),
-            responsavel VARCHAR(100),
-            cargo_responsavel VARCHAR(100),
-            site_empresa VARCHAR(255),
-            data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            ativo BOOLEAN DEFAULT TRUE,
-            FOREIGN KEY (usuario_id) REFERENCES ibdn_usuarios(id)
-        ) ENGINE=InnoDB;
-        """
-
         tables['ramo'] = """
-        CREATE TABLE IF NOT EXISTS ramo (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            nome VARCHAR(100) NOT NULL UNIQUE,
-            descricao TEXT
-        ) ENGINE=InnoDB;
+            CREATE TABLE IF NOT EXISTS ramo (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nome VARCHAR(100) NOT NULL UNIQUE,
+                descricao TEXT
+            ) ENGINE=InnoDB;
         """
-
-        tables['tipo_rede_social'] = """
-        CREATE TABLE IF NOT EXISTS tipo_rede_social (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            nome VARCHAR(50) NOT NULL UNIQUE
-        ) ENGINE=InnoDB;
-        """
-
-        tables['endereco'] = """
-        CREATE TABLE IF NOT EXISTS endereco (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            id_empresa INT NOT NULL,
-            logradouro VARCHAR(255) NOT NULL,
-            bairro VARCHAR(100) NOT NULL,
-            cep VARCHAR(10) NOT NULL,
-            cidade VARCHAR(100) NOT NULL,
-            uf VARCHAR(2) NOT NULL,
-            complemento VARCHAR(255),
-            FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE
-        ) ENGINE=InnoDB;
-        """
-
-        tables['tipo_selo'] = """
-        CREATE TABLE IF NOT EXISTS tipo_selo (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            nome VARCHAR(100) NOT NULL,
-            descricao TEXT NOT NULL,
-            sigla VARCHAR(10) NOT NULL UNIQUE
-        ) ENGINE=InnoDB;
-        """
-
         tables['selo'] = """
-        CREATE TABLE IF NOT EXISTS selo (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            id_tipo_selo INT NOT NULL,
-            data_emissao DATE NOT NULL,
-            data_expiracao DATE NOT NULL,
-            codigo_selo VARCHAR(50) NOT NULL UNIQUE,
-            status VARCHAR(20) NOT NULL,
-            documentacao TEXT,
-            alerta_enviado BOOLEAN DEFAULT FALSE,
-            dias_alerta_previo INT DEFAULT 30,
-            FOREIGN KEY (id_tipo_selo) REFERENCES tipo_selo(id)
-        ) ENGINE=InnoDB;
+            CREATE TABLE IF NOT EXISTS selo (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nome VARCHAR(100) NOT NULL UNIQUE,
+                descricao TEXT,
+                validade_selo DATE
+            ) ENGINE=InnoDB;
         """
-
+        tables['ramo'] = """
+            CREATE TABLE IF NOT EXISTS ramo (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nome VARCHAR(100) NOT NULL UNIQUE,
+                descricao TEXT
+            ) ENGINE=InnoDB;
+        """
+        tables['selo'] = """
+            CREATE TABLE IF NOT EXISTS selo (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nome VARCHAR(100) NOT NULL UNIQUE,
+                sigla VARCHAR(3) NOT NULL UNIQUE,
+                descricao TEXT
+            ) ENGINE=InnoDB;
+        """
+        # ATUALIZAÇÃO: Removida a coluna 'ramo_id' para dar lugar à tabela de junção.
+        tables['empresa'] = """
+            CREATE TABLE IF NOT EXISTS empresa (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                cnpj VARCHAR(18) NOT NULL UNIQUE,
+                razao_social VARCHAR(255) NOT NULL,
+                nome_fantasia VARCHAR(255),
+                usuario_id CHAR(40) NOT NULL UNIQUE,
+                telefone VARCHAR(20),
+                responsavel VARCHAR(100),
+                cargo_responsavel VARCHAR(100),
+                site_empresa VARCHAR(255),
+                data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                ativo BOOLEAN DEFAULT TRUE,
+                ramo_id INT,
+                FOREIGN KEY (usuario_id) REFERENCES ibdn_usuarios(id) ON DELETE CASCADE,
+                FOREIGN KEY (ramo_id) REFERENCES ramo(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB;
+        """
+        tables['endereco'] = """
+            CREATE TABLE IF NOT EXISTS endereco (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                id_empresa INT NOT NULL,
+                logradouro VARCHAR(255) NOT NULL,
+                numero VARCHAR(20) NOT NULL,
+                bairro VARCHAR(100) NOT NULL,
+                cep VARCHAR(10) NOT NULL,
+                cidade VARCHAR(100) NOT NULL,
+                uf VARCHAR(2) NOT NULL,
+                complemento VARCHAR(255),
+                FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB;
+        """
+        
+        # ATUALIZAÇÃO: Tabela ajustada para corresponder ao último DER.
         tables['empresa_selo'] = """
-        CREATE TABLE IF NOT EXISTS empresa_selo (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            id_empresa INT NOT NULL,
-            id_selo INT NOT NULL,
-            UNIQUE (id_empresa, id_selo),
-            FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE,
-            FOREIGN KEY (id_selo) REFERENCES selo(id) ON DELETE CASCADE
-        ) ENGINE=InnoDB;
-        """
-
-        tables['alerta_expiracao_selo'] = """
-        CREATE TABLE IF NOT EXISTS alerta_expiracao_selo (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            id_selo INT NOT NULL,
-            data_envio DATE NOT NULL,
-            email_destino VARCHAR(255) NOT NULL,
-            email_enviado BOOLEAN DEFAULT FALSE,
-            conteudo_email TEXT,
-            status VARCHAR(20) NOT NULL,
-            FOREIGN KEY (id_selo) REFERENCES selo(id) ON DELETE CASCADE
-        ) ENGINE=InnoDB;
+            CREATE TABLE IF NOT EXISTS empresa_selo (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                id_empresa INT NOT NULL,
+                id_selo INT NOT NULL,
+                status VARCHAR(20),
+                data_emissao DATE,
+                data_expiracao DATE,
+                codigo_selo VARCHAR(50) UNIQUE,
+                documentacao TEXT,
+                alerta_enviado BOOLEAN,
+                dias_alerta_previo INT,
+                FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE,
+                FOREIGN KEY (id_selo) REFERENCES selo(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB;
         """
 
         tables['notificacao'] = """
-        CREATE TABLE IF NOT EXISTS notificacao (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            id_empresa INT NOT NULL,
-            mensagem TEXT NOT NULL,
-            data_envio DATETIME NOT NULL,
-            tipo VARCHAR(50) NOT NULL,
-            lida BOOLEAN DEFAULT FALSE,
-            FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE
-        ) ENGINE=InnoDB;
+            CREATE TABLE IF NOT EXISTS notificacao (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                id_empresa INT NOT NULL,
+                mensagem TEXT NOT NULL,
+                data_envio DATETIME NOT NULL,
+                tipo VARCHAR(50) NOT NULL,
+                lida BOOLEAN DEFAULT FALSE,
+                FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB;
         """
-
-        tables['log_acesso'] = """
-        CREATE TABLE IF NOT EXISTS log_acesso (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            id_usuario CHAR(40),
-            data_hora DATETIME NOT NULL,
-            operacao VARCHAR(50) NOT NULL,
-            tabela_afetada VARCHAR(50),
-            id_registro_afetado VARCHAR(255),
-            dados_anteriores JSON,
-            dados_novos JSON,
-            ip VARCHAR(45),
-            user_agent VARCHAR(255),
-            status VARCHAR(20) NOT NULL,
-            mensagem TEXT,
-            tempo_execucao INT,
-            FOREIGN KEY (id_usuario) REFERENCES ibdn_usuarios(id) ON DELETE SET NULL
-        ) ENGINE=InnoDB;
-        """
-
-        tables['log_auditoria'] = """
-        CREATE TABLE IF NOT EXISTS log_auditoria (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            id_usuario CHAR(40),
-            data_hora DATETIME NOT NULL,
-            tipo_evento ENUM('LOGIN', 'LOGOUT', 'TENTATIVA_LOGIN', 'ALTERACAO_PERMISSAO', 'EXCLUSAO', 'APROVACAO') NOT NULL,
-            descricao TEXT NOT NULL,
-            ip VARCHAR(45) NOT NULL,
-            user_agent VARCHAR(255),
-            status VARCHAR(20) NOT NULL,
-            FOREIGN KEY (id_usuario) REFERENCES ibdn_usuarios(id) ON DELETE SET NULL
-        ) ENGINE=InnoDB;
-        """
-
-        tables['log_erro'] = """
-        CREATE TABLE IF NOT EXISTS log_erro (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            data_hora DATETIME NOT NULL,
-            nivel ENUM('INFO', 'WARNING', 'ERROR', 'CRITICAL') NOT NULL,
-            origem VARCHAR(255) NOT NULL,
-            mensagem TEXT NOT NULL,
-            stack_trace TEXT,
-            id_usuario CHAR(40),
-            ip VARCHAR(45),
-            FOREIGN KEY (id_usuario) REFERENCES ibdn_usuarios(id) ON DELETE SET NULL
-        ) ENGINE=InnoDB;
-        """
-
+        
         table_creation_order = [
-            'ibdn_permissoes', 'ibdn_perfis', 'ramo', 'tipo_rede_social', 'tipo_selo',  # Nível 0
-            'ibdn_usuarios', 'selo', 'ibdn_perfil_permissoes',  # Nível 1
-            'empresa',  # Nível 2
-            'endereco', 'empresa_selo', 'notificacao',  # Nível 3
-            'alerta_expiracao_selo',  # Nível 4
-            'log_acesso', 'log_auditoria', 'log_erro'  # Nível 5 (Logs)
+            'ibdn_permissoes', 'ibdn_perfis', 'ramo', 'selo',
+            'ibdn_usuarios', 'ibdn_perfil_permissoes',
+            'empresa',
+            'endereco', 'empresa_selo', 'notificacao',
         ]
 
         logger.info("Iniciando a criação das tabelas na ordem correta...")
@@ -268,7 +197,7 @@ def create_tables():
         if connection:
             connection.rollback()
     finally:
-        if cursor:
+        if 'cursor' in locals() and cursor:
             cursor.close()
         if connection and connection.is_connected():
             connection.close()
@@ -299,127 +228,114 @@ def create_database_if_not_exists():
         if connection and connection.is_connected():
             connection.close()
 
-def create_admin_master_user():
-    """Cria o usuário administrador mestre padrão se não existir"""
+
+def create_initial_data():
+    """Cria os dados iniciais essenciais para o sistema, como perfis e o admin master."""
     logger = setup_logging()
-    logger.info("Verificando/Configurando usuário admin_master...")
-    
+    logger.info("Verificando/Configurando dados iniciais...")
+
+    connection = None
     try:
-        from app.repository.ibdn_permissions_repository import repo_create_ibdn_permissao
-        from app.repository.ibdn_profiles_repository import (
-            repo_create_ibdn_perfil,
-            repo_get_ibdn_perfil_by_id_with_permissions,
-            repo_add_permissao_to_perfil
-        )
-        from app.repository.ibdn_user_repository import (
-            repo_get_ibdn_usuario_by_email,
-            repo_create_ibdn_usuario
-        )
-        from app.security.password import get_password_hash
-        from app.models.ibdn_user_model import IbdnUsuarioCreate  
-        import os
-        from uuid import uuid4
-
-        admin_email = os.getenv('ADMIN_EMAIL')
-        admin_password = os.getenv('ADMIN_PASSWORD')
-        
-        if not admin_email or not admin_password:
-            error_msg = "Variáveis ADMIN_EMAIL e ADMIN_PASSWORD não configuradas. É obrigatório configurar estas variáveis."
-            logger.error(error_msg)
-            if os.getenv('ENVIRONMENT') == 'production':
-                raise ValueError(error_msg)
-            return
-
         config = get_db_config()
         connection = mysql.connector.connect(**config)
         cursor = connection.cursor(dictionary=True)
-        
-        try:
-            # 1. Verificar/Criar permissão admin_master
-            cursor.execute("SELECT id FROM ibdn_permissoes WHERE nome = 'admin_master'")
-            permissao = cursor.fetchone()
-            
-            if not permissao:
-                logger.info("Criando permissão admin_master...")
-                permissao_id = str(uuid4())
-                repo_create_ibdn_permissao({
-                    'id': permissao_id,
-                    'nome': 'admin_master'
-                })
-                logger.info(f"Permissão admin_master criada com ID: {permissao_id}")
-            else:
-                permissao_id = permissao['id']
-                logger.info(f"Permissão admin_master já existe com ID: {permissao_id}")
-            
-            # 2. Verificar/Criar perfil admin_master
-            cursor.execute("SELECT id FROM ibdn_perfis WHERE nome = 'admin_master'")
-            perfil = cursor.fetchone()
-            
-            if not perfil:
-                logger.info("Criando perfil admin_master...")
-                perfil_id = str(uuid4())
-                repo_create_ibdn_perfil({
-                    'id': perfil_id,
-                    'nome': 'admin_master'
-                }, [permissao_id])
-                logger.info(f"Perfil admin_master criado com ID: {perfil_id}")
-            else:
-                perfil_id = perfil['id']
-                logger.info(f"Perfil admin_master já existe com ID: {perfil_id}")
-                # Verificar se a permissão está associada ao perfil
-                cursor.execute(
-                    "SELECT 1 FROM ibdn_perfil_permissoes WHERE perfil_id = %s AND permissao_id = %s",
-                    (perfil_id, permissao_id)
-                )
-                if not cursor.fetchone():
-                    logger.info("Associando permissão admin_master ao perfil...")
-                    repo_add_permissao_to_perfil(perfil_id, permissao_id)
-                    logger.info("Permissão associada com sucesso.")
-            
-            # 3. Verificar/Criar usuário admin
-            usuario = repo_get_ibdn_usuario_by_email(admin_email)
-            if not usuario:
-                logger.info(f"Criando usuário admin_master com email {admin_email}...")
-                usuario_id = str(uuid4())
-                
-                usuario_data = IbdnUsuarioCreate(
-                    id=usuario_id,
-                    nome='Admin Master',
-                    email=admin_email,
-                    senha=admin_password,
-                    perfil_id=perfil_id,
-                    ativo=True,
-                    twofactor=False
-                )
-                
-                repo_create_ibdn_usuario(usuario_data)
-                logger.info(f"Usuário admin_master criado com sucesso! ID: {usuario_id}")
-            else:
-                logger.info(f"Usuário admin_master já existe com email {admin_email}. Verificando configuração...")
-                if usuario.get('perfil_id') != perfil_id:
-                    logger.warning(f"Usuário admin existe mas não tem o perfil correto. Atualizando...")
 
-                
-        except Exception as e:
-            logger.error(f"Erro durante a criação do admin_master: {str(e)}")
-            if connection:
-                connection.rollback()
-            raise
-        finally:
-            if cursor:
-                cursor.close()
-            if connection and connection.is_connected():
-                connection.close()
-                
-    except Exception as e:
-        logger.error(f"Erro ao configurar admin_master: {str(e)}")
-        raise
+        # 1. Criar Perfis Padrão
+        perfis_padrao = ["admin", "empresa", "admin_master"]
+        for nome_perfil in perfis_padrao:
+            cursor.execute(
+                "SELECT id FROM ibdn_perfis WHERE nome = %s", (nome_perfil,))
+            if not cursor.fetchone():
+                logger.info(f"Criando perfil '{nome_perfil}'...")
+                cursor.execute(
+                    "INSERT INTO ibdn_perfis (id, nome) VALUES (%s, %s)", (str(uuid4()), nome_perfil))
+
+        # 2. Criar Permissões Essenciais
+        permissoes_padrao = ["admin", "empresa", "admin_master"]
+        for nome_permissao in permissoes_padrao:
+            cursor.execute(
+                "SELECT id FROM ibdn_permissoes WHERE nome = %s", (nome_permissao,))
+            if not cursor.fetchone():
+                logger.info(f"Criando permissão '{nome_permissao}'...")
+                cursor.execute("INSERT INTO ibdn_permissoes (id, nome) VALUES (%s, %s)", (str(
+                    uuid4()), nome_permissao))
+
+        connection.commit()
+
+        # 3. Associar permissões aos seus respectivos perfis
+        perfis_e_permissoes = {
+            "admin_master": ["admin_master"],
+            "admin": ["admin"],
+            "empresa": ["empresa"]
+        }
+
+        for nome_perfil, permissoes_perfil in perfis_e_permissoes.items():
+            cursor.execute(
+                "SELECT id FROM ibdn_perfis WHERE nome = %s", (nome_perfil,))
+            perfil_id = cursor.fetchone()['id']
+
+            for nome_permissao in permissoes_perfil:
+                cursor.execute(
+                    "SELECT id FROM ibdn_permissoes WHERE nome = %s", (nome_permissao,))
+                permissao_id = cursor.fetchone()['id']
+
+                cursor.execute(
+                    "SELECT 1 FROM ibdn_perfil_permissoes WHERE perfil_id = %s AND permissao_id = %s", (perfil_id, permissao_id))
+                if not cursor.fetchone():
+                    cursor.execute(
+                        "INSERT INTO ibdn_perfil_permissoes (perfil_id, permissao_id) VALUES (%s, %s)", (perfil_id, permissao_id))
+                    logger.info(
+                        f"Permissão '{nome_permissao}' associada ao perfil '{nome_perfil}'.")
+
+        connection.commit()
+
+        # 4. Criar Usuário Admin Master
+        admin_email = os.getenv('ADMIN_EMAIL')
+        admin_password = os.getenv('ADMIN_PASSWORD')
+
+        if not admin_email or not admin_password:
+            logger.warning(
+                "Variáveis ADMIN_EMAIL e ADMIN_PASSWORD não configuradas. Admin master não será criado.")
+            return
+
+        cursor.execute(
+            "SELECT id FROM ibdn_usuarios WHERE email = %s", (admin_email,))
+        if not cursor.fetchone():
+            logger.info(
+                f"Criando usuário admin_master com email {admin_email}...")
+            usuario_id = str(uuid4())
+            senha_hash = get_password_hash(admin_password)
+
+            cursor.execute(
+                "SELECT id FROM ibdn_perfis WHERE nome = 'admin_master'")
+            perfil_master_id = cursor.fetchone()['id']
+
+            query = "INSERT INTO ibdn_usuarios (id, nome, email, senha_hash, perfil_id, ativo) VALUES (%s, %s, %s, %s, %s, 1)"
+            cursor.execute(query, (usuario_id, 'Admin Master',
+                                   admin_email, senha_hash, perfil_master_id))
+            logger.info(
+                f"Usuário admin_master criado com sucesso! ID: {usuario_id}")
+            connection.commit()
+        else:
+            logger.info(
+                f"Usuário admin_master com email {admin_email} já existe.")
+
+    except Error as e:
+        logger.error(f"Erro durante a configuração dos dados iniciais: {e}")
+        if connection:
+            connection.rollback()
+    finally:
+        if 'cursor' in locals() and cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
 
 
 if __name__ == "__main__":
     try:
         create_database_if_not_exists()
         create_tables()
+        create_initial_data()
         print("\nScript de inicialização do banco de dados concluído com sucesso.")
     except Exception as e:
         print(f"\nOcorreu um erro crítico durante a inicialização: {e}")

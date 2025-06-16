@@ -1,91 +1,90 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
-from typing import Optional
-from ..controllers.controller_selo import get_selos_por_empresas, retornar_empresas_com_selos_criados, remover_selos_expirados, controller_renovar_selo, controller_solicitar_renovacao, controller_expirar_selo_automatico, controller_associa_selo_empresa
-from ..models.selo_model import AssociacaoMultiplaRequest
-from app.controllers.token import require_permission
-from apscheduler.schedulers.background import BackgroundScheduler
-
-scheduler = BackgroundScheduler()
+# app/routers/routes_selo.py
+from fastapi import APIRouter, Depends, Path, status
+from typing import List
+from app.controllers import controller_selo as ctrl
+from app.models.selo_model import ConcederSeloRequest, SeloConcedido, SolicitarSeloRequest
+from app.controllers.token import require_permission, get_current_user, TokenPayLoad
 
 router = APIRouter(
-    prefix="/selos",
-    tags=["Selos"],
+    # O prefixo foi movido para cada rota para maior clareza
+    tags=["Selos Concedidos (Instâncias)"],
     responses={404: {"description": "Não encontrado"}},
 )
 
+# Rota para um admin conceder um selo a uma empresa
 
-@router.get("/empresa/{empresa_id}", summary="Lista selos fornecidos por uma empresa", dependencies=[Depends(require_permission("empresa","admin"))])
-async def listar_selos_empresa(
-    empresa_id: int,
-    pagina: int = Query(1, gt=0, description="Número da página"),
-    limite: int = Query(10, gt=0, le=100, description="Itens por página"),
-    status: Optional[str] = Query(
-        None, description="Filtrar por status (ex: 'ativo', 'expirado')"),
-    expiracao_proxima: Optional[bool] = Query(
-        None,
-        description="Filtrar selos com expiração próxima (30 dias)"
-    )
+@router.post("/selos/solicitar", status_code=status.HTTP_201_CREATED, summary="Empresa solicita um selo do catálogo", dependencies=[Depends(require_permission("empresa"))])
+def solicitar_selo(
+    data: SolicitarSeloRequest,
+    current_user: TokenPayLoad = Depends(get_current_user)
 ):
-    return await get_selos_por_empresas(
-        empresa_id=empresa_id,
-        pagina=pagina,
-        limite=limite,
-        status=status,
-        expiracao_proxima=expiracao_proxima
-    )
+    """
+    Cria uma nova solicitação de selo para a empresa associada ao usuário logado.
+    A solicitação é criada com o status 'Pendente' e aguarda a aprovação de um administrador.
+    """
+    return ctrl.solicitar_selo_para_minha_empresa(data, current_user)
+
+@router.post("/empresas/{id_empresa}/selos", status_code=status.HTTP_201_CREATED, summary="Concede um selo a uma empresa", dependencies=[Depends(require_permission("admin", "admin_master"))])
+def conceder_selo(id_empresa: int, data: ConcederSeloRequest):
+    """
+    Associa um tipo de selo do catálogo a uma empresa, criando uma nova instância
+    de selo concedido com datas de emissão e expiração.
+    """
+    return ctrl.conceder_selo_a_empresa(id_empresa, data)
+
+# Rota para listar os selos de uma empresa específica (cliente ou admin)
 
 
-@router.get("/todos_selos", summary="Listar todos os selos e quais empresas adquiriram", status_code=200, dependencies=[Depends(require_permission("admin"))])
-async def pegar_todos_selos_empresas_existentes():
-    try:
-        selos = retornar_empresas_com_selos_criados()
-        return {"dados": selos}
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+@router.get("/empresas/{id_empresa}/selos", response_model=List[SeloConcedido], summary="Lista os selos de uma empresa", dependencies=[Depends(require_permission("empresa", "admin", "admin_master"))])
+def listar_selos_empresa(id_empresa: int, current_user: TokenPayLoad = Depends(get_current_user)):
+    """
+    Retorna uma lista de todos os selos (ativos, expirados, etc.) concedidos
+    a uma empresa específica. Usuários com perfil 'empresa' só podem ver os seus.
+    """
+    # A lógica de segurança para impedir que uma empresa veja os selos de outra
+    # foi implementada no controller.
+    return ctrl.listar_selos_de_empresa(id_empresa, current_user)
+
+# Rota para admin listar solicitações pendentes
 
 
-@router.delete("/selos_expirados/remover", summary="Remover selos expirados há mais de 30 dias", dependencies=[Depends(require_permission("admin"))])
-async def rota_remover_selos_expirados():
-    return remover_selos_expirados()
+@router.get("/selos/solicitacoes", response_model=List[SeloConcedido], summary="Lista todas as solicitações de selo pendentes", dependencies=[Depends(require_permission("admin", "admin_master"))])
+def listar_solicitacoes():
+    """
+    Endpoint para administradores visualizarem todos os selos que estão
+    com status 'Pendente' ou 'Em Renovação', aguardando aprovação.
+    """
+    return ctrl.listar_solicitacoes_pendentes()
 
-# PUT para Admin (pendente → ativo)
-
-
-@router.put("/aprovar/{selo_id}", dependencies=[Depends(require_permission("admin"))])
-def aprovar_selo(selo_id: int):
-    return controller_renovar_selo(selo_id)
-
-# PUT para Cliente (expirado → pendente)
+# Rota para admin aprovar uma solicitação de selo (pendente ou em renovação)
 
 
-@router.put("/solicitar_renovacao/{selo_id}/", dependencies=[Depends(require_permission("empresa"))])
-def solicitar_renovacao(selo_id: int):
-    return controller_solicitar_renovacao(selo_id)
+@router.put("/empresa-selos/{empresa_selo_id}/aprovar", summary="Aprova uma solicitação de selo", dependencies=[Depends(require_permission("admin", "admin_master"))])
+def aprovar_selo(empresa_selo_id: int = Path(..., description="O ID da tabela 'empresa_selo'")):
+    """
+    Muda o status de um selo concedido para 'Ativo' e define suas datas
+    de emissão e validade.
+    """
+    return ctrl.aprovar_selo_concedido(empresa_selo_id)
+
+# Rota para empresa solicitar renovação de um selo
 
 
-# lógica Automática (ativo → expirado)
-# Função para o job (chamada externamente)
-def expirar_selos_automaticamente():
-    return controller_expirar_selo_automatico()
+@router.put("/empresa-selos/{empresa_selo_id}/solicitar-renovacao", summary="Solicita a renovação de um selo", dependencies=[Depends(require_permission("empresa"))])
+def solicitar_renovacao(
+    empresa_selo_id: int = Path(..., description="O ID da tabela 'empresa_selo'"),
+    current_user: TokenPayLoad = Depends(get_current_user) # Adicionar esta dependência
+):
+    """
+    Permite que uma empresa solicite a renovação de um selo, mudando seu
+    status para 'Em Renovação' para que um administrador possa avaliá-lo.
+    """
+    return ctrl.solicitar_renovacao_de_selo(empresa_selo_id, current_user)
 
-
-@router.on_event("startup")
-def realizar_evento():
-    scheduler.add_job(expirar_selos_automaticamente, 'interval', hours=24)
-    scheduler.start()
-
-
-@router.on_event("shutdown")
-def shutdown_scheduler():
-    scheduler.shutdown()
-
-
-@router.post("/{id_empresa}/associar", status_code=201,
-             summary="[Admin] Cria e associa um novo selo a uma empresa",
-             description="Cria uma nova instância de selo com código padronizado e a associa a uma empresa em uma única operação.",
-             dependencies=[Depends(require_permission("admin"))]
-             )
-def associar_multiplos_selos_a_empresa(id_empresa: int, data: AssociacaoMultiplaRequest):
-    return controller_associa_selo_empresa(id_empresa, data)
+@router.delete("/empresa-selos/{empresa_selo_id}", status_code=status.HTTP_200_OK, summary="Revoga um selo concedido", dependencies=[Depends(require_permission("admin", "admin_master"))])
+def revogar_selo(empresa_selo_id: int = Path(..., description="O ID da instância do selo a ser revogado")):
+    """
+    Exclui permanentemente a instância de um selo que foi concedido a uma empresa.
+    Esta ação é restrita a administradores e não pode ser desfeita.
+    """
+    return ctrl.revogar_selo_da_empresa(empresa_selo_id)
