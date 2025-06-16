@@ -1,6 +1,6 @@
 # app/models/ibdn_user_model.py
 import uuid
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr,field_validator, model_validator
 from typing import List, Optional
 
 # --- Schemas de Permissão da IBDN ---
@@ -107,3 +107,18 @@ class IbdnUsuario(IbdnUsuarioBase):
 
     class Config:
         from_attributes = True
+
+class UsuarioRegister(BaseModel):
+    """Modelo de dados para o autocadastro de um novo usuário."""
+    nome: str = Field(..., min_length=3, max_length=255)
+    email: EmailStr
+    senha: str = Field(..., min_length=8, description="A senha deve ter no mínimo 8 caracteres.")
+    senha_confirmacao: str
+
+    @model_validator(mode='after')
+    def check_passwords_match(self) -> 'UsuarioRegister':
+        pw1 = self.senha
+        pw2 = self.senha_confirmacao
+        if pw1 is not None and pw2 is not None and pw1 != pw2:
+            raise ValueError('As senhas não coincidem.')
+        return self

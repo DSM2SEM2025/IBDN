@@ -2,7 +2,7 @@
 from fastapi import APIRouter, HTTPException, status, Query, Depends
 from typing import List
 from app.controllers import ibdn_users_controller as ctrl
-from app.models.ibdn_user_model import IbdnUsuario, IbdnUsuarioCreate, IbdnUsuarioUpdate
+from app.models.ibdn_user_model import IbdnUsuario, IbdnUsuarioCreate, IbdnUsuarioUpdate, UsuarioRegister
 # MODIFICAÇÃO: Importar 'get_current_user' e 'TokenPayLoad' para injeção de dependência
 from app.controllers.token import require_permission, get_current_user, TokenPayLoad
 
@@ -12,9 +12,22 @@ router = APIRouter(
     responses={404: {"description": "Não encontrado"}},
 )
 
-# MODIFICAÇÃO: Rota agora protegida. Apenas admins podem criar usuários.
-
-
+@router.post("/register", response_model=IbdnUsuario, status_code=status.HTTP_201_CREATED, summary="Autocadastro de um novo usuário")
+async def api_register_user(usuario_data: UsuarioRegister):
+    """
+    Endpoint público para que novos usuários possam se cadastrar.
+    O usuário será criado com o perfil padrão 'empresa'.
+    """
+    try:
+        return ctrl.register_new_user(usuario_data)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro interno do servidor: {str(e)}"
+        )
+    
 @router.post("/", response_model=IbdnUsuario, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_permission("admin", "admin_master"))])
 async def api_create_usuario(
     usuario_data: IbdnUsuarioCreate,
