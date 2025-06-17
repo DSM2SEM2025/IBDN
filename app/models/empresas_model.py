@@ -13,7 +13,7 @@ class Empresa(BaseModel):
     telefone: Optional[str] = None
     responsavel: Optional[str] = None
     cargo_responsavel: Optional[str] = None
-    site_empresa: Optional[str] = None
+    site: Optional[str] = None
     data_cadastro: datetime
     ativo: bool
 
@@ -25,7 +25,7 @@ class EmpresaCreate(BaseModel):
     telefone: Optional[str] = Field(None, max_length=20)
     responsavel: Optional[str] = Field(None, max_length=100)
     cargo_responsavel: Optional[str] = Field(None, max_length=100)
-    site_empresa: Optional[str] = Field(None, max_length=255)
+    site: Optional[str] = Field(None, max_length=255)
     ativo: Optional[bool] = True
 
     @field_validator("cnpj")
@@ -46,5 +46,5 @@ class EmpresaUpdate(BaseModel):
     telefone: Optional[str] = Field(None, max_length=20)
     responsavel: Optional[str] = Field(None, max_length=100)
     cargo_responsavel: Optional[str] = Field(None, max_length=100)
-    site_empresa: Optional[str] = Field(None, max_length=255)
+    site: Optional[str] = Field(None, max_length=255)
     ativo: Optional[bool] = None

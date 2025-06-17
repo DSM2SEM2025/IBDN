@@ -40,7 +40,7 @@ def repo_criar_nova_empresa(empresa: EmpresaCreate, usuario_id: str) -> int:
             INSERT INTO empresa(
             cnpj, razao_social, nome_fantasia,
             usuario_id, telefone, responsavel,
-            cargo_responsavel, site_empresa, ativo
+            cargo_responsavel, site, ativo
             )
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
@@ -52,7 +52,7 @@ def repo_criar_nova_empresa(empresa: EmpresaCreate, usuario_id: str) -> int:
             empresa.telefone,
             empresa.responsavel,
             empresa.cargo_responsavel,
-            empresa.site_empresa,
+            empresa.site,
             empresa.ativo
         )
         cursor.execute(sql, values)
