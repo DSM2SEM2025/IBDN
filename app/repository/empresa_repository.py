@@ -5,7 +5,6 @@ from app.models.empresas_model import Empresa, EmpresaCreate, EmpresaUpdate
 
 
 def repo_get_empresa_by_id(empresa_id: int) -> Optional[Dict[str, Any]]:
-    """Busca uma empresa pelo seu ID."""
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
@@ -17,7 +16,6 @@ def repo_get_empresa_by_id(empresa_id: int) -> Optional[Dict[str, Any]]:
 
 
 def repo_get_all_empresas() -> List[Dict[str, Any]]:
-    """Busca todas as empresas ativas."""
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
@@ -28,11 +26,7 @@ def repo_get_all_empresas() -> List[Dict[str, Any]]:
         conn.close()
 
 
-# Removido o 'async'
 def repo_criar_nova_empresa(empresa: EmpresaCreate, usuario_id: str) -> int:
-    """
-    Insere uma nova empresa no banco de dados.
-    """
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
@@ -74,7 +68,6 @@ def repo_criar_nova_empresa(empresa: EmpresaCreate, usuario_id: str) -> int:
 
 
 def repo_update_empresa(empresa_id: int, update_data: EmpresaUpdate) -> bool:
-    """Atualiza os dados de uma empresa no banco."""
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
@@ -99,7 +92,6 @@ def repo_update_empresa(empresa_id: int, update_data: EmpresaUpdate) -> bool:
 
 
 def repo_delete_empresa(empresa_id: int) -> bool:
-    """Realiza a exclusão lógica (inativação) de uma empresa."""
     conn = get_db_connection()
     cursor = conn.cursor()
     try:

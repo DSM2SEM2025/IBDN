@@ -1,28 +1,22 @@
-# app/repository/ibdn_user_repository.py
 from typing import List, Optional, Dict, Any
 from fastapi import HTTPException
 from mysql.connector import Error
 from app.database.connection import get_db_connection
-# Schemas Pydantic
 from app.models.ibdn_user_model import IbdnUsuarioCreate, IbdnUsuarioUpdate
-from app.security.password import get_password_hash  # Para hashear senhas
-# Para buscar detalhes do perfil, precisaremos chamar o repositório de perfis
+from app.security.password import get_password_hash
 from app.repository.ibdn_profiles_repository import repo_get_ibdn_perfil_by_id_with_permissions
 
 
 def _get_profile_id_by_name(name: str, cursor) -> Optional[str]:
-    """Função auxiliar para buscar o ID de um perfil pelo nome."""
     cursor.execute("SELECT id FROM ibdn_perfis WHERE nome = %s", (name,))
     result = cursor.fetchone()
     return result['id'] if result else None
 
 
 def _map_user_db_to_schema(user_db_data: Dict[str, Any], perfil_completo: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Mapeia dados do usuário do banco para o formato do schema, incluindo perfil completo."""
     if user_db_data is None:
         return None
 
-    # Converte TINYINT(1) para bool para os campos ativo e twofactor
     user_data_mapped = {
         "id": user_db_data.get("id"),
         "nome": user_db_data.get("nome"),
@@ -43,12 +37,10 @@ def repo_create_ibdn_usuario(usuario_data: IbdnUsuarioCreate) -> Optional[Dict[s
     cursor = conn.cursor(dictionary=True)
     hashed_password = get_password_hash(usuario_data.senha)
     try:
-        # Se nenhum perfil_id for fornecido, busca o ID do perfil 'empresa' para usar como padrão
         perfil_id = usuario_data.perfil_id
         if not perfil_id:
             perfil_id = _get_profile_id_by_name("empresa", cursor)
             if not perfil_id:
-                # Se o perfil 'empresa' não existir, lança um erro, pois é uma configuração essencial
                 raise HTTPException(
                     status_code=500, detail="Perfil 'empresa' padrão não encontrado no sistema.")
 
@@ -61,12 +53,11 @@ def repo_create_ibdn_usuario(usuario_data: IbdnUsuarioCreate) -> Optional[Dict[s
             usuario_data.nome,
             usuario_data.email,
             hashed_password,
-            perfil_id,  # Usa o perfil_id obtido (seja o fornecido ou o padrão)
+            perfil_id,
             1 if usuario_data.ativo else 0,
             1 if usuario_data.twofactor else 0
         ))
         conn.commit()
-        # Retorna os dados do usuário criado (sem a senha) e com o perfil se houver
         return repo_get_ibdn_usuario_by_id(usuario_data.id)
     except Error as e:
         conn.rollback()
@@ -135,7 +126,6 @@ def repo_get_ibdn_usuario_by_email(email: str, include_password_hash: bool = Fal
                 user_db_data["perfil_id"])
 
         mapped_user = _map_user_db_to_schema(user_db_data, perfil_completo)
-        # Adiciona o empresa_id ao payload final, se existir
         if user_db_data.get("empresa_id"):
             mapped_user["empresa_id"] = user_db_data["empresa_id"]
 
@@ -177,7 +167,6 @@ def repo_update_ibdn_usuario(usuario_id: str, usuario_data: IbdnUsuarioUpdate) -
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Verifica se o usuário existe
     cursor.execute("SELECT id FROM ibdn_usuarios WHERE id = %s", (usuario_id,))
     if not cursor.fetchone():
         if cursor:
@@ -245,8 +234,6 @@ def repo_delete_ibdn_usuario(usuario_id: str) -> bool:
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # A FK na tabela `empresa` para `usuario_id` é restritiva.
-        # É preciso garantir que o usuário não seja dono de uma empresa antes de excluí-lo.
         cursor.execute(
             "SELECT id FROM empresa WHERE usuario_id = %s", (usuario_id,))
         if cursor.fetchone():

@@ -22,9 +22,6 @@ class EmpresaCreate(BaseModel):
     cnpj: str = Field(..., max_length=18)
     razao_social: str = Field(..., max_length=255)
     nome_fantasia: Optional[str] = Field(None, max_length=255)
-    # MODIFIED: usuario_id is now an optional field in the request body.
-    # An admin can provide it to create a company for another user.
-    # If not provided, it will default to the current user's ID.
     telefone: Optional[str] = Field(None, max_length=20)
     responsavel: Optional[str] = Field(None, max_length=100)
     cargo_responsavel: Optional[str] = Field(None, max_length=100)

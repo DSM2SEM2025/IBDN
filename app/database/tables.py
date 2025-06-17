@@ -1,15 +1,17 @@
-# teste_1/back/app/database/tables.py
 import logging
 import os
+from dotenv import load_dotenv
 import mysql.connector
 from mysql.connector import Error
 from app.database.config import get_db_config
 from app.security.password import get_password_hash
 from uuid import uuid4
 
+load_dotenv(override=True)
+
 
 def setup_logging():
-    """Configura o logging para as operações do banco de dados."""
+    
     log_dir = os.path.join(os.path.dirname(
         os.path.dirname(os.path.abspath(__file__))), 'logs')
 
@@ -32,7 +34,6 @@ def setup_logging():
 
 
 def create_tables():
-    """Conecta ao banco de dados e cria todas as tabelas na ordem correta."""
     logger = setup_logging()
     logger.info("Iniciando a criação das tabelas do banco de dados")
     connection = None
@@ -42,10 +43,8 @@ def create_tables():
         connection = mysql.connector.connect(**config)
         cursor = connection.cursor()
         logger.info("Conexão com o banco de dados estabelecida com sucesso.")
-
         tables = {}
 
-        # --- DEFINIÇÃO DE TABELAS (COM FORMATAÇÃO PADRONIZADA) ---
         tables['ibdn_permissoes'] = """
             CREATE TABLE IF NOT EXISTS ibdn_permissoes (
                 id CHAR(40) PRIMARY KEY,
@@ -79,71 +78,33 @@ def create_tables():
                 FOREIGN KEY (perfil_id) REFERENCES ibdn_perfis(id) ON DELETE SET NULL
             ) ENGINE=InnoDB;
         """
-        tables['ramo'] = """
-            CREATE TABLE IF NOT EXISTS ramo (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                nome VARCHAR(100) NOT NULL UNIQUE,
-                descricao TEXT
-            ) ENGINE=InnoDB;
-        """
-        tables['selo'] = """
-            CREATE TABLE IF NOT EXISTS selo (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                nome VARCHAR(100) NOT NULL UNIQUE,
-                descricao TEXT,
-                validade_selo DATE
-            ) ENGINE=InnoDB;
-        """
-        tables['ramo'] = """
-            CREATE TABLE IF NOT EXISTS ramo (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                nome VARCHAR(100) NOT NULL UNIQUE,
-                descricao TEXT
-            ) ENGINE=InnoDB;
-        """
-        tables['selo'] = """
-            CREATE TABLE IF NOT EXISTS selo (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                nome VARCHAR(100) NOT NULL UNIQUE,
-                sigla VARCHAR(3) NOT NULL UNIQUE,
-                descricao TEXT
-            ) ENGINE=InnoDB;
-        """
-        # ATUALIZAÇÃO: Removida a coluna 'ramo_id' para dar lugar à tabela de junção.
+
         tables['empresa'] = """
-            CREATE TABLE IF NOT EXISTS empresa (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                cnpj VARCHAR(18) NOT NULL UNIQUE,
-                razao_social VARCHAR(255) NOT NULL,
-                nome_fantasia VARCHAR(255),
-                usuario_id CHAR(40) NOT NULL UNIQUE,
-                telefone VARCHAR(20),
-                responsavel VARCHAR(100),
-                cargo_responsavel VARCHAR(100),
-                site_empresa VARCHAR(255),
-                data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                ativo BOOLEAN DEFAULT TRUE,
-                ramo_id INT,
-                FOREIGN KEY (usuario_id) REFERENCES ibdn_usuarios(id) ON DELETE CASCADE,
-                FOREIGN KEY (ramo_id) REFERENCES ramo(id) ON DELETE SET NULL
-            ) ENGINE=InnoDB;
+        CREATE TABLE IF NOT EXISTS empresa (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            cnpj VARCHAR(18) NOT NULL UNIQUE,
+            razao_social VARCHAR(255) NOT NULL,
+            nome_fantasia VARCHAR(255),
+            usuario_id CHAR(40) NOT NULL UNIQUE,
+            telefone VARCHAR(20),
+            responsavel VARCHAR(100),
+            cargo_responsavel VARCHAR(100),
+            site VARCHAR(255),
+            data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            ativo BOOLEAN DEFAULT TRUE,
+            FOREIGN KEY (usuario_id) REFERENCES ibdn_usuarios(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB;
         """
-        tables['endereco'] = """
-            CREATE TABLE IF NOT EXISTS endereco (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                id_empresa INT NOT NULL,
-                logradouro VARCHAR(255) NOT NULL,
-                numero VARCHAR(20) NOT NULL,
-                bairro VARCHAR(100) NOT NULL,
-                cep VARCHAR(10) NOT NULL,
-                cidade VARCHAR(100) NOT NULL,
-                uf VARCHAR(2) NOT NULL,
-                complemento VARCHAR(255),
-                FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE
-            ) ENGINE=InnoDB;
+
+        tables['empresa_ramo'] = """
+        CREATE TABLE IF NOT EXISTS empresa_ramo (
+            id_empresa INT NOT NULL,
+            id_ramo INT NOT NULL,
+            PRIMARY KEY (id_empresa, id_ramo),
+            FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE,
+            FOREIGN KEY (id_ramo) REFERENCES ramo(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB;
         """
-        
-        # ATUALIZAÇÃO: Tabela ajustada para corresponder ao último DER.
         tables['empresa_selo'] = """
             CREATE TABLE IF NOT EXISTS empresa_selo (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -160,6 +121,38 @@ def create_tables():
                 FOREIGN KEY (id_selo) REFERENCES selo(id) ON DELETE CASCADE
             ) ENGINE=InnoDB;
         """
+        tables['selo'] = """
+            CREATE TABLE IF NOT EXISTS selo (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nome VARCHAR(100) NOT NULL UNIQUE,
+                sigla VARCHAR(3) NOT NULL UNIQUE,
+                descricao TEXT
+            ) ENGINE=InnoDB;
+        """
+        tables['ramo'] = """
+            CREATE TABLE IF NOT EXISTS ramo (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nome VARCHAR(100) NOT NULL UNIQUE,
+                descricao TEXT
+            ) ENGINE=InnoDB;
+        """
+
+        tables['endereco'] = """
+            CREATE TABLE IF NOT EXISTS endereco (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                id_empresa INT NOT NULL,
+                logradouro VARCHAR(255) NOT NULL,
+                numero VARCHAR(20) NOT NULL,
+                bairro VARCHAR(100) NOT NULL,
+                cep VARCHAR(10) NOT NULL,
+                cidade VARCHAR(100) NOT NULL,
+                uf VARCHAR(2) NOT NULL,
+                complemento VARCHAR(255),
+                FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB;
+        """
+
+
 
         tables['notificacao'] = """
             CREATE TABLE IF NOT EXISTS notificacao (
@@ -172,12 +165,12 @@ def create_tables():
                 FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE
             ) ENGINE=InnoDB;
         """
-        
+
         table_creation_order = [
             'ibdn_permissoes', 'ibdn_perfis', 'ramo', 'selo',
-            'ibdn_usuarios', 'ibdn_perfil_permissoes',
-            'empresa',
-            'endereco', 'empresa_selo', 'notificacao',
+            'ibdn_perfil_permissoes', 'ibdn_usuarios', 
+            'empresa', 
+            'endereco', 'empresa_ramo', 'notificacao', 'empresa_selo'
         ]
 
         logger.info("Iniciando a criação das tabelas na ordem correta...")
@@ -205,7 +198,6 @@ def create_tables():
 
 
 def create_database_if_not_exists():
-    """Cria o banco de dados se ele ainda não existir."""
     logger = setup_logging()
     logger.info("Verificando se o banco de dados existe...")
     connection = None
@@ -230,7 +222,6 @@ def create_database_if_not_exists():
 
 
 def create_initial_data():
-    """Cria os dados iniciais essenciais para o sistema, como perfis e o admin master."""
     logger = setup_logging()
     logger.info("Verificando/Configurando dados iniciais...")
 
@@ -240,7 +231,6 @@ def create_initial_data():
         connection = mysql.connector.connect(**config)
         cursor = connection.cursor(dictionary=True)
 
-        # 1. Criar Perfis Padrão
         perfis_padrao = ["admin", "empresa", "admin_master"]
         for nome_perfil in perfis_padrao:
             cursor.execute(
@@ -250,7 +240,7 @@ def create_initial_data():
                 cursor.execute(
                     "INSERT INTO ibdn_perfis (id, nome) VALUES (%s, %s)", (str(uuid4()), nome_perfil))
 
-        # 2. Criar Permissões Essenciais
+        
         permissoes_padrao = ["admin", "empresa", "admin_master"]
         for nome_permissao in permissoes_padrao:
             cursor.execute(
@@ -262,7 +252,6 @@ def create_initial_data():
 
         connection.commit()
 
-        # 3. Associar permissões aos seus respectivos perfis
         perfis_e_permissoes = {
             "admin_master": ["admin_master"],
             "admin": ["admin"],
@@ -289,7 +278,6 @@ def create_initial_data():
 
         connection.commit()
 
-        # 4. Criar Usuário Admin Master
         admin_email = os.getenv('ADMIN_EMAIL')
         admin_password = os.getenv('ADMIN_PASSWORD')
 

@@ -1,5 +1,3 @@
-# teste_1/back/app/routers/routes_empresa.py
-
 from fastapi import APIRouter, Path, Depends, Body, status
 from typing import List, Dict, Any
 from app.models.empresas_model import (
@@ -8,7 +6,6 @@ from app.models.empresas_model import (
     EmpresaUpdate
 )
 from app.controllers import controller_empresa
-# MODIFICAÇÃO: get_current_user também será usado na rota de busca por ID
 from app.controllers.token import get_current_user, TokenPayLoad, require_permission
 
 router = APIRouter(
@@ -34,20 +31,14 @@ def rota_criar_empresa(
     empresa: EmpresaCreate,
     current_user: TokenPayLoad = Depends(get_current_user)
 ):
-    """
-    Cria uma nova empresa.
-    """
     return controller_empresa.criar_empresa(empresa, current_user)
-
-# MODIFICAÇÃO: A rota agora depende de get_current_user e o passa para o controller
 
 
 @router.get("/{empresa_id}", response_model=Empresa, dependencies=[Depends(require_permission("empresa", "admin", "admin_master"))])
 def buscar_empresa_por_id(
     empresa_id: int = Path(..., gt=0),
-    current_user: TokenPayLoad = Depends(get_current_user)  # Adicionado
+    current_user: TokenPayLoad = Depends(get_current_user)
 ):
-    # Adicionado
     return controller_empresa.get_empresa_por_id(empresa_id, current_user=current_user)
 
 
@@ -64,9 +55,6 @@ def atualizar_empresa_endpoint(
     empresa_update_data: EmpresaUpdate = Body(...),
     current_user: TokenPayLoad = Depends(get_current_user)
 ):
-    """
-    Atualiza os dados de uma empresa existente.
-    """
     return controller_empresa.update_empresa(
         id_empresa=id_empresa,
         empresa_data=empresa_update_data,
@@ -84,7 +72,4 @@ def excluir_empresa_endpoint(
     empresa_id: int = Path(..., gt=0),
     current_user: TokenPayLoad = Depends(get_current_user)
 ):
-    """
-    Permite a exclusão (lógica) de uma empresa.
-    """
     return controller_empresa.delete_empresa(empresa_id, current_user)

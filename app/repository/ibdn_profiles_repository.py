@@ -1,9 +1,8 @@
-# app/repository/ibdn_profiles_repository.py
 from typing import List, Optional, Dict, Any
 from fastapi import HTTPException
 from mysql.connector import Error
 from app.database.connection import get_db_connection
-import json  # Importa a biblioteca JSON
+import json
 
 
 def repo_create_ibdn_perfil(perfil_data: Dict[str, Any], permissoes_ids: List[str]) -> Dict[str, Any]:
@@ -91,13 +90,10 @@ def repo_get_all_ibdn_perfis_with_permissions(skip: int = 0, limit: int = 100) -
         cursor.execute(query, (limit, skip))
         perfis_db = cursor.fetchall()
 
-        # CORREÇÃO: Processa o campo 'permissoes' para cada perfil
         for perfil in perfis_db:
             permissoes_str = perfil.get('permissoes')
             if isinstance(permissoes_str, str):
-                # Converte a string JSON para uma lista Python
                 permissoes_list = json.loads(permissoes_str)
-                # Se o resultado for uma lista contendo apenas [None], converte para uma lista vazia
                 if permissoes_list and len(permissoes_list) == 1 and permissoes_list[0] is None:
                     perfil['permissoes'] = []
                 else:

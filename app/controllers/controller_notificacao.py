@@ -5,7 +5,6 @@ from app.repository import notificacao_repository as repo
 from app.controllers.token import TokenPayLoad
 
 def get_notificacoes_empresa(empresa_id: int, current_user: TokenPayLoad, lida: Optional[bool] = None) -> List[Notificacao]:
-    """Busca as notificações de uma empresa, com verificação de titularidade."""
     is_admin = "admin" in current_user.permissoes or "admin_master" in current_user.permissoes
     if not is_admin and current_user.empresa_id != empresa_id:
         raise HTTPException(
@@ -16,12 +15,10 @@ def get_notificacoes_empresa(empresa_id: int, current_user: TokenPayLoad, lida: 
     return [Notificacao(**notificacao) for notificacao in notificacoes_db]
 
 def criar_notificacao_empresa(empresa_id: int, notificacao: NotificacaoCreate) -> dict:
-    """Cria uma notificação para uma empresa (apenas admins)."""
     notificacao_id = repo.create_notificacao(empresa_id, notificacao.model_dump())
     return {"id": notificacao_id, "mensagem": "Notificação criada com sucesso"}
 
 def atualizar_notificacao(notificacao_id: int, notificacao: NotificacaoUpdate, current_user: TokenPayLoad) -> dict:
-    """Atualiza uma notificação. Admins podem alterar tudo, empresas só podem marcar como lida."""
     notificacao_existente = repo.get_notificacao_by_id(notificacao_id)
     if not notificacao_existente:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notificação não encontrada")
@@ -40,7 +37,6 @@ def atualizar_notificacao(notificacao_id: int, notificacao: NotificacaoUpdate, c
     return {"mensagem": "Notificação atualizada com sucesso"}
 
 def remover_notificacao(notificacao_id: int) -> dict:
-    """Remove uma notificação (apenas admins)."""
     deleted = repo.delete_notificacao(notificacao_id)
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notificação não encontrada")

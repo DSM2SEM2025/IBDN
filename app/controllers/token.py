@@ -15,11 +15,7 @@ ALGORITHM = "HS256"
 
 
 class TokenPayLoad(BaseModel):
-    """
-    Define a estrutura de dados (payload) contida dentro do token JWT.
-    """
     email: str
-    # CORREÇÃO: O ID do usuário é uma string (UUID), não um inteiro.
     usuario_id: str
     empresa_id: Optional[int] = None
     permissoes: List[str] = []
@@ -28,9 +24,6 @@ class TokenPayLoad(BaseModel):
 
 
 def verificar_token(token: str) -> dict:
-    """
-    Decodifica e valida um token JWT.
-    """
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
@@ -43,10 +36,6 @@ def verificar_token(token: str) -> dict:
 
 
 def gerar_token(email: str, usuario_id: str, permissoes: List[str], empresa_id: Optional[int] = None) -> str:
-    """
-    Gera um novo token JWT para um usuário.
-    CORREÇÃO: A assinatura da função agora aceita usuario_id como string.
-    """
     payload = {
         'email': email,
         'usuario_id': usuario_id,
@@ -61,9 +50,6 @@ def gerar_token(email: str, usuario_id: str, permissoes: List[str], empresa_id: 
 
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> TokenPayLoad:
-    """
-    Dependência FastAPI para obter o usuário atual a partir do token no header.
-    """
     token = credentials.credentials
     try:
         payload = verificar_token(token)
@@ -84,9 +70,6 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 
 
 def require_permission(*permissoes_necessarias: str):
-    """
-    Fábrica de dependências para verificar permissões.
-    """
     def permission_checker(current_user: TokenPayLoad = Depends(get_current_user)) -> dict:
         permissoes_usuario = set(current_user.permissoes)
         permissoes_requeridas = set(permissoes_necessarias)

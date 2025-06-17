@@ -17,7 +17,6 @@ def get_db_connection():
         )
 
 def get_notificacao_by_id(notificacao_id: int) -> Optional[Dict[str, Any]]:
-    """Busca uma notificação específica pelo seu ID."""
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:

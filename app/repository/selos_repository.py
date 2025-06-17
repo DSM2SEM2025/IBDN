@@ -1,4 +1,3 @@
-# app/repository/selos_repository.py
 import mysql.connector
 from mysql.connector import Error
 from fastapi import HTTPException
@@ -6,11 +5,7 @@ from ..database.connection import get_db_connection
 from datetime import datetime, timedelta
 from typing import List, Optional
 
-# --- Funções para o Catálogo de Selos (tabela 'selo') ---
-
-
 def repo_criar_selo(selo_data: dict) -> int:
-    """Cria um novo tipo de selo no catálogo."""
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
@@ -21,7 +16,7 @@ def repo_criar_selo(selo_data: dict) -> int:
         return cursor.lastrowid
     except Error as e:
         conn.rollback()
-        if e.errno == 1062:  # Chave duplicada (nome ou sigla)
+        if e.errno == 1062:
             raise HTTPException(
                 status_code=409, detail=f"Já existe um selo com o mesmo nome ou sigla.")
         raise HTTPException(
@@ -32,7 +27,6 @@ def repo_criar_selo(selo_data: dict) -> int:
 
 
 def repo_listar_selos() -> List[dict]:
-    """Lista todos os tipos de selo do catálogo."""
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
@@ -45,7 +39,6 @@ def repo_listar_selos() -> List[dict]:
 
 
 def repo_get_selo_por_id(id_selo: int) -> Optional[dict]:
-    """Busca um tipo de selo do catálogo pelo ID."""
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
@@ -56,17 +49,13 @@ def repo_get_selo_por_id(id_selo: int) -> Optional[dict]:
         cursor.close()
         conn.close()
 
-# --- Funções para Instâncias de Selos (tabela 'empresa_selo') ---
-
 
 def repo_conceder_selo_empresa(id_empresa: int, id_selo: int, dias_validade: int) -> dict:
-    """Cria uma nova instância de selo para uma empresa."""
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
         conn.start_transaction()
 
-        # 1. Verificar se a empresa e o tipo de selo existem
         cursor.execute("SELECT 1 FROM empresa WHERE id = %s", (id_empresa,))
         if not cursor.fetchone():
             raise HTTPException(
@@ -79,20 +68,18 @@ def repo_conceder_selo_empresa(id_empresa: int, id_selo: int, dias_validade: int
             raise HTTPException(
                 status_code=404, detail="Tipo de selo não encontrado no catálogo.")
 
-        # 2. Gerar código único e datas
         timestamp = int(datetime.now().timestamp())
         codigo_selo_gerado = f"{selo_catalogo['sigla']}-{datetime.now().year}-{id_empresa}-{timestamp}"
         data_emissao = datetime.now().date()
         data_expiracao = data_emissao + timedelta(days=dias_validade)
 
-        # 3. Inserir na tabela 'empresa_selo'
         query = """
             INSERT INTO empresa_selo 
             (id_empresa, id_selo, status, data_emissao, data_expiracao, codigo_selo)
             VALUES (%s, %s, %s, %s, %s, %s)
         """
         cursor.execute(query, (id_empresa, id_selo, 'Ativo',
-                       data_emissao, data_expiracao, codigo_selo_gerado))
+                               data_emissao, data_expiracao, codigo_selo_gerado))
         novo_empresa_selo_id = cursor.lastrowid
         conn.commit()
 
@@ -108,7 +95,6 @@ def repo_conceder_selo_empresa(id_empresa: int, id_selo: int, dias_validade: int
 
 
 def repo_listar_selos_da_empresa(id_empresa: int) -> List[dict]:
-    """Lista todas as instâncias de selos concedidas a uma empresa."""
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
@@ -135,7 +121,6 @@ def repo_listar_selos_da_empresa(id_empresa: int) -> List[dict]:
 
 
 def repo_listar_solicitacoes_pendentes() -> List[dict]:
-    """Lista todas as instâncias de selos com status 'Pendente' ou 'Em Renovação'."""
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
@@ -162,11 +147,9 @@ def repo_listar_solicitacoes_pendentes() -> List[dict]:
 
 
 def repo_atualizar_status_selo(empresa_selo_id: int, novo_status: str) -> bool:
-    """Atualiza o status de uma instância de selo."""
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # Se aprovado, renova as datas
         if novo_status == 'Ativo':
             data_emissao = datetime.now().date()
             data_expiracao = data_emissao + timedelta(days=365)
@@ -189,11 +172,9 @@ def repo_atualizar_status_selo(empresa_selo_id: int, novo_status: str) -> bool:
         conn.close()
 
 def repo_solicitar_selo_empresa(id_empresa: int, id_selo: int) -> dict:
-    """Cria uma solicitação de selo para uma empresa com status 'Pendente'."""
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
-        # 1. Verificar se a empresa e o tipo de selo existem
         cursor.execute("SELECT id FROM empresa WHERE id = %s AND ativo = TRUE", (id_empresa,))
         if not cursor.fetchone():
             raise HTTPException(status_code=404, detail="Empresa não encontrada ou inativa.")
@@ -202,7 +183,6 @@ def repo_solicitar_selo_empresa(id_empresa: int, id_selo: int) -> dict:
         if not cursor.fetchone():
             raise HTTPException(status_code=404, detail="Tipo de selo não encontrado no catálogo.")
 
-        # 2. VERIFICAR DUPLICIDADE: Impede que a empresa solicite um selo que já possui ou que já está pendente.
         cursor.execute(
             "SELECT id, status FROM empresa_selo WHERE id_empresa = %s AND id_selo = %s",
             (id_empresa, id_selo)
@@ -211,11 +191,10 @@ def repo_solicitar_selo_empresa(id_empresa: int, id_selo: int) -> dict:
         if selo_existente:
             status_existente = selo_existente['status']
             raise HTTPException(
-                status_code=409, # Conflito
+                status_code=409,
                 detail=f"Não é possível solicitar este selo. Você já possui uma instância com o status: '{status_existente}'."
             )
 
-        # 3. Inserir com status Pendente. Datas e código ficam nulos até a aprovação.
         query = "INSERT INTO empresa_selo (id_empresa, id_selo, status) VALUES (%s, %s, %s)"
         cursor.execute(query, (id_empresa, id_selo, 'Pendente'))
         novo_id = cursor.lastrowid
@@ -233,7 +212,6 @@ def repo_solicitar_selo_empresa(id_empresa: int, id_selo: int) -> dict:
         conn.close()
 
 def repo_get_empresa_selo_por_id(empresa_selo_id: int) -> Optional[dict]:
-    """Busca uma instância de selo concedido pelo seu ID."""
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
@@ -245,7 +223,6 @@ def repo_get_empresa_selo_por_id(empresa_selo_id: int) -> Optional[dict]:
         conn.close()
 
 def repo_revogar_selo_empresa(empresa_selo_id: int) -> bool:
-    """Exclui (revoga) uma instância de selo concedido do banco de dados."""
     conn = get_db_connection()
     cursor = conn.cursor()
     try:

@@ -1,4 +1,3 @@
-# app/controllers/ibdn_permissions_controller.py
 from typing import List, Optional, Dict, Any
 from fastapi import HTTPException
 from app.repository import ibdn_permissions_repository as repo

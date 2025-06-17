@@ -30,7 +30,7 @@ def associar_ramos(id_empresa: int, dados: EmpresaRamoCreate) -> List[EmpresaRam
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Falha ao assossiar ramo: {err}")
     
-def remover_associacao(id_empresa: int, id_ramo: int) -> bool: # Alterado o tipo de retorno para bool
+def remover_associacao(id_empresa: int, id_ramo: int) -> bool:
     try:
         with get_cursor() as cursor:
             cursor.execute(
@@ -42,7 +42,7 @@ def remover_associacao(id_empresa: int, id_ramo: int) -> bool: # Alterado o tipo
             cursor.execute(
                 "DELETE FROM empresa_ramo WHERE id_empresa = %s AND id_ramo = %s", (id_empresa, id_ramo)
             )
-            return cursor.rowcount > 0 # Retorna True se uma linha foi deletada
+            return cursor.rowcount > 0
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Erro ao remover associação: {err}")
     
@@ -58,4 +58,3 @@ def listar_ramo_por_empresa(id_empresa: int) -> List[RamoBase]:
             return ramos
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Erro ao listar ramos pelas empresas: {err}")
-    

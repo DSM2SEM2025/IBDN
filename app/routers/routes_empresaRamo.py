@@ -13,8 +13,6 @@ router = APIRouter(
     responses={404: {"description": "Não encontrado"}},
 )
 
-# rotas empresa_ramo
-
 @router.post("/{id_empresa}/ramos/", status_code=201, dependencies=[Depends(require_permission("empresa", "admin"))])
 def atrelar_ramos(id_empresa:int = Path(...,gt=0), dados: EmpresaRamoCreate = None):
     return controller_associar_ramos(id_empresa,dados)
