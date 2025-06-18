@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![IBDN Logo](https://via.placeholder.com/150x100/4f46e5/white?text=IBDN)
+![IBDN Logo](https://ibdn.org.br/wp-content/themes/ibdn-theme/assets/images/logo-ibdn.svg)
 
 **Sistema completo para gerenciamento de empresas, certificações e usuários**
 
@@ -321,7 +321,37 @@ uvicorn main:app --port 8080 # 🌐 Servidor em porta específica
 
 ---
 
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+---
+
+## 🤝 Contribuição
+
+Contribuições são bem-vindas! Para contribuir:
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+---
+
+## 📞 Suporte
+
+Se você tiver alguma dúvida ou problema, sinta-se à vontade para:
+
+- 🐛 Abrir uma [issue](https://github.com/seu-usuario/projeto-ibdn/issues)
+- 💬 Iniciar uma [discussão](https://github.com/seu-usuario/projeto-ibdn/discussions)
+- 📧 Entrar em contato via email
+
+---
+
 <div align="center">
+
+**Feito com ❤️ pela equipe IBDN**
 
 ⭐ **Se este projeto foi útil para você, considere dar uma estrela!**
 
