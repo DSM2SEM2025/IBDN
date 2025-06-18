@@ -278,6 +278,53 @@ def create_initial_data():
                         f"Permissão '{nome_permissao}' associada ao perfil '{nome_perfil}'.")
 
         connection.commit()
+        
+        logger.info("Verificando/Configurando ramos iniciais...")
+        ramos_iniciais = [
+            {"nome": "Hotelaria e Turismo", "descricao": 'Hotéis, pousadas e resorts que buscam a certificação "Hotel Eco Responsável (HER)", focada em redução de consumo de água, energia e gestão de resíduos. Exemplo: Cocriação de alternativas para minimizar impactos ambientais em estabelecimentos hoteleiros 1.'},
+            {"nome": "Logística e Transporte", "descricao": 'Empresas de gestão de frotas e transporte que neutralizam emissões de carbono, como a Maestro Frotas, certificada como "Neutra em Carbono" pelo IBDN 1.'},
+            {"nome": "Agronegócio e Eventos Rurais", "descricao": "Eventos agropecuários (ex.: Rodeio Crioulo Internacional de Imbé) e propriedades rurais que compensam emissões de GEE por meio de reflorestamento ou outras ações sustentáveis 1."},
+            {"nome": "Alimentos e Bebidas", "descricao": "Marcas como Café Pilão, que mantêm parcerias de longo prazo com o IBDN para ações socioambientais, incluindo redução de impacto em embalagens e cadeia produtiva 1."},
+            {"nome": "Energia e Sustentabilidade", "descricao": 'Empresas que adotam energias renováveis (solar, eólica) e buscam selos como "Energia Renovável" ou "Neutro em Carbono" para validar suas práticas 1.'},
+            {"nome": "Educação e Conscientização Ambiental", "descricao": "Escolas, universidades e projetos educacionais que participam de programas do IBDN, como distribuição de cartilhas e palestras sobre sustentabilidade (ex.: Jornada do Rio Tietê com alunos de Itapevi) 11."},
+            {"nome": "Construção Civil e Imobiliário", "descricao": "Construtoras e empreendimentos que implementam eficiência energética, gestão de resíduos e outras práticas para obter certificações ambientais 1."},
+            {"nome": "Marketing e Comunicação", "descricao": 'Agências e empresas de comunicação que adquirem selos como "Empresa Parceira da Natureza" para reforçar sua imagem sustentável perante clientes 1.'},
+            {"nome": "Setor Público e Políticas Ambientais", "descricao": "Governos e entidades públicas que colaboram com o IBDN em projetos de revitalização (ex.: participação em eventos como a Jornada do Rio Tietê) 11."},
+            {"nome": "Tecnologia e Serviços", "descricao": "Empresas de TI e consultoria que alinham operações aos ODS da ONU, utilizando certificações do IBDN como diferencial competitivo 1."}
+        ]
+
+        for ramo in ramos_iniciais:
+            cursor.execute("SELECT id FROM ramo WHERE nome = %s", (ramo['nome'],))
+            if not cursor.fetchone():
+                logger.info(f"Criando ramo '{ramo['nome']}'...")
+                cursor.execute(
+                    "INSERT INTO ramo (nome, descricao) VALUES (%s, %s)",
+                    (ramo['nome'], ramo['descricao'])
+                )
+        connection.commit()
+        logger.info("Ramos iniciais configurados.")
+
+        logger.info("Verificando/Configurando selos iniciais...")
+        selos_iniciais = [
+            {"nome": "Empresa Parceira da Natureza", "sigla": "EPN", "descricao": "Certifica empresas comprometidas com práticas sustentáveis, alinhadas aos ODS da ONU e critérios ESG. Inclui gestão de resíduos e educação ambiental 1."},
+            {"nome": "Neutro de Carbono", "sigla": "NC", "descricao": "Atesta a neutralização de emissões de GEE (Gases de Efeito Estufa) por meio de compensação, como reflorestamento ou projetos de energia limpa 1."},
+            {"nome": "Produto ECO Sustentável", "sigla": "PES", "descricao": "Certifica produtos com ciclo de vida sustentável, desde matérias-primas até descarte, seguindo normas como ISO 14024 1."},
+            {"nome": "Hotel ECO Responsável", "sigla": "HER", "descricao": "Selo exclusivo para meios de hospedagem que reduzem impactos ambientais (água, energia e resíduos) 1."},
+            {"nome": "Energia Renovável", "sigla": "ER", "descricao": "Reconhece empresas que utilizam fontes renováveis (solar, eólica, biomassa) em suas operações 1."},
+            {"nome": "Carbono Cidadão", "sigla": "CC", "descricao": "Certificação individual para pessoas ou pequenos negócios que neutralizam suas emissões de carbono 1."}
+        ]
+        
+        for selo in selos_iniciais:
+            cursor.execute("SELECT id FROM selo WHERE sigla = %s", (selo['sigla'],))
+            if not cursor.fetchone():
+                logger.info(f"Criando selo '{selo['nome']}' ({selo['sigla']})...")
+                cursor.execute(
+                    "INSERT INTO selo (nome, sigla, descricao) VALUES (%s, %s, %s)",
+                    (selo['nome'], selo['sigla'], selo['descricao'])
+                )
+        connection.commit()
+        logger.info("Selos iniciais configurados.")
+        # <<< FIM DA NOVA SEÇÃO >>>
 
         admin_email = os.getenv('ADMIN_EMAIL')
         admin_password = os.getenv('ADMIN_PASSWORD')
