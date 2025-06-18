@@ -1,90 +1,52 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
-from typing import Optional
-from ..controllers.controller_selo import get_selos_por_empresas, retornar_empresas_com_selos_criados, remover_selos_expirados, controller_renovar_selo, controller_solicitar_renovacao, controller_expirar_selo_automatico, controller_associa_selo_empresa
-from ..models.selo_model import AssociacaoMultiplaRequest
-
-from apscheduler.schedulers.background import BackgroundScheduler
-
-scheduler = BackgroundScheduler()
+from fastapi import APIRouter, Depends, Path, status
+from typing import List
+from app.controllers import controller_selo as ctrl
+from app.models.selo_model import ConcederSeloRequest, SeloConcedido, SolicitarSeloRequest
+from app.controllers.token import require_permission, get_current_user, TokenPayLoad
 
 router = APIRouter(
-    prefix="/selos",
-    tags=["Selos"],
+    tags=["Selos Concedidos (Instâncias)"],
     responses={404: {"description": "Não encontrado"}},
 )
 
 
-@router.get("/empresa/{empresa_id}", summary="Lista selos fornecidos por uma empresa")
-async def listar_selos_empresa(
-    empresa_id: int,
-    pagina: int = Query(1, gt=0, description="Número da página"),
-    limite: int = Query(10, gt=0, le=100, description="Itens por página"),
-    status: Optional[str] = Query(
-        None, description="Filtrar por status (ex: 'ativo', 'expirado')"),
-    expiracao_proxima: Optional[bool] = Query(
-        None,
-        description="Filtrar selos com expiração próxima (30 dias)"
-    )
+@router.post("/selos/solicitar", status_code=status.HTTP_201_CREATED, summary="Empresa solicita um selo do catálogo", dependencies=[Depends(require_permission("empresa"))])
+def solicitar_selo(
+    data: SolicitarSeloRequest,
+    current_user: TokenPayLoad = Depends(get_current_user)
 ):
-    return await get_selos_por_empresas(
-        empresa_id=empresa_id,
-        pagina=pagina,
-        limite=limite,
-        status=status,
-        expiracao_proxima=expiracao_proxima
-    )
+    return ctrl.solicitar_selo_para_minha_empresa(data, current_user)
+
+@router.post("/empresas/{id_empresa}/selos", status_code=status.HTTP_201_CREATED, summary="Concede um selo a uma empresa", dependencies=[Depends(require_permission("admin", "admin_master"))])
+def conceder_selo(id_empresa: int, data: ConcederSeloRequest):
+    return ctrl.conceder_selo_a_empresa(id_empresa, data)
 
 
-@router.get("/todos_selos", summary="Listar todos os selos e quais empresas adquiriram", status_code=200)
-async def pegar_todos_selos_empresas_existentes():
-    try:
-        selos = retornar_empresas_com_selos_criados()
-        return {"dados": selos}
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+@router.get("/empresas/{id_empresa}/selos", response_model=List[SeloConcedido], summary="Lista os selos de uma empresa", dependencies=[Depends(require_permission("empresa", "admin", "admin_master"))])
+def listar_selos_empresa(id_empresa: int, current_user: TokenPayLoad = Depends(get_current_user)):
+    return ctrl.listar_selos_de_empresa(id_empresa, current_user)
 
 
-@router.delete("/selos_expirados/remover", summary="Remover selos expirados há mais de 30 dias")
-async def rota_remover_selos_expirados():
-    return remover_selos_expirados()
-
-# PUT para Admin (pendente → ativo)
+@router.get("/selos/solicitacoes", response_model=List[SeloConcedido], summary="Lista todas as solicitações de selo pendentes", dependencies=[Depends(require_permission("admin", "admin_master"))])
+def listar_solicitacoes():
+    return ctrl.listar_solicitacoes_pendentes()
 
 
-@router.put("/aprovar/{selo_id}")
-def aprovar_selo(selo_id: int):
-    return controller_renovar_selo(selo_id)
+@router.put("/empresa-selos/{empresa_selo_id}/aprovar", summary="Aprova uma solicitação de selo", dependencies=[Depends(require_permission("admin", "admin_master"))])
+def aprovar_selo(empresa_selo_id: int = Path(..., description="O ID da tabela 'empresa_selo'")):
+    return ctrl.aprovar_selo_concedido(empresa_selo_id)
 
-# PUT para Cliente (expirado → pendente)
+@router.put("/empresa-selos/{empresa_selo_id}/recusar", summary="Recusa uma solicitação de selo", dependencies=[Depends(require_permission("admin", "admin_master"))])
+def recusar_solicitacao(empresa_selo_id: int = Path(..., description="O ID da tabela 'empresa_selo'")):
+    return ctrl.recusar_selo_concedido(empresa_selo_id)
 
+@router.put("/empresa-selos/{empresa_selo_id}/solicitar-renovacao", summary="Solicita a renovação de um selo", dependencies=[Depends(require_permission("empresa"))])
+def solicitar_renovacao(
+    empresa_selo_id: int = Path(..., description="O ID da tabela 'empresa_selo'"),
+    current_user: TokenPayLoad = Depends(get_current_user)
+):
+    return ctrl.solicitar_renovacao_de_selo(empresa_selo_id, current_user)
 
-@router.put("/solicitar-renovacao/{selo_id}/")
-def solicitar_renovacao(selo_id: int):
-    return controller_solicitar_renovacao(selo_id)
-
-
-# lógica Automática (ativo → expirado)
-# Função para o job (chamada externamente)
-def expirar_selos_automaticamente():
-    return controller_expirar_selo_automatico()
-
-
-@router.on_event("startup")
-def realizar_evento():
-    scheduler.add_job(expirar_selos_automaticamente, 'interval', hours=24)
-    scheduler.start()
-
-
-@router.on_event("shutdown")
-def shutdown_scheduler():
-    scheduler.shutdown()
-
-
-@router.post("/{id_empresa}/associar", status_code=201,
-             summary="[Admin] Cria e associa um novo selo a uma empresa",
-             description="Cria uma nova instância de selo com código padronizado e a associa a uma empresa em uma única operação."
-             )
-def associar_multiplos_selos_a_empresa(id_empresa: int, data: AssociacaoMultiplaRequest):
-    return controller_associa_selo_empresa(id_empresa, data)
+@router.delete("/empresa-selos/{empresa_selo_id}", status_code=status.HTTP_200_OK, summary="Revoga um selo concedido", dependencies=[Depends(require_permission("admin", "admin_master"))])
+def revogar_selo(empresa_selo_id: int = Path(..., description="O ID da instância do selo a ser revogado")):
+    return ctrl.revogar_selo_da_empresa(empresa_selo_id)

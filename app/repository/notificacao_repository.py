@@ -3,7 +3,7 @@ from mysql.connector import Error
 from fastapi import HTTPException
 from ..database.config import get_db_config 
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 def get_db_connection():
     try:
@@ -15,6 +15,21 @@ def get_db_connection():
             status_code=500,
             detail=f"Erro ao conectar ao banco de dados: {str(e)}"
         )
+
+def get_notificacao_by_id(notificacao_id: int) -> Optional[Dict[str, Any]]:
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        query = "SELECT * FROM notificacao WHERE id = %s"
+        cursor.execute(query, (notificacao_id,))
+        return cursor.fetchone()
+    except Error as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao buscar notificação por ID: {str(e)}")
+    finally:
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
 
 def get_notificacoes_by_empresa(empresa_id: int, lida: Optional[bool] = None) -> List[dict]:
     conn = get_db_connection()

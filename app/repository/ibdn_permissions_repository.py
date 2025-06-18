@@ -1,8 +1,6 @@
-# app/repository/ibdn_permissions_repository.py
 from typing import List, Optional, Dict, Any
 from fastapi import HTTPException
-from mysql.connector import Error  # Importar Error especificamente
-# Supondo que get_db_connection está em app.database.connection
+from mysql.connector import Error
 from app.database.connection import get_db_connection
 
 

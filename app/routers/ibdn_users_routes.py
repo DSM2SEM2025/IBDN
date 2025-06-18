@@ -1,11 +1,8 @@
-# app/routes/ibdn_users_routes.py
 from fastapi import APIRouter, HTTPException, status, Query, Depends
 from typing import List
 from app.controllers import ibdn_users_controller as ctrl
-from app.models.ibdn_user_model import IbdnUsuario, IbdnUsuarioCreate, IbdnUsuarioUpdate
-# Para autenticação/autorização (exemplo, você precisará implementar)
-# from app.core.security import get_current_active_user, User # Supondo um schema User para o usuário autenticado
-# from app.auth_utils import require_permission # Sua função de dependência para verificar permissões
+from app.models.ibdn_user_model import IbdnUsuario, IbdnUsuarioCreate, IbdnUsuarioUpdate, UsuarioRegister
+from app.controllers.token import require_permission, get_current_user, TokenPayLoad
 
 router = APIRouter(
     prefix="/usuario",
@@ -13,11 +10,21 @@ router = APIRouter(
     responses={404: {"description": "Não encontrado"}},
 )
 
-
-@router.post("/", response_model=IbdnUsuario, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=IbdnUsuario, status_code=status.HTTP_201_CREATED, summary="Autocadastro de um novo usuário")
+async def api_register_user(usuario_data: UsuarioRegister):
+    try:
+        return ctrl.register_new_user(usuario_data)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro interno do servidor: {str(e)}"
+        )
+    
+@router.post("/", response_model=IbdnUsuario, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_permission("admin", "admin_master"))])
 async def api_create_usuario(
     usuario_data: IbdnUsuarioCreate,
-    # current_user: User = Depends(require_permission("gerenciar_usuarios")) # Exemplo de proteção
 ):
     try:
         return ctrl.create_usuario(usuario_data)
@@ -31,11 +38,10 @@ async def api_create_usuario(
 @router.get("/{usuario_id}", response_model=IbdnUsuario)
 async def api_get_usuario(
     usuario_id: str,
-    # current_user: User = Depends(get_current_active_user) # Exemplo de proteção
+    current_user: TokenPayLoad = Depends(get_current_user)
 ):
-    # Aqui você pode adicionar lógica para verificar se o current_user pode ver este usuario_id
     try:
-        return ctrl.get_usuario(usuario_id)
+        return ctrl.get_usuario(usuario_id, current_user)
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -43,11 +49,10 @@ async def api_get_usuario(
             status_code=500, detail=f"Erro interno do servidor: {str(e)}")
 
 
-@router.get("/", response_model=List[IbdnUsuario])
+@router.get("/", response_model=List[IbdnUsuario], dependencies=[Depends(require_permission("admin_master"))])
 async def api_get_all_usuarios(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    # current_user: User = Depends(require_permission("listar_usuarios")) # Exemplo de proteção
 ):
     try:
         return ctrl.get_all_usuarios(skip=skip, limit=limit)
@@ -56,16 +61,14 @@ async def api_get_all_usuarios(
             status_code=500, detail=f"Erro interno do servidor: {str(e)}")
 
 
-@router.put("/{usuario_id}", response_model=IbdnUsuario)
+@router.put("/{usuario_id}", response_model=IbdnUsuario, dependencies=[Depends(require_permission("empresa", "admin", "admin_master"))])
 async def api_update_usuario(
     usuario_id: str,
     usuario_data: IbdnUsuarioUpdate,
-    # current_user: User = Depends(get_current_active_user) # Exemplo de proteção
+    current_user: TokenPayLoad = Depends(get_current_user)
 ):
-    # Adicionar lógica para verificar se current_user pode atualizar este usuario_id
-    # ou se tem a permissão "gerenciar_usuarios"
     try:
-        return ctrl.update_usuario(usuario_id, usuario_data)
+        return ctrl.update_usuario(usuario_id, usuario_data, current_user)
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -73,10 +76,9 @@ async def api_update_usuario(
             status_code=500, detail=f"Erro interno do servidor: {str(e)}")
 
 
-@router.delete("/{usuario_id}", status_code=status.HTTP_200_OK)
+@router.delete("/{usuario_id}", status_code=status.HTTP_200_OK, dependencies=[Depends(require_permission("admin", "admin_master"))])
 async def api_delete_usuario(
     usuario_id: str,
-    # current_user: User = Depends(require_permission("gerenciar_usuarios")) # Exemplo de proteção
 ):
     try:
         return ctrl.delete_usuario(usuario_id)

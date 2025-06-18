@@ -69,3 +69,6 @@ seed_data.py
 
 # Script para gerar tokens JWT para testes locais
 gerar_tokens_teste.py
+
+# Script para testes automatizados
+test_api.py

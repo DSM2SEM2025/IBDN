@@ -1,63 +1,56 @@
-import mysql.connector
 from fastapi import HTTPException
-from app.database.config import get_db_config
-from app.models.model_endereco import EmpresaEndereco, EmpresaEnderecoUpdate
+from app.repository import endereco_repository as repo
+from app.repository import empresa_repository
+from app.models.model_endereco import EmpresaEnderecoUpdate, EmpresaEnderecoCreate
+from app.controllers.token import TokenPayLoad
 
-def get_empresa_enderecos_by_empresa_id(empresa_id: int):
-    try:
-        config = get_db_config()
-        conn = mysql.connector.connect(**config)
-        cursor = conn.cursor(dictionary=True)
 
-        cursor.execute("SELECT * FROM endereco WHERE id_empresa = %s", (empresa_id,))
-        rows = cursor.fetchall()
+def get_empresa_enderecos_by_empresa_id(empresa_id: int, current_user: TokenPayLoad):
+    is_admin = "admin" in current_user.permissoes or "admin_master" in current_user.permissoes
 
-        cursor.close()
-        conn.close()
+    get_empresa_enderecos_by_empresa_id = repo.get_enderecos_by_empresa(
+        empresa_id)
+    if not is_admin and current_user.empresa_id != empresa_id:
+        raise HTTPException(status_code=403, detail="Acesso negado.")
+    return get_empresa_enderecos_by_empresa_id
 
-        if not rows:
-            raise HTTPException(status_code=404, detail="Nenhum endereço encontrado para esta empresa")
-        return rows
-    except mysql.connector.Error as err:
-        raise HTTPException(status_code=500, detail=f"Erro ao buscar endereços: {err}")
 
-def update_empresa_endereco(empresa_id: int, endereco_id: int, data: dict):
-    try:
-        config = get_db_config()
-        conn = mysql.connector.connect(**config)
-        cursor = conn.cursor()
-
-        # Verifica se o endereço pertence à empresa
-        cursor.execute("SELECT id FROM endereco WHERE id = %s AND id_empresa = %s", (endereco_id, empresa_id))
-        if not cursor.fetchone():
-            raise HTTPException(status_code=404, detail="Endereço não encontrado para esta empresa")
-
-        # Atualiza o endereço
-        cursor.execute("""
-            UPDATE endereco SET 
-                logradouro = %s,
-                bairro = %s,
-                cep = %s,
-                cidade = %s,
-                uf = %s,
-                complemento = %s
-            WHERE id = %s AND id_empresa = %s
-        """, (
-            data.get('logradouro'),
-            data.get('bairro'),
-            data.get('cep'),
-            data.get('cidade'),
-            data.get('uf'),
-            data.get('complemento'),
-            endereco_id,
-            empresa_id
-        ))
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return {"mensagem": "Endereço atualizado com sucesso"}
-    except mysql.connector.Error as err:
-        raise HTTPException(status_code=500, detail=f"Erro ao atualizar endereço: {err}")
+def update_empresa_endereco(empresa_id: int, data: EmpresaEnderecoUpdate, current_user: TokenPayLoad):
+    is_admin = "admin" in current_user.permissoes or "admin_master" in current_user.permissoes
     
+    if not is_admin and current_user.empresa_id != empresa_id:
+        raise HTTPException(
+            status_code=403, 
+            detail="Acesso negado: Você não tem permissão para atualizar o endereço desta empresa."
+        )
+
+    updated = repo.update_endereco(empresa_id, data)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Nenhum endereço encontrado para esta empresa para ser atualizado.")
+    
+    return {"message": "Endereço atualizado com sucesso"}
+
+def create_empresa_endereco(empresa_id: int, endereco: EmpresaEnderecoCreate, current_user: TokenPayLoad):
+    is_admin = "admin" in current_user.permissoes or "admin_master" in current_user.permissoes
+
+    if not is_admin:
+        empresa_existente = empresa_repository.repo_get_empresa_by_id(
+            empresa_id)
+
+        if not empresa_existente:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Empresa não encontrada.")
+
+        if empresa_existente['usuario_id'] != current_user.usuario_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Você não tem permissão para criar um endereço para esta empresa."
+            )
+    novo_endereco = repo.create_endereco(empresa_id, endereco)
+    return {"message": "Endereço criado com sucesso", "endereco": novo_endereco}
+
+def delete_empresa_endereco(empresa_id: int):
+    deleted = repo.repo_delete_endereco(empresa_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Nenhum endereço encontrado para esta empresa para ser removido.")
+    return {"message": "Endereço removido com sucesso"}

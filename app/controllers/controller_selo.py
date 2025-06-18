@@ -1,190 +1,118 @@
-import mysql.connector
-from mysql.connector import Error
-from datetime import datetime
-from typing import Optional
-from fastapi import HTTPException
-from ..repository.selos_repository import delete_selos_expirados, update_renovar_selo, update_solicitar_renovacao, update_expirar_selo_automatico, get_selos_por_empresas as repo_get_selos, update_rejeitar_renovacao, repo_associa_selos_empresa, get_selo_by_id, get_all_associacoes
-from ..models.selo_model import AssociacaoMultiplaRequest
+from fastapi import HTTPException, status
+from typing import List
+from app.models.selo_model import SeloCreate, SeloUpdate, SeloInDB, ConcederSeloRequest, SeloConcedido, SolicitarSeloRequest
+from app.repository import selos_repository as repo
+from app.controllers.token import TokenPayLoad
 
 
-async def get_selos_por_empresas(
-    empresa_id: int,
-    pagina: int = 1,
-    limite: int = 10,
-    status: Optional[str] = None,
-    expiracao_proxima: Optional[bool] = None
-):
+def criar_tipo_selo(data: SeloCreate) -> SeloInDB:
     try:
-        resultado = await repo_get_selos(
-            empresa_id=empresa_id,
-            pagina=pagina,
-            limite=limite,
-            status=status,
-            expiracao_proxima=expiracao_proxima
-        )
-        return resultado
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-def retornar_empresas_com_selos_criados():
-    try:
-        selos = get_all_associacoes()
-        return selos
+        new_id = repo.repo_criar_selo(data.model_dump())
+        return SeloInDB(id=new_id, **data.model_dump())
     except HTTPException as e:
         raise e
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
-def remover_selos_expirados():
-    """
-    Controller para remover selos que estão expirados há mais de 30 dias.
-    """
+def listar_tipos_selo() -> List[SeloInDB]:
+    selos_db = repo.repo_listar_selos()
+    return [SeloInDB(**selo) for selo in selos_db]
+
+
+def conceder_selo_a_empresa(id_empresa: int, data: ConcederSeloRequest) -> dict:
     try:
-        selos_removidos = delete_selos_expirados()
-        return {
-            "status": "success",
-            "mensagem": f"Remoção de selos expirados processada com sucesso",
-            "dados": selos_removidos
-        }
+        return repo.repo_conceder_selo_empresa(id_empresa, data.id_selo, data.dias_validade)
     except HTTPException as e:
         raise e
-    except Exception as e:
+
+
+def listar_selos_de_empresa(id_empresa: int, current_user: TokenPayLoad) -> List[SeloConcedido]:
+    is_admin = "admin" in current_user.permissoes or "admin_master" in current_user.permissoes
+    if not is_admin and current_user.empresa_id != id_empresa:
         raise HTTPException(
-            status_code=500,
-            detail=f"Erro ao remover selos expirados: {str(e)}"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para visualizar os selos desta empresa."
         )
 
+    selos_db = repo.repo_listar_selos_da_empresa(id_empresa)
+    return [SeloConcedido(**selo) for selo in selos_db]
 
-def controller_renovar_selo(selo_id: int):
-    """
-    Controller para renovar um selo (alterar status de pendente para ativo).
-    Esta função é utilizada pelo administrador para aprovar renovações.
-    """
-    try:
-        selo = get_selo_by_id(selo_id=selo_id)
-        if not selo:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Selo com ID {selo_id} não encontrado"
-            )
+def listar_solicitacoes_pendentes() -> List[SeloConcedido]:
+    solicitacoes_db = repo.repo_listar_solicitacoes_pendentes()
+    return [SeloConcedido(**solicitacao) for solicitacao in solicitacoes_db]
 
-        resultado = update_renovar_selo(selo_id)
-        return {
-            "status": "success",
-            "mensagem": f"Selo com ID {selo_id} renovado com sucesso",
-            "dados": resultado
-        }
-    except HTTPException as e:
-        raise e
-    except Exception as e:
+
+def aprovar_selo_concedido(empresa_selo_id: int) -> dict:
+    sucesso = repo.repo_atualizar_status_selo(empresa_selo_id, 'Ativo')
+    if not sucesso:
         raise HTTPException(
-            status_code=500,
-            detail=f"Erro ao renovar selo: {str(e)}"
+            status_code=404, detail="Selo concedido não encontrado ou já está ativo.")
+    return {"message": "Selo aprovado e ativado com sucesso."}
+
+def recusar_selo_concedido(empresa_selo_id: int) -> dict:
+    selo_concedido = repo.repo_get_empresa_selo_por_id(empresa_selo_id)
+    if not selo_concedido:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Solicitação de selo não encontrada.")
+
+    if selo_concedido['status'] not in ['Pendente', 'Em Renovação']:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"A solicitação de selo não pode ser recusada pois seu status atual é '{selo_concedido['status']}'."
         )
 
-
-def controller_solicitar_renovacao(selo_id: int):
-    """
-    Controller para solicitar renovação de um selo (alterar status de expirado para pendente).
-    """
-    try:
-        selo = get_selo_by_id(selo_id=selo_id)
-        if not selo:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Selo com ID {selo_id} não encontrado"
-            )
-
-        if selo.get("status", "").lower() != "expirado":  # Corrigido aqui
-            raise HTTPException(
-                status_code=400,
-                detail=f"Apenas selos com status 'expirado' podem solicitar renovação"
-            )
-
-        resultado = update_solicitar_renovacao(selo_id)
-        return {
-            "status": "success",
-            "mensagem": f"Solicitação de renovação para o selo ID {selo_id} enviada com sucesso",
-            "dados": resultado
-        }
-    except HTTPException as e:
-        raise e
-    except Exception as e:
+    sucesso = repo.repo_atualizar_status_selo(empresa_selo_id, 'Recusado')
+    if not sucesso:
         raise HTTPException(
-            status_code=500,
-            detail=f"Erro ao solicitar renovação do selo: {str(e)}"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail="Ocorreu um erro ao tentar recusar a solicitação de selo."
+        )
+    return {"message": "Solicitação de selo recusada com sucesso."}
+
+def solicitar_renovacao_de_selo(empresa_selo_id: int, current_user: TokenPayLoad) -> dict:
+    selo_concedido = repo.repo_get_empresa_selo_por_id(empresa_selo_id)
+    if not selo_concedido:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Selo concedido não encontrado.")
+
+    if selo_concedido['id_empresa'] != current_user.empresa_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Você não tem permissão para solicitar a renovação deste selo."
         )
 
-
-def controller_expirar_selo_automatico():
-    """
-    Controller para expirar selos automaticamente.
-    Esta função é executada periodicamente para alterar o status de selos ativos
-    que atingiram sua data de expiração.
-    """
-    try:
-        selos_expirados = update_expirar_selo_automatico()
-
-        return {
-            "status": "success",
-            "mensagem": "Verificação de selos expirados concluída",
-            "dados": {
-                "selos_expirados": selos_expirados,
-                "data_execucao": datetime.now().isoformat()
-            }
-        }
-    except Exception as e:
-        print(f"Erro ao expirar selos automaticamente: {str(e)}")
-        return {
-            "status": "error",
-            "mensagem": f"Erro ao processar expiração automática de selos",
-            "erro": str(e)
-        }
-
-
-def controller_rejeitar_renovacao_selo(selo_id: int, motivo: str = ""):
-    """
-    Controller para rejeitar a renovação de um selo (alterar status de pendente para expirado).
-    Esta função é utilizada pelo administrador quando não aprova a renovação solicitada.
-    """
-    try:
-        selo = get_selo_by_id(selo_id=selo_id)
-        if not selo:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Selo com ID {selo_id} não encontrado"
-            )
-        if selo.get("status") != "pendente":
-            raise HTTPException(
-                status_code=400,
-                detail=f"Apenas selos com status 'pendente' podem ter a renovação rejeitada"
-            )
-        resultado = update_rejeitar_renovacao(selo_id, motivo)
-
-        return {
-            "status": "success",
-            "mensagem": f"Renovação do selo ID {selo_id} rejeitada com sucesso",
-            "dados": resultado
-        }
-    except HTTPException as e:
-        raise e
-    except Exception as e:
+    sucesso = repo.repo_atualizar_status_selo(empresa_selo_id, 'Em Renovação')
+    if not sucesso:
         raise HTTPException(
-            status_code=500,
-            detail=f"Erro ao rejeitar renovação do selo: {str(e)}"
+            status_code=404, detail="Não foi possível solicitar a renovação. Selo não encontrado ou status inválido.")
+            
+    return {"message": "Solicitação de renovação enviada com sucesso."}
+
+def revogar_selo_da_empresa(empresa_selo_id: int) -> dict:
+    selo_existente = repo.repo_get_empresa_selo_por_id(empresa_selo_id)
+    if not selo_existente:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Selo concedido não encontrado para revogação."
         )
 
-
-def controller_associa_selo_empresa(id_empresa: int, data: AssociacaoMultiplaRequest):
-    try:
-        resultado = repo_associa_selos_empresa(id_empresa, data)
-        return resultado
-    except HTTPException as http_exc:
-        raise http_exc
-    except Exception as e:
+    sucesso = repo.repo_revogar_selo_empresa(empresa_selo_id)
+    if not sucesso:
         raise HTTPException(
-            status_code=500,
-            detail=f"Ocorreu um erro interno inesperado no servidor: {str(e)}"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ocorreu um erro ao tentar revogar o selo."
         )
+
+    return {"message": "Selo revogado com sucesso."}
+
+def solicitar_selo_para_minha_empresa(data: SolicitarSeloRequest, current_user: TokenPayLoad) -> dict:
+    if "empresa" not in current_user.permissoes:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Esta ação é permitida apenas para usuários do tipo empresa."
+        )
+
+    id_empresa = current_user.empresa_id
+    if not id_empresa:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Usuário do tipo empresa não está associado a nenhuma empresa."
+        )
+    return repo.repo_solicitar_selo_empresa(id_empresa, data.id_selo, data.plano_anos)

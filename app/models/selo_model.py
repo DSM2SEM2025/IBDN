@@ -1,17 +1,53 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional, Literal
+from datetime import date
 
-from pydantic import BaseModel
 
-class AssociacaoMultiplaRequest(BaseModel):
-    #Associar um selo a uma empresa em uma única etapa
-    id_tipo_selo: int = Field(..., description="ID do tipo de selo a ser criado e associado.")
-    dias_validade: int = Field(365, description="Número de dias que o selo será válido a partir da emissão.")
+class SeloBase(BaseModel):
+    nome: str = Field(..., max_length=100)
+    descricao: Optional[str] = None
+    sigla: str = Field(..., max_length=3)
+
+
+class SeloCreate(SeloBase):
+    pass
+
+
+class SeloUpdate(BaseModel):
+    nome: Optional[str] = Field(None, max_length=100)
+    descricao: Optional[str] = None
+    sigla: Optional[str] = Field(None, max_length=3)
+
+
+class SeloInDB(SeloBase):
+    id: int
 
     class Config:
-        json_schema_extra = {
-            "example": {
-                "id_tipo_selo": 2,
-                "dias_validade": 730
-            }
-        }
+        from_attributes = True
+
+
+class SolicitarSeloRequest(BaseModel):
+    id_selo: int = Field(..., description="ID do selo do catálogo que a empresa deseja solicitar.")
+    plano_anos: Literal[1, 2] = Field(..., description="Plano de certificação desejado em anos (1 ou 2).")
+
+class ConcederSeloRequest(BaseModel):
+    id_selo: int = Field(...,
+                         description="ID do selo (do catálogo) a ser concedido.")
+    dias_validade: int = Field(
+        365, gt=0, description="Número de dias que o selo será válido.")
+
+
+class SeloConcedido(BaseModel):
+    id: int
+    id_empresa: int
+    id_selo: int
+    status: str
+    data_emissao: Optional[date]
+    data_expiracao: Optional[date]
+    codigo_selo: Optional[str] = None
+    nome_selo: str
+    sigla_selo: str
+    razao_social_empresa: str
+
+    class Config:
+        from_attributes = True
