@@ -351,6 +351,8 @@ Se você tiver alguma dúvida ou problema, sinta-se à vontade para:
 
 <div align="center">
 
+**Feito com ❤️ pela equipe IBDN**
+
 ⭐ **Se este projeto foi útil para você, considere dar uma estrela!**
 
 </div>
