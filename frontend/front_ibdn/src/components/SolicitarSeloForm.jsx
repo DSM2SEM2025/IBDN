@@ -76,7 +76,6 @@ function SolicitarSeloForm({ tiposSelo = [], onSubmit, onCancel, isSaving }) {
         >
           <option value="1">1 Ano</option>
           <option value="2">2 Anos</option>
-          <option value="3">3 Anos</option>
         </select>
       </div>
 
