@@ -117,6 +117,7 @@ def create_tables():
                 documentacao TEXT,
                 alerta_enviado BOOLEAN,
                 dias_alerta_previo INT,
+                plano_solicitado_anos INT,
                 FOREIGN KEY (id_empresa) REFERENCES empresa(id) ON DELETE CASCADE,
                 FOREIGN KEY (id_selo) REFERENCES selo(id) ON DELETE CASCADE
             ) ENGINE=InnoDB;

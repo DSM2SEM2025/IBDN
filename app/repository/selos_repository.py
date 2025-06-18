@@ -101,6 +101,7 @@ def repo_listar_selos_da_empresa(id_empresa: int) -> List[dict]:
         query = """
             SELECT
                 es.id, es.id_empresa, es.id_selo, es.status, es.data_emissao, es.data_expiracao, es.codigo_selo,
+                es.plano_solicitado_anos,
                 s.nome as nome_selo,
                 s.sigla as sigla_selo,
                 e.razao_social as razao_social_empresa
@@ -127,6 +128,7 @@ def repo_listar_solicitacoes_pendentes() -> List[dict]:
         query = """
             SELECT
                 es.id, es.id_empresa, es.id_selo, es.status, es.data_emissao, es.data_expiracao, es.codigo_selo,
+                es.plano_solicitado_anos,
                 s.nome as nome_selo,
                 s.sigla as sigla_selo,
                 e.razao_social as razao_social_empresa
@@ -148,14 +150,22 @@ def repo_listar_solicitacoes_pendentes() -> List[dict]:
 
 def repo_atualizar_status_selo(empresa_selo_id: int, novo_status: str) -> bool:
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
     try:
         if novo_status == 'Ativo':
+            cursor.execute("SELECT plano_solicitado_anos FROM empresa_selo WHERE id = %s", (empresa_selo_id,))
+            resultado = cursor.fetchone()
+            
+            anos_validade = 1
+            if resultado and resultado.get('plano_solicitado_anos'):
+                anos_validade = resultado['plano_solicitado_anos']
+
+            dias_validade = anos_validade * 365
             data_emissao = datetime.now().date()
-            data_expiracao = data_emissao + timedelta(days=365)
+            data_expiracao = data_emissao + timedelta(days=dias_validade)
+            
             query = "UPDATE empresa_selo SET status = %s, data_emissao = %s, data_expiracao = %s WHERE id = %s"
-            params = (novo_status, data_emissao,
-                      data_expiracao, empresa_selo_id)
+            params = (novo_status, data_emissao, data_expiracao, empresa_selo_id)
         else:
             query = "UPDATE empresa_selo SET status = %s WHERE id = %s"
             params = (novo_status, empresa_selo_id)
@@ -171,7 +181,7 @@ def repo_atualizar_status_selo(empresa_selo_id: int, novo_status: str) -> bool:
         cursor.close()
         conn.close()
 
-def repo_solicitar_selo_empresa(id_empresa: int, id_selo: int) -> dict:
+def repo_solicitar_selo_empresa(id_empresa: int, id_selo: int, plano_anos: int) -> dict:
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
@@ -195,8 +205,8 @@ def repo_solicitar_selo_empresa(id_empresa: int, id_selo: int) -> dict:
                 detail=f"Não é possível solicitar este selo. Você já possui uma instância com o status: '{status_existente}'."
             )
 
-        query = "INSERT INTO empresa_selo (id_empresa, id_selo, status) VALUES (%s, %s, %s)"
-        cursor.execute(query, (id_empresa, id_selo, 'Pendente'))
+        query = "INSERT INTO empresa_selo (id_empresa, id_selo, status, plano_solicitado_anos) VALUES (%s, %s, %s, %s)"
+        cursor.execute(query, (id_empresa, id_selo, 'Pendente', plano_anos))
         novo_id = cursor.lastrowid
         conn.commit()
 
@@ -215,7 +225,7 @@ def repo_get_empresa_selo_por_id(empresa_selo_id: int) -> Optional[dict]:
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     try:
-        query = "SELECT id, id_empresa, id_selo, status FROM empresa_selo WHERE id = %s"
+        query = "SELECT id, id_empresa, id_selo, status, plano_solicitado_anos FROM empresa_selo WHERE id = %s"
         cursor.execute(query, (empresa_selo_id,))
         return cursor.fetchone()
     finally:

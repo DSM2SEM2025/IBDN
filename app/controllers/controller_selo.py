@@ -48,6 +48,24 @@ def aprovar_selo_concedido(empresa_selo_id: int) -> dict:
             status_code=404, detail="Selo concedido não encontrado ou já está ativo.")
     return {"message": "Selo aprovado e ativado com sucesso."}
 
+def recusar_selo_concedido(empresa_selo_id: int) -> dict:
+    selo_concedido = repo.repo_get_empresa_selo_por_id(empresa_selo_id)
+    if not selo_concedido:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Solicitação de selo não encontrada.")
+
+    if selo_concedido['status'] not in ['Pendente', 'Em Renovação']:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"A solicitação de selo não pode ser recusada pois seu status atual é '{selo_concedido['status']}'."
+        )
+
+    sucesso = repo.repo_atualizar_status_selo(empresa_selo_id, 'Recusado')
+    if not sucesso:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail="Ocorreu um erro ao tentar recusar a solicitação de selo."
+        )
+    return {"message": "Solicitação de selo recusada com sucesso."}
 
 def solicitar_renovacao_de_selo(empresa_selo_id: int, current_user: TokenPayLoad) -> dict:
     selo_concedido = repo.repo_get_empresa_selo_por_id(empresa_selo_id)
@@ -97,4 +115,4 @@ def solicitar_selo_para_minha_empresa(data: SolicitarSeloRequest, current_user: 
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Usuário do tipo empresa não está associado a nenhuma empresa."
         )
-    return repo.repo_solicitar_selo_empresa(id_empresa, data.id_selo)
+    return repo.repo_solicitar_selo_empresa(id_empresa, data.id_selo, data.plano_anos)

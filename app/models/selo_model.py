@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Literal
 from datetime import date
 
 
@@ -28,7 +28,7 @@ class SeloInDB(SeloBase):
 
 class SolicitarSeloRequest(BaseModel):
     id_selo: int = Field(..., description="ID do selo do catálogo que a empresa deseja solicitar.")
-
+    plano_anos: Literal[1, 2] = Field(..., description="Plano de certificação desejado em anos (1 ou 2).")
 
 class ConcederSeloRequest(BaseModel):
     id_selo: int = Field(...,

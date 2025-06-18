@@ -36,6 +36,9 @@ def listar_solicitacoes():
 def aprovar_selo(empresa_selo_id: int = Path(..., description="O ID da tabela 'empresa_selo'")):
     return ctrl.aprovar_selo_concedido(empresa_selo_id)
 
+@router.put("/empresa-selos/{empresa_selo_id}/recusar", summary="Recusa uma solicitação de selo", dependencies=[Depends(require_permission("admin", "admin_master"))])
+def recusar_solicitacao(empresa_selo_id: int = Path(..., description="O ID da tabela 'empresa_selo'")):
+    return ctrl.recusar_selo_concedido(empresa_selo_id)
 
 @router.put("/empresa-selos/{empresa_selo_id}/solicitar-renovacao", summary="Solicita a renovação de um selo", dependencies=[Depends(require_permission("empresa"))])
 def solicitar_renovacao(
