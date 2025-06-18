@@ -1,5 +1,4 @@
-// front_e_back/front/src/pages/SolicitarSeloPage.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import * as seloService from "../services/seloService";
 import * as tipoSeloService from "../services/tipoSeloService";
 import Modal from "../components/Modal";
@@ -21,16 +20,20 @@ function SolicitarSeloPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [solicitacoesDaEmpresa, setSolicitacoesDaEmpresa] = useState([]);
 
-  const fetchTiposSeloAndSolicitacoes = async () => {
+  const fetchTiposSeloAndSolicitacoes = useCallback(async () => {
+    // Se o usuário não tiver uma empresa associada, não há o que buscar.
+    if (!user?.empresa_id) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const [tiposSeloData, solicitacoesData] = await Promise.all([
         tipoSeloService.listarTiposSelo(),
-        user?.empresa_id
-          ? seloService.getSelosByEmpresa(user.empresa_id)
-          : Promise.resolve([]),
+        seloService.getSelosByEmpresa(user.empresa_id),
       ]);
       setTiposSelo(tiposSeloData);
+      // Filtra para exibir apenas as solicitações que estão aguardando alguma ação
       setSolicitacoesDaEmpresa(
         solicitacoesData.filter(
           (s) => s.status === "Pendente" || s.status === "Em Renovação"
@@ -45,11 +48,11 @@ function SolicitarSeloPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchTiposSeloAndSolicitacoes();
-  }, [user]);
+  }, [fetchTiposSeloAndSolicitacoes]);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -60,15 +63,16 @@ function SolicitarSeloPage() {
     setIsModalOpen(false);
   };
 
-  const handleSolicitarSelo = async (idSelo) => {
+  const handleSolicitarSelo = async (dadosSolicitacao) => {
     setIsSaving(true);
     try {
-      await seloService.solicitarSelo(idSelo);
+      // O serviço já espera o objeto completo { id_selo, plano_anos }
+      await seloService.solicitarSelo(dadosSolicitacao);
       alert(
         "Solicitação de selo enviada com sucesso! Um administrador revisará sua solicitação."
       );
       handleCloseModal();
-      await fetchTiposSeloAndSolicitacoes();
+      await fetchTiposSeloAndSolicitacoes(); // Atualiza a lista de solicitações pendentes
     } catch (err) {
       const errorMessage =
         err.response?.data?.detail ||
@@ -89,13 +93,15 @@ function SolicitarSeloPage() {
         </div>
       );
 
+    // Exibe uma mensagem se o usuário ainda não tiver cadastrado sua empresa
     if (!user?.empresa_id) {
       return (
         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg shadow">
           <p className="font-semibold">Atenção:</p>
           <p>
             Você precisa ter uma empresa registrada para solicitar selos. Por
-            favor, complete o cadastro da sua empresa no menu "Empresas".
+            favor, complete o cadastro da sua empresa no menu "Registrar
+            Empresa".
           </p>
         </div>
       );
@@ -114,7 +120,7 @@ function SolicitarSeloPage() {
           </p>
           <button
             onClick={handleOpenModal}
-            className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-700 disabled:opacity-50"
+            className="px-4 py-2 bg-green-900 text-white font-semibold rounded-md shadow-sm hover:bg-green-700 disabled:opacity-50"
             disabled={tiposSelo.length === 0}
           >
             Solicitar Selo Agora
@@ -151,14 +157,6 @@ function SolicitarSeloPage() {
                         {solicitacao.status}
                       </span>
                     </p>
-                    {solicitacao.data_emissao && (
-                      <p className="text-xs text-gray-500">
-                        Solicitado em:{" "}
-                        {new Date(solicitacao.data_emissao).toLocaleDateString(
-                          "pt-BR"
-                        )}
-                      </p>
-                    )}
                   </div>
                 </li>
               ))}
@@ -179,7 +177,9 @@ function SolicitarSeloPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Solicitar Selo</h1>
       </div>
+
       {renderContent()}
+
       <Modal
         isOpen={isModalOpen}
         onClose={handleCloseModal}

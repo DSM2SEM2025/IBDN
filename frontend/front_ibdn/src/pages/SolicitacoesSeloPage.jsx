@@ -33,11 +33,11 @@ function SolicitacoesSeloPage() {
 
   const handleApprove = async (seloId) => {
     if (
-      window.confirm("Tem certeza que deseja aprovar esta solicitação de selo?")
+      window.confirm("Tem certeza que deseja APROVAR esta solicitação de selo?")
     ) {
       try {
         await seloService.aprovarSelo(seloId);
-        await fetchSolicitacoes(); // Refresh the list
+        await fetchSolicitacoes();
         alert("Selo aprovado com sucesso!");
       } catch (err) {
         alert("Ocorreu um erro ao aprovar o selo.");
@@ -45,8 +45,20 @@ function SolicitacoesSeloPage() {
     }
   };
 
-  // NOTE: A 'reject' function would be added here. For now, we only have 'approve'.
-  // const handleReject = async (seloId) => { ... }
+  // --- NOVA FUNÇÃO PARA RECUSAR ---
+  const handleReject = async (seloId) => {
+    if (
+      window.confirm("Tem certeza que deseja RECUSAR esta solicitação de selo?")
+    ) {
+      try {
+        await seloService.recusarSelo(seloId);
+        await fetchSolicitacoes(); // Atualiza a lista após a recusa
+        alert("Solicitação de selo recusada com sucesso.");
+      } catch (err) {
+        alert("Ocorreu um erro ao recusar a solicitação.");
+      }
+    }
+  };
 
   const renderContent = () => {
     if (loading) return <LoadingSpinner />;
@@ -60,6 +72,7 @@ function SolicitacoesSeloPage() {
       <SolicitacoesSeloTable
         solicitacoes={solicitacoes}
         onApprove={handleApprove}
+        onReject={handleReject} // Passando a nova função para a tabela
       />
     );
   };

@@ -8,6 +8,7 @@ import api from './api';
  */
 export const getRamosPorEmpresa = async (idEmpresa) => {
     try {
+        // CORREÇÃO: Removido o prefixo /empresas para bater com a sua rota do backend.
         const response = await api.get(`/${idEmpresa}/ramos/`);
         return response.data;
     } catch (error) {
@@ -24,6 +25,7 @@ export const getRamosPorEmpresa = async (idEmpresa) => {
  */
 export const atrelarRamosAEmpresa = async (idEmpresa, idsRamo) => {
     try {
+        // CORREÇÃO: Removido o prefixo /empresas.
         const response = await api.post(`/${idEmpresa}/ramos/`, { ids_ramo: idsRamo });
         return response.data;
     } catch (error) {
@@ -40,6 +42,7 @@ export const atrelarRamosAEmpresa = async (idEmpresa, idsRamo) => {
  */
 export const deleteAssociacao = async (idEmpresa, idRamo) => {
     try {
+        // CORREÇÃO: Removido o prefixo /empresas.
         const response = await api.delete(`/${idEmpresa}/ramos/${idRamo}/`);
         return response.data;
     } catch (error) {

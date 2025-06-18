@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import useAuthStore from "../store/authStore";
 import * as empresaService from "../services/empresaService";
 import * as enderecoService from "../services/enderecoService";
 import * as ramoService from "../services/ramoService";
 import * as empresaRamoService from "../services/empresaRamoService";
 import * as seloService from "../services/seloService";
+import * as notificacaoService from "../services/notificacaoService";
 
 import Modal from "../components/Modal";
 import EmpresaForm from "../components/EmpresaForm";
 import EnderecoForm from "../components/EnderecoForm";
 import AssociarRamosForm from "../components/AssociarRamosForm";
 import SelosAssociadosTable from "../components/SelosAssociadosTable";
+import NotificacoesList from "../components/NotificacoesList";
 
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center p-10">
@@ -21,19 +24,23 @@ const LoadingSpinner = () => (
 function MeuCadastroPage() {
   const { user } = useAuthStore();
   const empresaId = user?.empresa_id;
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Estados para os dados da página
   const [empresa, setEmpresa] = useState(null);
   const [endereco, setEndereco] = useState(null);
   const [ramosAtuais, setRamosAtuais] = useState([]);
   const [todosOsRamos, setTodosOsRamos] = useState([]);
   const [selos, setSelos] = useState([]);
+  const [notificacoes, setNotificacoes] = useState([]);
 
-  // Estados para controle dos modais
-  const [modalState, setModalState] = useState({ isOpen: false, mode: null });
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    mode: null,
+    data: null,
+  });
   const [isSaving, setIsSaving] = useState(false);
 
   const fetchData = useCallback(async () => {
@@ -50,12 +57,14 @@ function MeuCadastroPage() {
         ramosAtuaisData,
         todosOsRamosData,
         selosData,
+        notificacoesData,
       ] = await Promise.all([
         empresaService.buscarEmpresaPorId(empresaId),
         enderecoService.getEndereco(empresaId),
         empresaRamoService.getRamosPorEmpresa(empresaId),
         ramoService.listarRamos(),
         seloService.getSelosByEmpresa(empresaId),
+        notificacaoService.listarNotificacoesEmpresa(empresaId),
       ]);
 
       setEmpresa(empresaData);
@@ -63,6 +72,7 @@ function MeuCadastroPage() {
       setRamosAtuais(ramosAtuaisData);
       setTodosOsRamos(todosOsRamosData);
       setSelos(selosData);
+      setNotificacoes(notificacoesData);
       setError(null);
     } catch (err) {
       setError("Falha ao carregar os dados do seu cadastro.");
@@ -77,9 +87,11 @@ function MeuCadastroPage() {
   }, [fetchData]);
 
   const handleCloseModal = () =>
-    !isSaving && setModalState({ isOpen: false, mode: null });
+    !isSaving && setModalState({ isOpen: false, mode: null, data: null });
+  const handleOpenModal = (mode, data = null) =>
+    setModalState({ isOpen: true, mode, data });
 
-  const handleEditEmpresa = async (formData) => {
+  const handleEmpresaSubmit = async (formData) => {
     setIsSaving(true);
     try {
       await empresaService.atualizarEmpresa(empresaId, formData);
@@ -103,7 +115,9 @@ function MeuCadastroPage() {
       handleCloseModal();
       await fetchData();
     } catch (err) {
-      alert("Erro ao salvar o endereço.");
+      alert(
+        err.response?.data?.detail || "Ocorreu um erro ao salvar o endereço."
+      );
     } finally {
       setIsSaving(false);
     }
@@ -111,17 +125,50 @@ function MeuCadastroPage() {
 
   const handleRamosSubmit = async (selectedRamosIds) => {
     setIsSaving(true);
+    const originalRamoIds = new Set(ramosAtuais.map((r) => r.id));
+    const newRamoIds = new Set(selectedRamosIds);
+
+    const ramosToAdd = selectedRamosIds.filter(
+      (id) => !originalRamoIds.has(id)
+    );
+    const ramosToRemove = [...originalRamoIds].filter(
+      (id) => !newRamoIds.has(id)
+    );
+
     try {
-      await empresaRamoService.atrelarRamosAEmpresa(
-        empresaId,
-        selectedRamosIds
-      );
+      const promises = [];
+
+      if (ramosToRemove.length > 0) {
+        ramosToRemove.forEach((ramoId) => {
+          promises.push(empresaRamoService.deleteAssociacao(empresaId, ramoId));
+        });
+      }
+
+      if (ramosToAdd.length > 0) {
+        promises.push(
+          empresaRamoService.atrelarRamosAEmpresa(empresaId, ramosToAdd)
+        );
+      }
+
+      await Promise.all(promises);
+
       handleCloseModal();
       await fetchData();
+      alert("Ramos de atividade atualizados com sucesso!");
     } catch (err) {
-      alert("Erro ao atualizar os ramos de atividade.");
+      console.error("Erro ao atualizar ramos:", err);
+      alert("Ocorreu um erro ao atualizar os ramos de atividade.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleMarkAsRead = async (id) => {
+    try {
+      await notificacaoService.atualizarNotificacao(id, { lida: true });
+      await fetchData();
+    } catch (err) {
+      alert("Erro ao marcar notificação como lida.");
     }
   };
 
@@ -134,16 +181,14 @@ function MeuCadastroPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold text-gray-900">Meu Cadastro</h1>
-
-      {/* Seção Dados da Empresa */}
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="flex justify-between items-center border-b pb-3 mb-4">
           <h2 className="text-xl font-semibold text-gray-800">
             Dados da Empresa
           </h2>
           <button
-            onClick={() => setModalState({ isOpen: true, mode: "EMPRESA" })}
-            className="px-4 py-2 text-sm bg-indigo-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-700"
+            onClick={() => handleOpenModal("EMPRESA", empresa)}
+            className="px-4 py-2 text-sm bg-green-900 text-white font-semibold rounded-md shadow-sm hover:bg-green-700"
           >
             Editar
           </button>
@@ -167,20 +212,14 @@ function MeuCadastroPage() {
           <p>
             <strong>Site:</strong> {empresa?.site || "N/A"}
           </p>
-          <p>
-            <strong>Cargo Responsavel:</strong>{" "}
-            {empresa?.cargo_responsavel || "N/A"}
-          </p>
         </div>
       </div>
-
-      {/* Seção Endereço */}
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="flex justify-between items-center border-b pb-3 mb-4">
           <h2 className="text-xl font-semibold text-gray-800">Endereço</h2>
           <button
-            onClick={() => setModalState({ isOpen: true, mode: "ENDERECO" })}
-            className="px-4 py-2 text-sm bg-indigo-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-700"
+            onClick={() => handleOpenModal("ENDERECO", endereco)}
+            className="px-4 py-2 text-sm bg-green-900 text-white font-semibold rounded-md shadow-sm hover:bg-green-700"
           >
             {endereco ? "Editar" : "Adicionar"}
           </button>
@@ -195,16 +234,14 @@ function MeuCadastroPage() {
           <p className="text-sm text-gray-500">Nenhum endereço cadastrado.</p>
         )}
       </div>
-
-      {/* Seção Ramos */}
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="flex justify-between items-center border-b pb-3 mb-4">
           <h2 className="text-xl font-semibold text-gray-800">
             Ramos de Atividade
           </h2>
           <button
-            onClick={() => setModalState({ isOpen: true, mode: "RAMOS" })}
-            className="px-4 py-2 text-sm bg-indigo-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-700"
+            onClick={() => handleOpenModal("RAMOS")}
+            className="px-4 py-2 text-sm bg-green-900 text-white font-semibold rounded-md shadow-sm hover:bg-green-700"
           >
             Gerenciar
           </button>
@@ -226,33 +263,51 @@ function MeuCadastroPage() {
           </p>
         )}
       </div>
-
-      {/* Seção Selos */}
       <div className="bg-white p-6 rounded-lg shadow-md">
         <h2 className="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">
           Meus Selos
         </h2>
         <SelosAssociadosTable selos={selos} />
       </div>
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">
+          Minhas Notificações
+        </h2>
+        <NotificacoesList
+          notificacoes={notificacoes}
+          onMarkAsRead={handleMarkAsRead}
+          isAdminView={false}
+        />
+      </div>
 
-      {/* Modais */}
       <Modal
         isOpen={modalState.isOpen}
         onClose={handleCloseModal}
-        title={`Editar ${modalState.mode}`}
+        title={
+          modalState.mode === "ENDERECO"
+            ? endereco
+              ? "Editar Endereço"
+              : "Adicionar Endereço"
+            : `Gerenciar ${modalState.mode}`
+        }
       >
         {modalState.mode === "EMPRESA" && (
           <EmpresaForm
-            initialData={empresa}
-            onSubmit={handleEditEmpresa}
+            initialData={modalState.data}
+            onSubmit={handleEmpresaSubmit}
             onCancel={handleCloseModal}
             isSaving={isSaving}
           />
         )}
         {modalState.mode === "ENDERECO" && (
           <EnderecoForm
-            formData={endereco || {}}
-            setFormData={setEndereco}
+            formData={modalState.data || {}}
+            setFormData={(updater) =>
+              setModalState((s) => ({
+                ...s,
+                data: typeof updater === "function" ? updater(s.data) : updater,
+              }))
+            }
             onSubmit={handleEnderecoSubmit}
             onCancel={handleCloseModal}
             isSaving={isSaving}

@@ -35,31 +35,31 @@ const DeleteIcon = (props) => (
   </svg>
 );
 
-// Helper para formatar a data para um formato mais legível
 const formatDate = (dateString) => {
   if (!dateString) return "-";
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch (error) {
-    return "Data inválida";
-  }
+  return new Date(dateString).toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 
 /**
  * Componente para exibir uma lista de notificações.
  * @param {Object} props
  * @param {Array} props.notificacoes - A lista de notificações a ser exibida.
- * @param {Function} props.onMarkAsRead - Função para marcar uma notificação como lida.
- * @param {Function} props.onDelete - Função para excluir uma notificação.
+ * @param {Function} [props.onMarkAsRead] - Função para marcar uma notificação como lida (para empresas).
+ * @param {Function} [props.onDelete] - Função para excluir uma notificação (para admins).
+ * @param {boolean} [props.isAdminView=false] - Define se a visão é de um admin.
  */
-function NotificacoesList({ notificacoes, onMarkAsRead, onDelete }) {
+function NotificacoesList({
+  notificacoes,
+  onMarkAsRead,
+  onDelete,
+  isAdminView = false,
+}) {
   if (!notificacoes || notificacoes.length === 0) {
     return (
       <div className="text-center p-6 bg-gray-50 rounded-lg">
@@ -67,7 +67,7 @@ function NotificacoesList({ notificacoes, onMarkAsRead, onDelete }) {
           Nenhuma notificação encontrada
         </h3>
         <p className="mt-1 text-sm text-gray-500">
-          Esta empresa não tem notificações.
+          Não há notificações para exibir no momento.
         </p>
       </div>
     );
@@ -88,7 +88,8 @@ function NotificacoesList({ notificacoes, onMarkAsRead, onDelete }) {
                 className={`px-2 py-0.5 text-xs font-semibold rounded-full mr-3 capitalize ${
                   notificacao.tipo === "info"
                     ? "bg-blue-100 text-blue-800"
-                    : notificacao.tipo === "aviso"
+                    : // CORREÇÃO APLICADA AQUI
+                    notificacao.tipo === "aviso"
                     ? "bg-yellow-100 text-yellow-800"
                     : "bg-red-100 text-red-800"
                 }`}
@@ -99,6 +100,7 @@ function NotificacoesList({ notificacoes, onMarkAsRead, onDelete }) {
                 {formatDate(notificacao.data_envio)}
               </span>
             </div>
+            {/* CORREÇÃO APLICADA AQUI */}
             <p
               className={`text-sm ${
                 notificacao.lida ? "text-gray-500" : "text-gray-800"
@@ -109,7 +111,7 @@ function NotificacoesList({ notificacoes, onMarkAsRead, onDelete }) {
           </div>
 
           <div className="flex items-center space-x-3 ml-4">
-            {!notificacao.lida && (
+            {!isAdminView && !notificacao.lida && (
               <button
                 onClick={() => onMarkAsRead(notificacao.id)}
                 className="text-green-500 hover:text-green-700"
@@ -118,13 +120,15 @@ function NotificacoesList({ notificacoes, onMarkAsRead, onDelete }) {
                 <CheckIcon className="w-5 h-5" />
               </button>
             )}
-            <button
-              onClick={() => onDelete(notificacao.id)}
-              className="text-red-500 hover:text-red-700"
-              title="Excluir notificação"
-            >
-              <DeleteIcon className="w-5 h-5" />
-            </button>
+            {isAdminView && (
+              <button
+                onClick={() => onDelete(notificacao.id)}
+                className="text-red-500 hover:text-red-700"
+                title="Excluir notificação"
+              >
+                <DeleteIcon className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </div>
       ))}

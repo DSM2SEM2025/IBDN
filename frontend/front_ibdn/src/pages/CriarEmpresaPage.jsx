@@ -1,4 +1,5 @@
 // front_e_back/src/pages/CriarEmpresaPage.jsx
+// front_e_back/src/pages/CriarEmpresaPage.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import useAuthStore from "../store/authStore";
@@ -52,6 +53,17 @@ function CriarEmpresaPage() {
 
   const handleFinalSubmit = async (ramosIds) => {
     setIsSaving(true);
+
+    // --- VALIDAÇÃO ADICIONADA AQUI ---
+    // Verifica se o array de IDs de ramos está vazio ou não foi fornecido.
+    if (!ramosIds || ramosIds.length === 0) {
+      alert(
+        "Você deve selecionar pelo menos um ramo de atividade para continuar."
+      );
+      setIsSaving(false); // Libera o botão
+      return; // Interrompe a execução da função
+    }
+
     if (!dadosEmpresa || !dadosEndereco) {
       alert("Dados da empresa ou endereço estão em falta.");
       setIsSaving(false);
@@ -68,7 +80,7 @@ function CriarEmpresaPage() {
       await empresaRamoService.atrelarRamosAEmpresa(novaEmpresaId, ramosIds);
 
       alert(
-        "Empresa, endereço e ramos registados com sucesso! Por favor, faça login novamente para atualizar o seu perfil."
+        "Empresa, endereço e ramos registrados com sucesso! Por favor, faça login novamente para atualizar seu perfil."
       );
       logout(); // Força o logout para o token ser atualizado com o novo empresa_id
       navigate("/login");
@@ -76,7 +88,7 @@ function CriarEmpresaPage() {
       console.error("Erro completo ao finalizar registro:", error); // Log para depuração
       alert(
         error.response?.data?.detail ||
-          "Ocorreu um erro ao finalizar o registo."
+          "Ocorreu um erro ao finalizar o registro."
       );
       // Volta para a primeira etapa em caso de erro para permitir correção
       setEtapa(1);
@@ -136,7 +148,9 @@ function CriarEmpresaPage() {
   return (
     <div className="bg-white p-8 rounded-lg shadow-lg max-w-4xl mx-auto">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Registo da Empresa</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          Registro da Empresa
+        </h1>
         <p className="text-gray-600 mt-2">
           Siga os passos para completar o seu perfil.
         </p>

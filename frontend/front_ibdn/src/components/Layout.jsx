@@ -1,9 +1,11 @@
 // src/components/Layout.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import useAuthStore from "../store/authStore";
+import useNotificationStore from "../store/notificationStore";
+import NotificationIcon from "./NotificationIcon";
+import NotificationPanel from "./NotificationPanel";
 
-// --- Ícones em SVG ---
 const MenuIcon = (props) => (
   <svg {...props} stroke="currentColor" fill="none" viewBox="0 0 24 24">
     <path
@@ -14,7 +16,6 @@ const MenuIcon = (props) => (
     />
   </svg>
 );
-
 const LogoutIcon = (props) => (
   <svg {...props} stroke="currentColor" fill="none" viewBox="0 0 24 24">
     <path
@@ -31,6 +32,15 @@ function Layout({ children }) {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const fetchNotifications = useNotificationStore(
+    (state) => state.fetchNotifications
+  );
+
+  useEffect(() => {
+    if (user?.permissoes.includes("empresa") && user.empresa_id) {
+      fetchNotifications(user.empresa_id);
+    }
+  }, [user, fetchNotifications]);
 
   if (!user) {
     return null;
@@ -39,6 +49,8 @@ function Layout({ children }) {
   const isAdmin =
     user.permissoes.includes("admin") ||
     user.permissoes.includes("admin_master");
+
+  const isEmpresa = user.permissoes.includes("empresa");
 
   const handleLogout = () => {
     logout();
@@ -49,7 +61,7 @@ function Layout({ children }) {
     `flex items-center px-4 py-2 rounded-md transition-colors ${
       isActive
         ? "bg-gray-700 text-white"
-        : "text-gray-400 hover:bg-gray-700 hover:text-white"
+        : "text-white hover:bg-gray-700 hover:text-white"
     }`;
 
   const sidebarContent = (
@@ -58,26 +70,22 @@ function Layout({ children }) {
         IBDN Painel
       </div>
       <nav className="flex-grow p-4 space-y-2">
-        {/* -- Menus Comuns e de Empresa -- */}
         <NavLink to="/" className={linkClass} end>
           <span className="mr-3">🏠</span>
           Início
         </NavLink>
-
-        {/* Link visível apenas se o usuário tiver uma empresa registrada */}
-        {user.empresa_id && (
+        {isEmpresa && user.empresa_id && (
           <NavLink to="/meu-cadastro" className={linkClass}>
             <span className="mr-3">📄</span>
             Meu Cadastro
           </NavLink>
         )}
-
-        <NavLink to="/solicitar-selo" className={linkClass}>
-          <span className="mr-3">⭐</span>
-          Solicitar Selo
-        </NavLink>
-
-        {/* --- MENUS SOMENTE PARA ADMINS --- */}
+        {isEmpresa && !isAdmin && (
+          <NavLink to="/solicitar-selo" className={linkClass}>
+            <span className="mr-3">⭐</span>
+            Solicitar Selo
+          </NavLink>
+        )}
         {isAdmin && (
           <>
             <hr className="my-2 border-gray-700" />
@@ -87,12 +95,9 @@ function Layout({ children }) {
             </NavLink>
             <NavLink to="/tipos-selo" className={linkClass}>
               <span className="mr-3">🏷️</span>
-              Tipos de Selo
+              Gerenciar Selos
             </NavLink>
-            <NavLink to="/selos" className={linkClass}>
-              <span className="mr-3">🌟</span>
-              Selos Atribuídos
-            </NavLink>
+
             <NavLink to="/solicitacoes-selo" className={linkClass}>
               <span className="mr-3">📬</span>
               Solicitações
@@ -117,7 +122,6 @@ function Layout({ children }) {
           </>
         )}
       </nav>
-      {/* Botão de Sair */}
       <div className="p-4 border-t border-gray-700">
         <button
           onClick={handleLogout}
@@ -132,7 +136,7 @@ function Layout({ children }) {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <aside className="w-64 flex-shrink-0 bg-gray-800 text-white flex-col hidden md:flex">
+      <aside className="w-64 flex-shrink-0 bg-green-900 text-white flex-col hidden md:flex">
         {sidebarContent}
       </aside>
       {sidebarOpen && (
@@ -165,6 +169,14 @@ function Layout({ children }) {
         </header>
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
+
+      {/* Componentes do sistema de notificação global */}
+      {isEmpresa && !isAdmin && (
+        <>
+          <NotificationIcon />
+          <NotificationPanel />
+        </>
+      )}
     </div>
   );
 }

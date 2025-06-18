@@ -14,13 +14,17 @@ const formatDate = (dateString) => {
 };
 
 const getStatusClass = (status) => {
-  switch (status) {
+  switch (
+    status.toLowerCase() // Usar toLowerCase para garantir a correspondência
+  ) {
     case "ativo":
       return "bg-green-100 text-green-800";
     case "pendente":
       return "bg-yellow-100 text-yellow-800";
     case "expirado":
       return "bg-red-100 text-red-800";
+    case "em renovação":
+      return "bg-blue-100 text-blue-800";
     default:
       return "bg-gray-100 text-gray-800";
   }
@@ -34,7 +38,7 @@ function SelosAssociadosTable({ selos }) {
           Nenhum selo associado
         </h3>
         <p className="mt-1 text-sm text-gray-500">
-          Esta empresa ainda não possui selos.
+          Esta empresa ainda não possui selos ou nenhuma solicitação foi feita.
         </p>
       </div>
     );
@@ -75,14 +79,15 @@ function SelosAssociadosTable({ selos }) {
           {selos.map((selo) => (
             <tr key={selo.id} className="hover:bg-gray-50">
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                {selo.nome_tipo_selo}
+                {/* CORREÇÃO APLICADA AQUI */}
+                {selo.nome_selo} ({selo.sigla_selo})
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
-                {selo.codigo_selo}
+                {selo.sigla_selo || "Aguardando Aprovação"}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <span
-                  className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(
+                  className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${getStatusClass(
                     selo.status
                   )}`}
                 >
@@ -90,7 +95,9 @@ function SelosAssociadosTable({ selos }) {
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                Expira em: {formatDate(selo.data_expiracao)}
+                {selo.data_expiracao
+                  ? `Expira em: ${formatDate(selo.data_expiracao)}`
+                  : "N/A"}
               </td>
             </tr>
           ))}

@@ -117,7 +117,7 @@ function UsuariosPage() {
         <h1 className="text-3xl font-bold text-gray-900">Gerir Utilizadores</h1>
         <button
           onClick={handleOpenAddModal}
-          className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="px-4 py-2 bg-green-900 text-white font-semibold rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
           Adicionar Utilizador
         </button>

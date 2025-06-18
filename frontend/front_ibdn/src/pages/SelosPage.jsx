@@ -56,7 +56,7 @@ function SelosPage() {
   const selosMapeados = useMemo(() => {
     return selos.map((selo) => ({
       id: selo.id,
-      codigo: selo.codigo_selo,
+      codigo: selo.sigla_selo,
       status: selo.status,
       empresa: {
         razao_social: selo.razao_social || "N/A",
