@@ -27,13 +27,20 @@ def update_empresa_endereco(empresa_id: int, data: EmpresaEnderecoUpdate, curren
 
 def create_empresa_endereco(empresa_id: int, endereco: EmpresaEnderecoCreate, current_user: TokenPayLoad):
     is_admin = "admin" in current_user.permissoes or "admin_master" in current_user.permissoes
-    
-    if not is_admin and current_user.empresa_id != empresa_id:
-        raise HTTPException(
-            status_code=403, 
-            detail="Acesso negado: Você não tem permissão para criar um endereço para esta empresa."
-        )
 
+    if not is_admin:
+        empresa_existente = empresa_repository.repo_get_empresa_by_id(
+            empresa_id)
+
+        if not empresa_existente:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Empresa não encontrada.")
+
+        if empresa_existente['usuario_id'] != current_user.usuario_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Você não tem permissão para criar um endereço para esta empresa."
+            )
     novo_endereco = repo.create_endereco(empresa_id, endereco)
     return {"message": "Endereço criado com sucesso", "endereco": novo_endereco}
 
