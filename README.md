@@ -1,185 +1,356 @@
-# 🛠️ Guia de Configuração e Execução do Projeto
+# 🏢 Projeto IBDN - Plataforma de Certificação e Gestão de Empresas
 
-Este guia descreve os passos necessários para configurar e executar o projeto em um ambiente de desenvolvimento local.
+<div align="center">
 
-## 🏗️ Arquitetura do Projeto
+![IBDN Logo](https://ibdn.org.br/wp-content/themes/ibdn-theme/assets/images/logo-ibdn.svg)
 
-O projeto utiliza uma arquitetura em camadas para separar as responsabilidades e garantir a organização do código:
+**Sistema completo para gerenciamento de empresas, certificações e usuários**
 
-* **`main.py` (Ponto de Entrada)**: Arquivo principal que inicializa a aplicação FastAPI, configura o CORS, e inclui todos os roteadores.
-* **`routers/`**: Define os endpoints da API. Cada arquivo corresponde a um recurso específico (ex: `routes_empresa.py`, `ibdn_users_routes.py`) e delega a lógica para os *controllers*.
-* **`controllers/`**: Contém a lógica de negócio da aplicação. Eles recebem as requisições dos roteadores, validam permissões, e orquestram as operações, interagindo com os *repositories* (ex: `controller_empresa.py`, `ibdn_users_controller.py`).
-* **`repository/`**: Camada de acesso a dados. É responsável por toda a comunicação com o banco de dados, executando queries SQL (ex: `empresa_repository.py`, `ibdn_user_repository.py`).
-* **`models/`**: Contém os modelos de dados Pydantic que definem a estrutura das requisições e respostas da API, garantindo a validação dos dados (ex: `empresas_model.py`, `ibdn_user_model.py`).
-* **`security/`**: Inclui módulos para funcionalidades de segurança, como hashing de senhas com `passlib` e `bcrypt`.
-* **`database/`**: Gerencia a configuração, conexão e criação das tabelas do banco de dados.
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+
+</div>
+
+---
+
+## 📋 Índice
+
+- [Visão Geral](#-visão-geral)
+- [Funcionalidades](#-funcionalidades)
+- [Tecnologias](#-tecnologias-utilizadas)
+- [Pré-requisitos](#-pré-requisitos)
+- [Instalação](#-instalação-e-execução)
+- [Estrutura](#-estrutura-do-projeto)
+- [API Docs](#-documentação-da-api)
+- [Scripts](#-scripts-disponíveis)
+- [Roadmap](#-próximos-passos)
+
+---
+
+## ✨ Visão Geral
+
+A **plataforma IBDN** é um sistema web completo que integra **frontend React** e **backend FastAPI** para o gerenciamento de certificações empresariais. A solução oferece uma interface intuitiva para administração de empresas, usuários, selos de certificação e permissões de acesso.
+
+### 👥 Perfis de Usuário
+
+- **🔧 Administradores:** Aprovação de selos, gerenciamento de empresas e usuários
+- **🏢 Usuários Empresariais:** Cadastro de empresas, solicitação de selos e acompanhamento
+
+---
+
+## 🚀 Funcionalidades
+
+<table>
+<tr>
+<td width="50%">
+
+### 🔒 **Autenticação & Segurança**
+- ✅ Login com JWT
+- ✅ Perfis com permissões específicas
+- ✅ Hash de senhas seguro
+
+### 🏢 **Gestão de Empresas**
+- ✅ CRUD completo de empresas
+- ✅ Cadastro de endereços
+- ✅ Múltiplos ramos de atuação
+
+</td>
+<td width="50%">
+
+### 👥 **Gestão de Usuários**
+- ✅ CRUD de usuários
+- ✅ Associação a perfis
+- ✅ Controle de permissões
+
+### 🏅 **Sistema de Selos**
+- ✅ Catálogo de certificações
+- ✅ Processo de solicitação
+- ✅ Aprovação por administradores
+
+</td>
+</tr>
+</table>
+
+### 🔔 **Recursos Adicionais**
+- **Notificações em tempo real**
+- **Interface responsiva**
+- **API RESTful documentada**
+- **Gerenciamento de estado otimizado**
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+<div align="center">
+
+### Backend
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=flat-square&logo=postgresql&logoColor=white)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white)
+
+### Frontend
+![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-B73BFE?style=flat-square&logo=vite&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
+![Zustand](https://img.shields.io/badge/Zustand-FF6B6B?style=flat-square&logo=zustand&logoColor=white)
+
+</div>
+
+<details>
+<summary><b>📦 Dependências Completas</b></summary>
+
+#### Backend
+- **FastAPI** - Framework web moderno
+- **SQLAlchemy** - ORM para Python
+- **PostgreSQL** - Banco de dados relacional
+- **Uvicorn** - Servidor ASGI
+- **Pydantic** - Validação de dados
+- **Python-Jose** - Manipulação de JWT
+- **Passlib** - Hash de senhas
+- **Alembic** - Migrações de banco (opcional)
+
+#### Frontend
+- **React** - Biblioteca UI
+- **Vite** - Build tool e dev server
+- **Zustand** - Gerenciamento de estado
+- **TailwindCSS** - Framework CSS
+- **React Router** - Roteamento
+- **Axios** - Cliente HTTP
+- **JWT Decode** - Decodificação de tokens
+
+</details>
 
 ---
 
 ## ✅ Pré-requisitos
 
-Antes de começar, certifique-se de que você tem os seguintes softwares instalados em sua máquina:
+Certifique-se de ter instalado:
 
-* **Python 3.8 ou superior**
-* **MySQL Server**
-* **Node.js (versão 18 ou superior)**
-* **npm ou yarn**
+```bash
+Node.js (LTS) ≥ 16.x
+Python ≥ 3.8
+PostgreSQL ≥ 12
+Git
+```
 
 ---
 
-## 🚀 Passos para Instalação
+## 🚀 Instalação e Execução
 
-Siga os passos abaixo para colocar o projeto em funcionamento.
-
-### 1. Clonar o Repositório
+### 1️⃣ Clone o Repositório
 
 ```bash
-git clone https://github.com/DSM2SEM2025/IBDN.git
-cd IBDN
+git clone https://github.com/seu-usuario/projeto-ibdn.git
+cd projeto-ibdn
 ```
 
-### 2. Criar e Ativar um Ambiente Virtual
+### 2️⃣ Configuração do Backend
 
-É uma boa prática usar um ambiente virtual para isolar as dependências do projeto.
+<details>
+<summary><b>🔧 Configurar API (FastAPI)</b></summary>
 
+#### Ambiente Virtual
 ```bash
-# Criar o ambiente virtual
 python -m venv venv
-
-# Ativar no Windows
-.\venv\Scripts\activate
-
-# Ativar no macOS/Linux
-source venv/bin/activate
+source venv/bin/activate  # Linux/Mac
+# ou
+.\venv\Scripts\activate   # Windows
 ```
 
-### 3. Instalar as Dependências do Backend
+#### Variáveis de Ambiente
+Crie o arquivo `.env` na raiz:
 
-Em seguida, instale todas as dependências com o pip:
+```env
+# Database
+DB_USER=seu_usuario
+DB_PASSWORD=sua_senha
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=ibdn_db
 
+# Security
+SECRET_KEY=sua-chave-muito-secreta-aqui
+ALLOWED_ORIGINS=http://localhost:5173
+
+# Admin Default
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=senha_forte_123
+```
+
+#### Instalação e Execução
 ```bash
 pip install -r requirements.txt
+uvicorn main:app --reload
 ```
 
-### 4. Configurar o Banco de Dados
+✅ **API disponível em:** http://localhost:8000
 
-O projeto utiliza um script para criar o banco de dados e as tabelas automaticamente.
+</details>
 
-1. **Garanta que o seu serviço MySQL esteja em execução.**
-2. O script tentará criar um banco de dados chamado `XE`, conforme indicado nos logs. Se você precisar de um nome diferente, ajuste-o no seu arquivo de configuração de ambiente.
+### 3️⃣ Configuração do Frontend
 
-### 5. Configurar as Variáveis de Ambiente
+<details>
+<summary><b>🖥️ Configurar Interface (React)</b></summary>
 
-Crie um arquivo chamado `.env` na raiz do projeto. Ele armazenará as credenciais e chaves secretas de forma segura. Copie o conteúdo abaixo para o seu `.env` e substitua pelos seus valores.
+#### Navegue para o diretório
+```bash
+cd front_ibdn
+```
+
+#### Variáveis de Ambiente
+Crie o arquivo `.env`:
 
 ```env
-# Configuração do Banco de Dados
-DB_HOST=localhost
-DB_USER=seu_usuario_mysql
-DB_PASSWORD=sua_senha_mysql
-DB_NAME=XE
-DB_PORT=3306
-
-# Chave secreta para JWT (token de autenticação)
-# Use o comando `openssl rand -hex 32` para gerar uma chave segura
-SECRET_KEY=sua_chave_secreta_super_segura
-
-# Credenciais para o usuário Administrador Master
-# Estas credenciais serão usadas pelo script de inicialização para criar o primeiro usuário
-ADMIN_EMAIL=admin@dominio.com
-ADMIN_PASSWORD=senha_forte_para_admin
+VITE_API_URL=http://localhost:8000
 ```
 
-O script de inicialização do banco de dados (`app/database/tables.py`) usa as variáveis `ADMIN_EMAIL` e `ADMIN_PASSWORD` para criar o usuário `admin_master` na primeira execução. Os logs confirmam que a ausência dessas variáveis causa um erro.
-
----
-
-## 🏃 Executando a Aplicação
-
-Após concluir a instalação, você pode iniciar a aplicação com o Uvicorn.
-
-### 1. Inicializar o Banco de Dados
-
-Execute o script `tables.py` para criar o banco de dados e as tabelas necessárias. Este passo só é necessário na primeira vez.
-
+#### Instalação e Execução
 ```bash
-python app/database/tables.py
-```
-
-Você verá logs indicando a criação de tabelas como `ibdn_usuarios`, `empresa`, e `selo`.
-
-### 2. Iniciar o Servidor FastAPI
-
-Execute o seguinte comando na raiz do projeto:
-
-```bash
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-* `main:app`: Refere-se ao arquivo `main.py` e à instância `app` do FastAPI.
-* `--reload`: Reinicia o servidor automaticamente sempre que um arquivo é alterado.
-* `--host 0.0.0.0`: Torna a aplicação acessível na sua rede local.
-* `--port 8000`: Define a porta em que a aplicação será executada.
-
-Após a execução, a API estará disponível em **`http://127.0.0.1:8000`** e a documentação interativa (Swagger UI) em **`http://127.0.0.1:8000/docs`**.
-
----
-
-## 3. Arquitetura do Front-end (Cliente)
-
-A interface do usuário foi desenvolvida como uma Single-Page Application (SPA) utilizando a biblioteca React. Esta abordagem foi escolhida para proporcionar uma experiência de usuário rica, rápida e responsiva.
-
-- **Consumidor da API:** O front-end atua exclusivamente como um consumidor da API RESTful provida pelo backend em FastAPI. Toda a comunicação e manipulação de dados ocorre por meio de requisições HTTP aos endpoints documentados.
-- **Responsabilidade e Lógica:** A responsabilidade primária do front-end é a apresentação e a experiência do usuário (UI/UX). Ele não contém regras de negócio críticas; sua função é renderizar os dados recebidos da API e capturar as entradas do usuário para enviá-las ao backend.
-- **Arquitetura Baseada em Componentes:** A aplicação é estruturada em componentes reutilizáveis, o que facilita a manutenção, a escalabilidade e a consistência visual da interface.
-- **Gerenciamento de Estado:** O estado da aplicação (como informações do usuário autenticado e token) é gerenciado utilizando ferramentas do ecossistema React, como a Context API, garantindo um fluxo de dados previsível.
-
----
-
-## ⚙️ Configurando e Rodando o Front-end
-
-Para executar o ambiente de desenvolvimento do front-end, siga os passos abaixo.
-
-### 1. Navegue até o diretório do front-end:
-
-Supondo que o código do cliente esteja em uma pasta `frontend/`:
-
-```bash
-cd frontend/
-```
-
-### 2. Instale as dependências do projeto:
-
-```bash
-# Usando npm
 npm install
-
-# Ou usando yarn
+# ou
 yarn install
+
+npm run dev
+# ou
+yarn dev
 ```
 
-### 3. Configure as Variáveis de Ambiente:
+✅ **App disponível em:** http://localhost:5173
 
-Crie um arquivo `.env` na raiz do diretório do front-end (`frontend/.env`) para definir a URL da API do backend.
+</details>
 
-```env
-# Exemplo para Vite
-VITE_API_URL=http://127.0.0.1:8000
+---
 
-# Exemplo para Create React App
-REACT_APP_API_URL=http://127.0.0.1:8000
+## 📁 Estrutura do Projeto
+
+<div align="center">
+
+```
+projeto-ibdn/
+├── 📂 app/                 # Backend (FastAPI)
+│   ├── 📁 controllers/     # Lógica de negócio
+│   ├── 📁 database/        # Config do banco
+│   ├── 📁 models/          # Modelos de dados
+│   ├── 📁 repository/      # Acesso aos dados
+│   ├── 📁 routers/         # Endpoints da API
+│   ├── 📁 security/        # Autenticação
+│   └── 📁 service/         # Serviços auxiliares
+│
+├── 📂 front_ibdn/          # Frontend (React)
+│   ├── 📁 src/
+│   │   ├── 📁 components/  # Componentes reutilizáveis
+│   │   ├── 📁 pages/       # Páginas da aplicação
+│   │   ├── 📁 services/    # Comunicação com API
+│   │   ├── 📁 store/       # Estado global (Zustand)
+│   │   ├── 📄 App.jsx      # Rotas principais
+│   │   └── 📄 main.jsx     # Ponto de entrada
+│   │
+│   ├── 📄 package.json
+│   └── 📄 vite.config.js
+│
+├── 📄 requirements.txt     # Deps do Python
+├── 📄 .env.example        # Exemplo de variáveis
+└── 📄 README.md           # Este arquivo
 ```
 
-### 4. Execute o Servidor de Desenvolvimento:
+</div>
 
-Após a instalação das dependências e com o backend já em execução, inicie o servidor do React.
+---
+
+## 📜 Documentação da API
+
+Após iniciar o backend, acesse a documentação interativa:
+
+<div align="center">
+
+| Documentação | URL | Descrição |
+|:---:|:---:|:---|
+| 📚 **Swagger UI** | http://localhost:8000/docs | Interface interativa completa |
+| 📖 **ReDoc** | http://localhost:8000/redoc | Documentação alternativa |
+
+</div>
+
+---
+
+## 🧪 Scripts Disponíveis
+
+### Frontend Commands
 
 ```bash
-# Comando padrão para projetos Vite
-npm run dev
-
-# Comando padrão para projetos Create React App
-npm start
+npm run dev      # 🚀 Servidor de desenvolvimento
+npm run build    # 📦 Build para produção
+npm run preview  # 👀 Visualizar build
+npm run lint     # 🔍 Análise de código
 ```
 
-A aplicação front-end estará disponível em **`http://localhost:5173`** ou **`http://localhost:3000`**, conforme a configuração do seu projeto. O backend já está configurado para aceitar requisições dessas origens.
+### Backend Commands
+
+```bash
+uvicorn main:app --reload    # 🔄 Servidor com auto-reload
+uvicorn main:app --port 8080 # 🌐 Servidor em porta específica
+```
+
+---
+
+## 🧭 Próximos Passos
+
+### 🔜 Roadmap
+
+- [ ] **🧪 Testes Automatizados**
+  - Pytest para backend
+  - Vitest para frontend
+  - Cobertura de código
+
+- [ ] **🚀 Deploy & DevOps**
+  - Containerização com Docker
+  - CI/CD com GitHub Actions
+  - Deploy em cloud (Heroku/Vercel)
+
+- [ ] **📈 Monitoramento**
+  - Logs estruturados
+  - Métricas de performance
+  - Alertas de sistema
+
+- [ ] **🔒 Melhorias de Segurança**
+  - Rate limiting
+  - Validação avançada
+  - Auditoria de ações
+
+---
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+---
+
+## 🤝 Contribuição
+
+Contribuições são bem-vindas! Para contribuir:
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+---
+
+## 📞 Suporte
+
+Se você tiver alguma dúvida ou problema, sinta-se à vontade para:
+
+- 🐛 Abrir uma [issue](https://github.com/seu-usuario/projeto-ibdn/issues)
+- 💬 Iniciar uma [discussão](https://github.com/seu-usuario/projeto-ibdn/discussions)
+- 📧 Entrar em contato via email
+
+---
+
+<div align="center">
+
+⭐ **Se este projeto foi útil para você, considere dar uma estrela!**
+
+</div>
