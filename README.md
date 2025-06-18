@@ -89,7 +89,6 @@ A **plataforma IBDN** é um sistema web completo que integra **frontend React** 
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white)
-![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white)
 
 ### Frontend
 ![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black)
@@ -104,7 +103,6 @@ A **plataforma IBDN** é um sistema web completo que integra **frontend React** 
 
 #### Backend
 - **FastAPI** - Framework web moderno
-- **SQLAlchemy** - ORM para Python
 - **MySQL** - Banco de dados relacional
 - **Uvicorn** - Servidor ASGI
 - **Pydantic** - Validação de dados
