@@ -8,7 +8,7 @@
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
 </div>
@@ -88,7 +88,7 @@ A **plataforma IBDN** é um sistema web completo que integra **frontend React** 
 ### Backend
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=flat-square&logo=postgresql&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white)
 ![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white)
 
 ### Frontend
@@ -105,7 +105,7 @@ A **plataforma IBDN** é um sistema web completo que integra **frontend React** 
 #### Backend
 - **FastAPI** - Framework web moderno
 - **SQLAlchemy** - ORM para Python
-- **PostgreSQL** - Banco de dados relacional
+- **MySQL** - Banco de dados relacional
 - **Uvicorn** - Servidor ASGI
 - **Pydantic** - Validação de dados
 - **Python-Jose** - Manipulação de JWT
@@ -132,7 +132,7 @@ Certifique-se de ter instalado:
 ```bash
 Node.js (LTS) ≥ 16.x
 Python ≥ 3.8
-PostgreSQL ≥ 12
+MySQL ≥ 8.0
 Git
 ```
 
@@ -321,37 +321,8 @@ uvicorn main:app --port 8080 # 🌐 Servidor em porta específica
 
 ---
 
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
----
-
-## 🤝 Contribuição
-
-Contribuições são bem-vindas! Para contribuir:
-
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
-
----
-
-## 📞 Suporte
-
-Se você tiver alguma dúvida ou problema, sinta-se à vontade para:
-
-- 🐛 Abrir uma [issue](https://github.com/seu-usuario/projeto-ibdn/issues)
-- 💬 Iniciar uma [discussão](https://github.com/seu-usuario/projeto-ibdn/discussions)
-- 📧 Entrar em contato via email
-
----
-
 <div align="center">
 
-**Feito com ❤️ pela equipe IBDN**
 
 ⭐ **Se este projeto foi útil para você, considere dar uma estrela!**
 
