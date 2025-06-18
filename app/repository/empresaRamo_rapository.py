@@ -34,7 +34,7 @@ def remover_associacao(id_empresa: int, id_ramo: int) -> bool:
     try:
         with get_cursor() as cursor:
             cursor.execute(
-                "SELECT id FROM empresa_ramo WHERE id_empresa = %s AND id_ramo = %s", (id_empresa, id_ramo)
+                "SELECT * FROM empresa_ramo WHERE id_empresa = %s AND id_ramo = %s", (id_empresa, id_ramo)
             )
             if cursor.fetchone() is None:
                 raise HTTPException(status_code=404, detail="Associação não encontrada")
