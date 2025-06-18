@@ -3,7 +3,8 @@ import api from './api';
 
 export const listarTiposSelo = async () => {
     try {
-        const response = await api.get('/tipos_selo/');
+        // CORREÇÃO: A rota correta é /selos-catalogo/ conforme o backend
+        const response = await api.get('/selos-catalogo/');
         return response.data;
     } catch (error) {
         console.error('Erro ao listar tipos de selo:', error.response?.data || error.message);
@@ -13,7 +14,8 @@ export const listarTiposSelo = async () => {
 
 export const criarTipoSelo = async (dados) => {
     try {
-        const response = await api.post('/tipos_selo/', dados);
+        // CORREÇÃO: A rota correta é /selos-catalogo/
+        const response = await api.post('/selos-catalogo/', dados);
         return response.data;
     } catch (error) {
         console.error('Erro ao criar tipo de selo:', error.response?.data || error.message);
@@ -23,7 +25,8 @@ export const criarTipoSelo = async (dados) => {
 
 export const atualizarTipoSelo = async (id, dados) => {
     try {
-        const response = await api.put(`/tipos_selo/${id}`, dados);
+        // Esta rota não foi implementada no seu backend, mas se fosse, o caminho seria este:
+        const response = await api.put(`/selos-catalogo/${id}`, dados);
         return response.data;
     } catch (error) {
         console.error(`Erro ao atualizar tipo de selo ${id}:`, error.response?.data || error.message);
@@ -33,7 +36,8 @@ export const atualizarTipoSelo = async (id, dados) => {
 
 export const deletarTipoSelo = async (id) => {
     try {
-        const response = await api.delete(`/tipos_selo/${id}`);
+        // Esta rota não foi implementada no seu backend, mas se fosse, o caminho seria este:
+        const response = await api.delete(`/selos-catalogo/${id}`);
         return response.data;
     } catch (error) {
         console.error(`Erro ao deletar tipo de selo ${id}:`, error.response?.data || error.message);

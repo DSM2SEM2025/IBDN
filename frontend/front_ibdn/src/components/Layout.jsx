@@ -29,7 +29,16 @@ const LogoutIcon = (props) => (
 function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+
+  if (!user) {
+    return null;
+  }
+
+  const isAdmin =
+    user.permissoes.includes("admin") ||
+    user.permissoes.includes("admin_master");
 
   const handleLogout = () => {
     logout();
@@ -49,45 +58,66 @@ function Layout({ children }) {
         IBDN Painel
       </div>
       <nav className="flex-grow p-4 space-y-2">
+        {/* -- Menus Comuns e de Empresa -- */}
         <NavLink to="/" className={linkClass} end>
           <span className="mr-3">🏠</span>
           Início
         </NavLink>
-        <NavLink to="/empresas" className={linkClass}>
-          <span className="mr-3">🏢</span>
-          Empresas
+
+        {/* Link visível apenas se o usuário tiver uma empresa registrada */}
+        {user.empresa_id && (
+          <NavLink to="/meu-cadastro" className={linkClass}>
+            <span className="mr-3">📄</span>
+            Meu Cadastro
+          </NavLink>
+        )}
+
+        <NavLink to="/solicitar-selo" className={linkClass}>
+          <span className="mr-3">⭐</span>
+          Solicitar Selo
         </NavLink>
-        <NavLink to="/tipos-selo" className={linkClass}>
-          <span className="mr-3">🏷️</span>
-          Tipos de Selo
-        </NavLink>
-        <NavLink to="/selos" className={linkClass}>
-          <span className="mr-3">🌟</span>
-          Selos Atribuídos
-        </NavLink>
-        {/* NOVO: Link para a nova página de solicitações */}
-        <NavLink to="/solicitacoes-selo" className={linkClass}>
-          <span className="mr-3">📬</span>
-          Solicitações
-        </NavLink>
-        <NavLink to="/ramos" className={linkClass}>
-          <span className="mr-3">🌿</span>
-          Ramos
-        </NavLink>
-        <hr className="my-2 border-gray-600" />
-        <NavLink to="/utilizadores" className={linkClass}>
-          <span className="mr-3">👤</span>
-          Utilizadores
-        </NavLink>
-        <NavLink to="/perfis" className={linkClass}>
-          <span className="mr-3">👥</span>
-          Perfis
-        </NavLink>
-        <NavLink to="/permissoes" className={linkClass}>
-          <span className="mr-3">🛡️</span>
-          Permissões
-        </NavLink>
+
+        {/* --- MENUS SOMENTE PARA ADMINS --- */}
+        {isAdmin && (
+          <>
+            <hr className="my-2 border-gray-700" />
+            <NavLink to="/empresas" className={linkClass}>
+              <span className="mr-3">🏢</span>
+              Empresas
+            </NavLink>
+            <NavLink to="/tipos-selo" className={linkClass}>
+              <span className="mr-3">🏷️</span>
+              Tipos de Selo
+            </NavLink>
+            <NavLink to="/selos" className={linkClass}>
+              <span className="mr-3">🌟</span>
+              Selos Atribuídos
+            </NavLink>
+            <NavLink to="/solicitacoes-selo" className={linkClass}>
+              <span className="mr-3">📬</span>
+              Solicitações
+            </NavLink>
+            <NavLink to="/ramos" className={linkClass}>
+              <span className="mr-3">🌿</span>
+              Ramos
+            </NavLink>
+            <hr className="my-2 border-gray-600" />
+            <NavLink to="/utilizadores" className={linkClass}>
+              <span className="mr-3">👤</span>
+              Utilizadores
+            </NavLink>
+            <NavLink to="/perfis" className={linkClass}>
+              <span className="mr-3">👥</span>
+              Perfis
+            </NavLink>
+            <NavLink to="/permissoes" className={linkClass}>
+              <span className="mr-3">🛡️</span>
+              Permissões
+            </NavLink>
+          </>
+        )}
       </nav>
+      {/* Botão de Sair */}
       <div className="p-4 border-t border-gray-700">
         <button
           onClick={handleLogout}
@@ -105,14 +135,12 @@ function Layout({ children }) {
       <aside className="w-64 flex-shrink-0 bg-gray-800 text-white flex-col hidden md:flex">
         {sidebarContent}
       </aside>
-
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black opacity-50 z-20 md:hidden"
           onClick={() => setSidebarOpen(false)}
         ></div>
       )}
-
       <aside
         className={`fixed top-0 left-0 h-full w-64 bg-gray-800 text-white flex-col flex z-30 transform transition-transform duration-300 ease-in-out md:hidden ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -120,7 +148,6 @@ function Layout({ children }) {
       >
         {sidebarContent}
       </aside>
-
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
           <button
@@ -129,11 +156,11 @@ function Layout({ children }) {
           >
             <MenuIcon className="w-6 h-6" />
           </button>
+          <div className="flex items-center"></div>
           <div className="flex items-center">
-            {/* O título da página pode ser dinâmico no futuro */}
-          </div>
-          <div className="flex items-center">
-            <p className="text-gray-600 hidden sm:block">Bem-vindo!</p>
+            <p className="text-gray-600 hidden sm:block">
+              Bem-vindo, {user.email}!
+            </p>
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-6">{children}</main>

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// 1. Importar o Link
+import { useNavigate, Link } from "react-router-dom";
 import { login as authServiceLogin } from "../services/authService";
 import useAuthStore from "../store/authStore";
 
@@ -16,7 +17,6 @@ function LoginPage() {
 
     try {
       const data = await authServiceLogin(email, password);
-      // MODIFICAÇÃO: Passar o token completo para a store
       loginToStore(data.access_token);
       navigate("/");
     } catch (err) {
@@ -25,8 +25,6 @@ function LoginPage() {
     }
   };
 
-  // ... (o resto do componente JSX permanece o mesmo)
-  // ...
   return (
     <main className="flex items-center justify-center min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-md p-8 space-y-6 bg-white sm:rounded-xl sm:shadow-lg">
@@ -40,6 +38,7 @@ function LoginPage() {
         </div>
 
         <form className="space-y-6" onSubmit={handleSubmit}>
+          {/* ... campos de email e senha ... */}
           <div>
             <label
               htmlFor="email"
@@ -83,7 +82,6 @@ function LoginPage() {
               />
             </div>
           </div>
-
           {error && (
             <div className="p-3 text-sm text-red-700 bg-red-100 border border-red-400 rounded-md">
               {error}
@@ -97,6 +95,19 @@ function LoginPage() {
             >
               Entrar
             </button>
+          </div>
+
+          {/* 2. Adicionar o link para a página de registro */}
+          <div className="text-sm text-center">
+            <p className="text-gray-600">
+              Não tem uma conta?{" "}
+              <Link
+                to="/register"
+                className="font-medium text-indigo-600 hover:text-indigo-500"
+              >
+                Registe-se
+              </Link>
+            </p>
           </div>
         </form>
       </div>
