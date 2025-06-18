@@ -6,7 +6,7 @@ from datetime import date
 class SeloBase(BaseModel):
     nome: str = Field(..., max_length=100)
     descricao: Optional[str] = None
-    sigla: str = Field(..., max_length=10)
+    sigla: str = Field(..., max_length=3)
 
 
 class SeloCreate(SeloBase):
@@ -16,7 +16,7 @@ class SeloCreate(SeloBase):
 class SeloUpdate(BaseModel):
     nome: Optional[str] = Field(None, max_length=100)
     descricao: Optional[str] = None
-    sigla: Optional[str] = Field(None, max_length=10)
+    sigla: Optional[str] = Field(None, max_length=3)
 
 
 class SeloInDB(SeloBase):

@@ -1,13 +1,18 @@
 from fastapi import HTTPException
 from app.repository import endereco_repository as repo
+from app.repository import empresa_repository
 from app.models.model_endereco import EmpresaEnderecoUpdate, EmpresaEnderecoCreate
 from app.controllers.token import TokenPayLoad
 
 
 def get_empresa_enderecos_by_empresa_id(empresa_id: int, current_user: TokenPayLoad):
     is_admin = "admin" in current_user.permissoes or "admin_master" in current_user.permissoes
+
+    get_empresa_enderecos_by_empresa_id = repo.get_enderecos_by_empresa(
+        empresa_id)
     if not is_admin and current_user.empresa_id != empresa_id:
         raise HTTPException(status_code=403, detail="Acesso negado.")
+    return get_empresa_enderecos_by_empresa_id
 
 
 def update_empresa_endereco(empresa_id: int, data: EmpresaEnderecoUpdate, current_user: TokenPayLoad):
