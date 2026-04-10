@@ -1,4 +1,5 @@
 import React from "react";
+import { X, Bell } from "lucide-react";
 import useNotificationStore from "../store/notificationStore";
 import NotificacoesList from "./NotificacoesList";
 
@@ -8,40 +9,49 @@ function NotificationPanel() {
 
   if (!isPanelOpen) return null;
 
+  const unreadCount = notifications.filter((n) => !n.lida).length;
+
   return (
     <>
-      {/* Overlay */}
+      {/* Overlay com backdrop-blur */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-40"
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-all"
         onClick={closePanel}
-      ></div>
-      {/* Painel */}
-      <div className="fixed top-0 right-0 h-full w-full max-w-sm bg-white shadow-lg z-50 transform transition-transform translate-x-0">
-        <div className="flex flex-col h-full">
-          <div className="flex justify-between items-center p-4 border-b">
-            <h3 className="text-xl font-semibold text-gray-900">
-              Notificações
-            </h3>
-            <button
-              onClick={closePanel}
-              className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                ></path>
-              </svg>
-            </button>
+      />
+      {/* Painel lateral */}
+      <div className="fixed top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl z-50 flex flex-col border-l border-gray-100">
+        {/* Cabeçalho */}
+        <div className="flex justify-between items-center px-6 py-5 border-b border-gray-100 bg-ibdn-bg/30 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-ibdn-primary/10 flex items-center justify-center">
+              <Bell className="w-5 h-5 text-ibdn-primary" strokeWidth={1.5} />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold font-serif text-ibdn-earthy">
+                Notificações
+              </h3>
+              {unreadCount > 0 && (
+                <p className="text-xs text-ibdn-primary font-medium">
+                  {unreadCount} não {unreadCount === 1 ? "lida" : "lidas"}
+                </p>
+              )}
+            </div>
           </div>
-          <div className="p-4 overflow-y-auto flex-grow">
-            <NotificacoesList
-              notificacoes={notifications}
-              onMarkAsRead={markAsRead}
-              isAdminView={false} // A visão do painel é sempre a do usuário da empresa
-            />
-          </div>
+          <button
+            onClick={closePanel}
+            className="text-gray-400 bg-transparent hover:bg-gray-100 hover:text-red-500 rounded-full p-2 inline-flex items-center transition-colors"
+            aria-label="Fechar painel de notificações"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        {/* Corpo com scroll */}
+        <div className="p-4 overflow-y-auto flex-grow">
+          <NotificacoesList
+            notificacoes={notifications}
+            onMarkAsRead={markAsRead}
+            isAdminView={false}
+          />
         </div>
       </div>
     </>

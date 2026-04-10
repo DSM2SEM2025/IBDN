@@ -1,37 +1,25 @@
-// src/services/authService.js
-// Mock de autenticação — dois perfis pré-definidos
+import api from './api';
 
-import { delay } from '../data/mockStore';
-
-const MOCK_USERS = {
-  'admin@ibdn.com': {
-    senha: '12345678',
-    user: {
-      id: 'user-001',
-      email: 'admin@ibdn.com',
-      empresa_id: null,
-      permissoes: ['admin', 'admin_master', 'visualizar_relatorios', 'gerir_selos', 'gerir_usuarios'],
-    },
-  },
-  'empresa@ibdn.com': {
-    senha: '12345678',
-    user: {
-      id: 'user-002',
-      email: 'empresa@ibdn.com',
-      empresa_id: 1,
-      permissoes: ['empresa', 'visualizar_relatorios'],
-    },
-  },
-};
-
+/**
+ * Autentica o usuário no backend real.
+ * Endpoint: POST /login
+ * Body: { email, senha }
+ * Retorna: { access_token, message } + dados do usuário extraídos do JWT
+ */
 export const login = async (email, senha) => {
-  await delay(400);
+  const response = await api.post('/login', { email, senha });
+  const { access_token, message } = response.data;
 
-  const entry = MOCK_USERS[email];
-  if (!entry || entry.senha !== senha) {
-    throw { response: { data: { detail: 'Credenciais inválidas.' } } };
-  }
+  // Decodifica o payload do JWT para obter dados do usuário (sem verificação de assinatura no cliente)
+  const payloadBase64 = access_token.split('.')[1];
+  const payload = JSON.parse(atob(payloadBase64));
 
-  // Retorna no mesmo formato que o LoginPage espera
-  return { access_token: 'demo-token', user: entry.user };
+  const user = {
+    id: payload.sub,
+    email: payload.email ?? email,
+    empresa_id: payload.empresa_id ?? null,
+    permissoes: payload.permissoes ?? [],
+  };
+
+  return { access_token, user };
 };
