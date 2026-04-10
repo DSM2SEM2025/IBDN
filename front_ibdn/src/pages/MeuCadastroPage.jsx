@@ -16,8 +16,9 @@ import SelosAssociadosTable from "../components/SelosAssociadosTable";
 import NotificacoesList from "../components/NotificacoesList";
 
 const LoadingSpinner = () => (
-  <div className="flex justify-center items-center p-10">
-    <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-indigo-600"></div>
+  <div className="flex flex-col justify-center items-center p-20 premium-card bg-white rounded-3xl shadow-sm border border-gray-100 my-8">
+    <div className="w-12 h-12 border-4 border-ibdn-primary/20 border-t-ibdn-primary rounded-full animate-spin mb-4"></div>
+    <p className="text-ibdn-primary font-medium opacity-80">Carregando dados...</p>
   </div>
 );
 

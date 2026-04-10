@@ -1,97 +1,91 @@
-import api from './api';
+// src/services/perfilService.js — Mock
+import { getCollection, setCollection, delay } from '../data/mockStore';
 
-/**
- * Busca uma lista de todos os perfis.
- * @returns {Promise<Array>} Uma lista de perfis.
- */
+const generateId = () => `perfil-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+
 export const listarPerfis = async () => {
-    try {
-        const response = await api.get('/perfis/');
-        return response.data;
-    } catch (error) {
-        console.error('Erro ao listar perfis:', error.response?.data || error.message);
-        throw error;
-    }
+  await delay();
+  return getCollection('perfis');
 };
 
-/**
- * Cria um novo perfil.
- * @param {Object} dadosPerfil - Os dados do novo perfil (ex: { nome, permissoes_ids: [] }).
- * @returns {Promise<Object>} Os dados do perfil criado.
- */
 export const criarPerfil = async (dadosPerfil) => {
-    try {
-        const response = await api.post('/perfis/', dadosPerfil);
-        return response.data;
-    } catch (error) {
-        console.error('Erro ao criar perfil:', error.response?.data || error.message);
-        throw error;
-    }
+  await delay();
+  const perfis = getCollection('perfis');
+  const permissoes = getCollection('permissoes');
+
+  // Resolve permissoes_ids para objetos completos
+  const permissoesResolvidas = (dadosPerfil.permissoes_ids || [])
+    .map((id) => permissoes.find((p) => p.id === id))
+    .filter(Boolean);
+
+  const novoPerfil = {
+    id: generateId(),
+    nome: dadosPerfil.nome,
+    permissoes: permissoesResolvidas,
+  };
+  setCollection('perfis', [...perfis, novoPerfil]);
+  return novoPerfil;
 };
 
-/**
- * Atualiza os dados de um perfil existente, incluindo suas permissões.
- * @param {string} perfilId - O ID do perfil a ser atualizado.
- * @param {Object} dadosAtualizacao - Os dados a serem atualizados (ex: { nome, permissoes_ids: [...] }).
- * @returns {Promise<Object>} Os dados do perfil atualizado.
- */
 export const atualizarPerfil = async (perfilId, dadosAtualizacao) => {
-    try {
-        // Esta função agora pode atualizar tanto o nome quanto as permissões em uma única chamada.
-        const response = await api.put(`/perfis/${perfilId}`, dadosAtualizacao);
-        return response.data;
-    } catch (error) {
-        console.error(`Erro ao atualizar perfil com ID ${perfilId}:`, error.response?.data || error.message);
-        throw error;
+  await delay();
+  let perfis = getCollection('perfis');
+  const permissoes = getCollection('permissoes');
+  let atualizado = null;
+
+  perfis = perfis.map((p) => {
+    if (p.id === perfilId) {
+      const permissoesResolvidas = dadosAtualizacao.permissoes_ids
+        ? dadosAtualizacao.permissoes_ids.map((id) => permissoes.find((pm) => pm.id === id)).filter(Boolean)
+        : p.permissoes;
+
+      atualizado = {
+        ...p,
+        nome: dadosAtualizacao.nome || p.nome,
+        permissoes: permissoesResolvidas,
+      };
+      return atualizado;
     }
+    return p;
+  });
+  if (!atualizado) throw { response: { data: { detail: 'Perfil não encontrado.' } } };
+  setCollection('perfis', perfis);
+  return atualizado;
 };
 
-/**
- * Exclui um perfil.
- * @param {string} perfilId - O ID do perfil a ser excluído.
- * @returns {Promise<Object>} A resposta da API.
- */
 export const deletarPerfil = async (perfilId) => {
-    try {
-        const response = await api.delete(`/perfis/${perfilId}`);
-        return response.data;
-    } catch (error) {
-        console.error(`Erro ao deletar perfil com ID ${perfilId}:`, error.response?.data || error.message);
-        throw error;
-    }
+  await delay();
+  const perfis = getCollection('perfis');
+  setCollection('perfis', perfis.filter((p) => p.id !== perfilId));
+  return { message: 'Perfil excluído com sucesso.' };
 };
 
-// As funções abaixo (adicionar/remover) ainda podem ser úteis para outras funcionalidades,
-// mas não são mais necessárias para a lógica do formulário principal de gestão de permissões.
-
-/**
- * Adiciona uma permissão a um perfil específico.
- * @param {string} perfilId - O ID do perfil.
- * @param {string} permissaoId - O ID da permissão a ser adicionada.
- * @returns {Promise<Object>} O perfil atualizado.
- */
 export const adicionarPermissaoAoPerfil = async (perfilId, permissaoId) => {
-    try {
-        const response = await api.post(`/perfis/${perfilId}/permissoes`, { permissao_id: permissaoId });
-        return response.data;
-    } catch (error) {
-        console.error(`Erro ao adicionar permissão ${permissaoId} ao perfil ${perfilId}:`, error.response?.data || error.message);
-        throw error;
+  await delay();
+  let perfis = getCollection('perfis');
+  const permissoes = getCollection('permissoes');
+  const permissao = permissoes.find((p) => p.id === permissaoId);
+  if (!permissao) throw { response: { data: { detail: 'Permissão não encontrada.' } } };
+
+  perfis = perfis.map((p) => {
+    if (p.id === perfilId && !p.permissoes.some((pm) => pm.id === permissaoId)) {
+      return { ...p, permissoes: [...p.permissoes, permissao] };
     }
+    return p;
+  });
+  setCollection('perfis', perfis);
+  return perfis.find((p) => p.id === perfilId);
 };
 
-/**
- * Remove uma permissão de um perfil específico.
- * @param {string} perfilId - O ID do perfil.
- * @param {string} permissaoId - O ID da permissão a ser removida.
- * @returns {Promise<Object>} O perfil atualizado.
- */
 export const removerPermissaoDoPerfil = async (perfilId, permissaoId) => {
-    try {
-        const response = await api.delete(`/perfis/${perfilId}/permissoes/${permissaoId}`);
-        return response.data;
-    } catch (error) {
-        console.error(`Erro ao remover permissão ${permissaoId} do perfil ${perfilId}:`, error.response?.data || error.message);
-        throw error;
+  await delay();
+  let perfis = getCollection('perfis');
+  perfis = perfis.map((p) => {
+    if (p.id === perfilId) {
+      return { ...p, permissoes: p.permissoes.filter((pm) => pm.id !== permissaoId) };
     }
+    return p;
+  });
+  setCollection('perfis', perfis);
+  return perfis.find((p) => p.id === perfilId);
 };

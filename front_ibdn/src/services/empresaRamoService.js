@@ -1,52 +1,37 @@
-// front_e_back/src/services/empresaRamoService.js
-import api from './api';
+// src/services/empresaRamoService.js — Mock
+import { getCollection, setCollection, delay } from '../data/mockStore';
 
-/**
- * Busca a lista de ramos associados a uma empresa específica.
- * @param {number} idEmpresa - O ID da empresa.
- * @returns {Promise<Array>} Uma lista de ramos.
- */
 export const getRamosPorEmpresa = async (idEmpresa) => {
-    try {
-        // CORREÇÃO: Removido o prefixo /empresas para bater com a sua rota do backend.
-        const response = await api.get(`/${idEmpresa}/ramos/`);
-        return response.data;
-    } catch (error) {
-        console.error(`Erro ao buscar ramos para a empresa ${idEmpresa}:`, error.response?.data || error.message);
-        throw error;
-    }
+  await delay();
+  const associacoes = getCollection('empresa_ramos').filter(
+    (er) => er.id_empresa === Number(idEmpresa)
+  );
+  const ramos = getCollection('ramos');
+  return associacoes
+    .map((a) => ramos.find((r) => r.id === a.id_ramo))
+    .filter(Boolean);
 };
 
-/**
- * Atrela uma lista de ramos a uma empresa.
- * @param {number} idEmpresa - O ID da empresa.
- * @param {Array<number>} idsRamo - Um array com os IDs dos ramos a serem atrelados.
- * @returns {Promise<Object>} A resposta da API.
- */
 export const atrelarRamosAEmpresa = async (idEmpresa, idsRamo) => {
-    try {
-        // CORREÇÃO: Removido o prefixo /empresas.
-        const response = await api.post(`/${idEmpresa}/ramos/`, { ids_ramo: idsRamo });
-        return response.data;
-    } catch (error) {
-        console.error(`Erro ao atrelar ramos à empresa ${idEmpresa}:`, error.response?.data || error.message);
-        throw error;
-    }
+  await delay();
+  const empresa_ramos = getCollection('empresa_ramos');
+  const novas = idsRamo
+    .filter((idRamo) => !empresa_ramos.some(
+      (er) => er.id_empresa === Number(idEmpresa) && er.id_ramo === Number(idRamo)
+    ))
+    .map((idRamo) => ({ id_empresa: Number(idEmpresa), id_ramo: Number(idRamo) }));
+  setCollection('empresa_ramos', [...empresa_ramos, ...novas]);
+  return { message: `${novas.length} ramos atrelados com sucesso.` };
 };
 
-/**
- * Remove a associação entre uma empresa e um ramo.
- * @param {number} idEmpresa - O ID da empresa.
- * @param {number} idRamo - O ID do ramo a ser desassociado.
- * @returns {Promise<void>}
- */
 export const deleteAssociacao = async (idEmpresa, idRamo) => {
-    try {
-        // CORREÇÃO: Removido o prefixo /empresas.
-        const response = await api.delete(`/${idEmpresa}/ramos/${idRamo}/`);
-        return response.data;
-    } catch (error) {
-        console.error(`Erro ao deletar associação do ramo ${idRamo} da empresa ${idEmpresa}:`, error.response?.data || error.message);
-        throw error;
-    }
+  await delay();
+  const empresa_ramos = getCollection('empresa_ramos');
+  setCollection(
+    'empresa_ramos',
+    empresa_ramos.filter(
+      (er) => !(er.id_empresa === Number(idEmpresa) && er.id_ramo === Number(idRamo))
+    )
+  );
+  return { message: 'Associação removida com sucesso.' };
 };

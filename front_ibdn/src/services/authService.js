@@ -1,24 +1,37 @@
-import api from './api'; // Importa a instância configurada do Axios
+// src/services/authService.js
+// Mock de autenticação — dois perfis pré-definidos
 
-/**
- * Envia as credenciais do usuário para o endpoint de login da API.
- * @param {string} email - O email do usuário.
- * @param {string} senha - A senha do usuário.
- * @returns {Promise<Object>} A resposta da API, contendo o token de acesso.
- */
+import { delay } from '../data/mockStore';
+
+const MOCK_USERS = {
+  'admin@ibdn.com': {
+    senha: '12345678',
+    user: {
+      id: 'user-001',
+      email: 'admin@ibdn.com',
+      empresa_id: null,
+      permissoes: ['admin', 'admin_master', 'visualizar_relatorios', 'gerir_selos', 'gerir_usuarios'],
+    },
+  },
+  'empresa@ibdn.com': {
+    senha: '12345678',
+    user: {
+      id: 'user-002',
+      email: 'empresa@ibdn.com',
+      empresa_id: 1,
+      permissoes: ['empresa', 'visualizar_relatorios'],
+    },
+  },
+};
+
 export const login = async (email, senha) => {
-    try {
-        // Realiza a chamada POST para o endpoint /login
-        // O corpo da requisição é um objeto com email e senha, como esperado pela API
-        const response = await api.post('/login', {
-            email,
-            senha,
-        });
-        // Retorna os dados da resposta em caso de sucesso
-        return response.data;
-    } catch (error) {
-        // Em caso de erro, loga o erro no console e relança para ser tratado no componente
-        console.error('Erro na autenticação:', error.response?.data || error.message);
-        throw error;
-    }
+  await delay(400);
+
+  const entry = MOCK_USERS[email];
+  if (!entry || entry.senha !== senha) {
+    throw { response: { data: { detail: 'Credenciais inválidas.' } } };
+  }
+
+  // Retorna no mesmo formato que o LoginPage espera
+  return { access_token: 'demo-token', user: entry.user };
 };

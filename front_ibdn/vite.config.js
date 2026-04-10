@@ -8,4 +8,6 @@ export default defineConfig({
     tailwindcss(),
     react()
   ],
+  // Para GitHub Pages: altere '/ibdn-demo/' para o nome do seu repositório
+  base: '/ibdn-demo/',
 })

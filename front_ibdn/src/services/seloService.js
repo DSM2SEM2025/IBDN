@@ -1,106 +1,117 @@
-import api from './api';
+// src/services/seloService.js — Mock
+import { getCollection, setCollection, nextId, delay } from '../data/mockStore';
 
-/**
- * Busca uma lista de todos os selos e as empresas associadas.
- */
 export const listarTodosSelos = async () => {
-    try {
-        const response = await api.get('/selos/todos_selos');
-        return response.data;
-    } catch (error) {
-        console.error('Erro ao listar todos os selos:', error.response?.data || error.message);
-        throw error;
-    }
+  await delay();
+  // SelosPage espera { dados: [...] }
+  return { dados: getCollection('selos') };
 };
 
-/**
- * Busca os selos concedidos a uma empresa específica.
- * ESTA É A FUNÇÃO QUE ESTÁ CAUSANDO O ERRO.
- */
 export const getSelosByEmpresa = async (empresaId) => {
-    try {
-        const response = await api.get(`/empresas/${empresaId}/selos`);
-        return response.data;
-    } catch (error) {
-        console.error(`Erro ao buscar selos para a empresa ${empresaId}:`, error.response?.data || error.message);
-        throw error;
-    }
-}
+  await delay();
+  return getCollection('selos').filter((s) => s.id_empresa === Number(empresaId));
+};
 
-/**
- * Busca todas as solicitações de selo pendentes ou em renovação.
- */
 export const getSolicitacoesSelo = async () => {
-    try {
-        const response = await api.get('/selos/solicitacoes');
-        return response.data;
-    } catch (error) {
-        console.error('Erro ao listar solicitações de selo:', error.response?.data || error.message);
-        throw error;
-    }
-}
+  await delay();
+  return getCollection('selos').filter(
+    (s) => s.status === 'Pendente' || s.status === 'Em Renovação'
+  );
+};
 
-/**
- * Aprova uma solicitação de selo.
- */
 export const aprovarSelo = async (seloId) => {
-    try {
-        const response = await api.put(`/empresa-selos/${seloId}/aprovar`);
-        return response.data;
-    } catch (error) {
-        console.error(`Erro ao aprovar selo com ID ${seloId}:`, error.response?.data || error.message);
-        throw error;
+  await delay();
+  let selos = getCollection('selos');
+  const tiposSelo = getCollection('tipos_selo');
+  selos = selos.map((s) => {
+    if (s.id === Number(seloId)) {
+      const tipo = tiposSelo.find((t) => t.id === s.id_selo);
+      const hoje = new Date();
+      const expiracao = new Date(hoje);
+      expiracao.setFullYear(expiracao.getFullYear() + 2);
+      return {
+        ...s,
+        status: 'Aprovado',
+        data_emissao: hoje.toISOString().split('T')[0],
+        data_expiracao: expiracao.toISOString().split('T')[0],
+        codigo_selo: `${tipo?.sigla || 'SEL'}-${hoje.getFullYear()}-${String(s.id).padStart(3, '0')}`,
+      };
     }
+    return s;
+  });
+  setCollection('selos', selos);
+  return { message: 'Selo aprovado com sucesso.' };
 };
 
-/**
- * Recusa uma solicitação de selo.
- */
 export const recusarSelo = async (seloId) => {
-    try {
-        const response = await api.put(`/empresa-selos/${seloId}/recusar`);
-        return response.data;
-    } catch (error) {
-        console.error(`Erro ao recusar selo com ID ${seloId}:`, error.response?.data || error.message);
-        throw error;
+  await delay();
+  let selos = getCollection('selos');
+  selos = selos.map((s) => {
+    if (s.id === Number(seloId)) {
+      return { ...s, status: 'Recusado' };
     }
+    return s;
+  });
+  setCollection('selos', selos);
+  return { message: 'Selo recusado.' };
 };
 
-/**
- * Solicita a renovação de um selo existente.
- */
 export const solicitarRenovacaoSelo = async (seloId) => {
-    try {
-        const response = await api.put(`/empresa-selos/${seloId}/solicitar-renovacao`);
-        return response.data;
-    } catch (error) {
-        console.error(`Erro ao solicitar renovação para o selo ${seloId}:`, error.response?.data || error.message);
-        throw error;
+  await delay();
+  let selos = getCollection('selos');
+  selos = selos.map((s) => {
+    if (s.id === Number(seloId)) {
+      return { ...s, status: 'Em Renovação' };
     }
+    return s;
+  });
+  setCollection('selos', selos);
+  return { message: 'Renovação solicitada.' };
 };
 
-/**
- * Associa um novo tipo de selo a uma empresa.
- */
 export const associarSeloAEmpresa = async (idEmpresa, dadosAssociacao) => {
-    try {
-        const response = await api.post(`/empresas/${idEmpresa}/selos`, dadosAssociacao);
-        return response.data;
-    } catch (error) {
-        console.error(`Erro ao associar selo à empresa ${idEmpresa}:`, error.response?.data || error.message);
-        throw error;
-    }
+  await delay();
+  const selos = getCollection('selos');
+  const tiposSelo = getCollection('tipos_selo');
+  const empresas = getCollection('empresas');
+  const tipo = tiposSelo.find((t) => t.id === Number(dadosAssociacao.id_selo));
+  const empresa = empresas.find((e) => e.id === Number(idEmpresa));
+
+  const novoSelo = {
+    id: nextId('selos'),
+    id_empresa: Number(idEmpresa),
+    id_selo: Number(dadosAssociacao.id_selo),
+    status: 'Pendente',
+    data_emissao: null,
+    data_expiracao: null,
+    codigo_selo: null,
+    nome_selo: tipo?.nome || 'Selo',
+    sigla_selo: tipo?.sigla || 'N/A',
+    razao_social: empresa?.razao_social || 'N/A',
+  };
+  setCollection('selos', [...selos, novoSelo]);
+  return novoSelo;
 };
 
-/**
- * Permite que um usuário empresa solicite um selo.
- */
 export const solicitarSelo = async (dadosSolicitacao) => {
-    try {
-        const response = await api.post('/selos/solicitar', dadosSolicitacao);
-        return response.data;
-    } catch (error) {
-        console.error(`Erro ao solicitar selo:`, error.response?.data || error.message);
-        throw error;
-    }
+  await delay();
+  const selos = getCollection('selos');
+  const tiposSelo = getCollection('tipos_selo');
+  const tipo = tiposSelo.find((t) => t.id === Number(dadosSolicitacao.id_selo));
+
+  // Pega o empresa_id do primeiro selo da empresa ou usa 1 como fallback
+  const novoSelo = {
+    id: nextId('selos'),
+    id_empresa: dadosSolicitacao.id_empresa || 1,
+    id_selo: Number(dadosSolicitacao.id_selo),
+    status: 'Pendente',
+    data_emissao: null,
+    data_expiracao: null,
+    codigo_selo: null,
+    nome_selo: tipo?.nome || 'Selo',
+    sigla_selo: tipo?.sigla || 'N/A',
+    razao_social: 'Empresa Solicitante',
+  };
+  setCollection('selos', [...selos, novoSelo]);
+  return novoSelo;
 };

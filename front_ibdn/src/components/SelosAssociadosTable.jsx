@@ -45,65 +45,71 @@ function SelosAssociadosTable({ selos }) {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Tipo de Selo
-            </th>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Código
-            </th>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Status
-            </th>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Validade
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+    <>
+      <div className="md:hidden space-y-4">
+        {selos.map((selo) => (
+          <div key={selo.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-3 relative">
+            <div className="flex justify-between items-start">
+              <div className="flex flex-col">
+                <div className="text-base font-bold text-gray-900">{selo.nome_selo}</div>
+                <div className="text-xs text-gray-500 font-mono bg-gray-50 px-2 py-1 rounded inline-block mt-1 w-fit">
+                  {selo.sigla_selo || "Aguardando Aprovação"}
+                </div>
+              </div>
+              <span className={`px-2 py-1 inline-flex text-xs font-bold rounded-full border capitalize ${getStatusClass(selo.status)}`}>
+                {selo.status}
+              </span>
+            </div>
+            <div className="text-sm text-gray-600 mt-1">
+              {selo.data_expiracao ? `Expira em: ${formatDate(selo.data_expiracao)}` : "Validade: N/A"}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="hidden md:block overflow-x-auto premium-card bg-white rounded-3xl shadow-sm border border-gray-100">
+        <table className="min-w-full divide-y divide-gray-100">
+          <thead className="bg-ibdn-bg/50">
+            <tr>
+              <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-ibdn-earthy uppercase tracking-widest rounded-tl-3xl font-serif">
+                Tipo de Selo
+              </th>
+              <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-ibdn-earthy uppercase tracking-widest font-serif">
+                Código
+              </th>
+              <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-ibdn-earthy uppercase tracking-widest font-serif">
+                Status
+              </th>
+              <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-ibdn-earthy uppercase tracking-widest font-serif rounded-tr-3xl">
+                Validade
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-50">
           {selos.map((selo) => (
-            <tr key={selo.id} className="hover:bg-gray-50">
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                {/* CORREÇÃO APLICADA AQUI */}
+            <tr key={selo.id} className="hover:bg-ibdn-bg/30 transition-colors group">
+              <td className="px-6 py-5 whitespace-nowrap text-sm font-bold text-gray-900 group-hover:text-ibdn-primary transition-colors">
                 {selo.nome_selo} ({selo.sigla_selo})
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
-                {selo.sigla_selo || "Aguardando Aprovação"}
+              <td className="px-6 py-5 whitespace-nowrap">
+                <div className="text-sm text-gray-500 font-mono bg-gray-50 px-2 py-1 rounded inline-block w-fit">
+                  {selo.sigla_selo || "Aguardando Aprovação"}
+                </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span
-                  className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${getStatusClass(
-                    selo.status
-                  )}`}
-                >
+              <td className="px-6 py-5 whitespace-nowrap">
+                <span className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full capitalize ${getStatusClass(selo.status)}`}>
                   {selo.status}
                 </span>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {selo.data_expiracao
-                  ? `Expira em: ${formatDate(selo.data_expiracao)}`
-                  : "N/A"}
+              <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-900 font-medium">
+                {selo.data_expiracao ? `Expira em: ${formatDate(selo.data_expiracao)}` : "N/A"}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-    </div>
+      </div>
+    </>
   );
 }
 

@@ -1,61 +1,40 @@
-import api from './api';
+// src/services/permissaoService.js — Mock
+import { getCollection, setCollection, delay } from '../data/mockStore';
 
-/**
- * Busca uma lista de todas as permissões.
- * @returns {Promise<Array>} Uma lista de permissões.
- */
+const generateId = () => `perm-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+
 export const listarPermissoes = async () => {
-    try {
-        const response = await api.get('/permissoes/');
-        return response.data;
-    } catch (error) {
-        console.error('Erro ao listar permissões:', error.response?.data || error.message);
-        throw error;
-    }
+  await delay();
+  return getCollection('permissoes');
 };
 
-/**
- * Cria uma nova permissão.
- * @param {Object} dadosPermissao - Os dados da nova permissão (ex: { nome }).
- * @returns {Promise<Object>} Os dados da permissão criada.
- */
 export const criarPermissao = async (dadosPermissao) => {
-    try {
-        const response = await api.post('/permissoes/', dadosPermissao);
-        return response.data;
-    } catch (error) {
-        console.error('Erro ao criar permissão:', error.response?.data || error.message);
-        throw error;
-    }
+  await delay();
+  const permissoes = getCollection('permissoes');
+  const nova = { ...dadosPermissao, id: generateId() };
+  setCollection('permissoes', [...permissoes, nova]);
+  return nova;
 };
 
-/**
- * Atualiza os dados de uma permissão existente.
- * @param {string} permissaoId - O ID da permissão a ser atualizada.
- * @param {Object} dadosAtualizacao - Os dados a serem atualizados.
- * @returns {Promise<Object>} Os dados da permissão atualizada.
- */
 export const atualizarPermissao = async (permissaoId, dadosAtualizacao) => {
-    try {
-        const response = await api.put(`/permissoes/${permissaoId}`, dadosAtualizacao);
-        return response.data;
-    } catch (error) {
-        console.error(`Erro ao atualizar permissão com ID ${permissaoId}:`, error.response?.data || error.message);
-        throw error;
+  await delay();
+  let permissoes = getCollection('permissoes');
+  let atualizada = null;
+  permissoes = permissoes.map((p) => {
+    if (p.id === permissaoId) {
+      atualizada = { ...p, ...dadosAtualizacao };
+      return atualizada;
     }
+    return p;
+  });
+  if (!atualizada) throw { response: { data: { detail: 'Permissão não encontrada.' } } };
+  setCollection('permissoes', permissoes);
+  return atualizada;
 };
 
-/**
- * Exclui uma permissão.
- * @param {string} permissaoId - O ID da permissão a ser excluída.
- * @returns {Promise<Object>} A resposta da API.
- */
 export const deletarPermissao = async (permissaoId) => {
-    try {
-        const response = await api.delete(`/permissoes/${permissaoId}`);
-        return response.data;
-    } catch (error) {
-        console.error(`Erro ao deletar permissão com ID ${permissaoId}:`, error.response?.data || error.message);
-        throw error;
-    }
+  await delay();
+  const permissoes = getCollection('permissoes');
+  setCollection('permissoes', permissoes.filter((p) => p.id !== permissaoId));
+  return { message: 'Permissão excluída com sucesso.' };
 };

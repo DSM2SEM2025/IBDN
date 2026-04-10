@@ -1,22 +1,5 @@
 import React from "react";
-
-// Reutilizando o ícone de edição
-const EditIcon = (props) => (
-  <svg
-    {...props}
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"
-    />
-  </svg>
-);
+import { Pencil } from "lucide-react";
 
 /**
  * Componente para exibir uma tabela de endereços de uma empresa.
@@ -39,78 +22,92 @@ function EnderecosTable({ enderecos, onEdit }) {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Logradouro
-            </th>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Bairro
-            </th>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Cidade / UF
-            </th>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              CEP
-            </th>
-            <th scope="col" className="relative px-6 py-3">
-              <span className="sr-only">Ações</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+    <>
+      {/* Visão Mobile */}
+      <div className="md:hidden space-y-4">
+        {enderecos.map((endereco) => (
+          <div key={endereco.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-2 relative">
+            <div className="text-base font-bold text-gray-900">{endereco.logradouro}</div>
+            <div className="text-sm text-gray-500">{endereco.complemento || "Sem complemento"}</div>
+            <div className="flex flex-wrap gap-2 text-sm text-gray-700 mt-2">
+              <span className="bg-gray-50 px-2 py-1 rounded">{endereco.bairro}</span>
+              <span className="bg-gray-50 px-2 py-1 rounded">{endereco.cidade} - {endereco.uf}</span>
+              <span className="bg-gray-50 px-2 py-1 rounded font-mono">{endereco.cep}</span>
+            </div>
+            <div className="flex justify-end pt-3 mt-1 border-t border-gray-50">
+              <button
+                onClick={() => onEdit(endereco)}
+                className="p-2 text-gray-500 bg-gray-50 hover:text-ibdn-primary hover:bg-ibdn-primary/5 rounded-lg flex items-center flex-1 justify-center transition-colors"
+                title="Editar Endereço"
+              >
+                <Pencil className="w-4 h-4 mr-2" /> Editar
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Visão Desktop */}
+      <div className="hidden md:block overflow-x-auto premium-card bg-white rounded-3xl shadow-sm border border-gray-100">
+        <table className="min-w-full divide-y divide-gray-100">
+          <thead className="bg-ibdn-bg/50">
+            <tr>
+              <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-ibdn-earthy uppercase tracking-widest rounded-tl-3xl font-serif">
+                Logradouro
+              </th>
+              <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-ibdn-earthy uppercase tracking-widest font-serif">
+                Bairro
+              </th>
+              <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-ibdn-earthy uppercase tracking-widest font-serif">
+                Cidade / UF
+              </th>
+              <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-ibdn-earthy uppercase tracking-widest font-serif">
+                CEP
+              </th>
+              <th scope="col" className="relative px-6 py-4 rounded-tr-3xl">
+                <span className="sr-only">Ações</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-50">
           {enderecos.map((endereco) => (
-            <tr
-              key={endereco.id}
-              className="hover:bg-gray-50 transition-colors"
-            >
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm font-medium text-gray-900">
+            <tr key={endereco.id} className="hover:bg-ibdn-bg/30 transition-colors group">
+              <td className="px-6 py-5 whitespace-nowrap">
+                <div className="text-sm font-bold text-gray-900 group-hover:text-ibdn-primary transition-colors">
                   {endereco.logradouro}
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-gray-500 mt-0.5">
                   {endereco.complemento || "Sem complemento"}
                 </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-900">{endereco.bairro}</div>
+              <td className="px-6 py-5 whitespace-nowrap">
+                <div className="text-sm text-gray-600 font-medium bg-gray-50 px-2 py-1 rounded inline-block">{endereco.bairro}</div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
+              <td className="px-6 py-5 whitespace-nowrap">
                 <div className="text-sm text-gray-900">
                   {endereco.cidade} - {endereco.uf}
                 </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-900">{endereco.cep}</div>
+              <td className="px-6 py-5 whitespace-nowrap">
+                <div className="text-sm text-gray-600 font-mono bg-gray-50 px-2 py-1 rounded inline-block">{endereco.cep}</div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button
-                  onClick={() => onEdit(endereco)}
-                  className="text-indigo-600 hover:text-indigo-900"
-                  title="Editar Endereço"
-                >
-                  <EditIcon className="w-5 h-5" />
-                </button>
+              <td className="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
+                <div className="opacity-70 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => onEdit(endereco)}
+                    className="p-2 text-gray-400 hover:text-ibdn-primary hover:bg-ibdn-primary/5 rounded-lg transition-colors"
+                    title="Editar Endereço"
+                  >
+                    <Pencil className="w-5 h-5" />
+                  </button>
+                </div>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-    </div>
+      </div>
+    </>
   );
 }
 

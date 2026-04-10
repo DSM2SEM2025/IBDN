@@ -1,61 +1,61 @@
-import api from './api';
+// src/services/usuarioService.js — Mock
+import { getCollection, setCollection, delay } from '../data/mockStore';
 
-/**
- * Busca uma lista de todos os utilizadores.
- * @returns {Promise<Array>} Uma lista de utilizadores.
- */
+const generateId = () => `user-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+
 export const listarUsuarios = async () => {
-    try {
-        const response = await api.get('/usuario/');
-        return response.data;
-    } catch (error) {
-        console.error('Erro ao listar utilizadores:', error.response?.data || error.message);
-        throw error;
-    }
+  await delay();
+  return getCollection('usuarios');
 };
 
-/**
- * Cria um novo utilizador.
- * @param {Object} dadosUsuario - Os dados do novo utilizador (conforme schema IbdnUsuarioCreate).
- * @returns {Promise<Object>} Os dados do utilizador criado.
- */
 export const criarUsuario = async (dadosUsuario) => {
-    try {
-        const response = await api.post('/usuario/', dadosUsuario);
-        return response.data;
-    } catch (error) {
-        console.error('Erro ao criar utilizador:', error.response?.data || error.message);
-        throw error;
-    }
+  await delay();
+  const usuarios = getCollection('usuarios');
+  const perfis = getCollection('perfis');
+
+  // Resolve perfil_id para objeto perfil completo
+  const perfil = dadosUsuario.perfil_id
+    ? perfis.find((p) => p.id === dadosUsuario.perfil_id)
+    : perfis.find((p) => p.nome === 'Empresa');
+
+  const novoUsuario = {
+    id: generateId(),
+    nome: dadosUsuario.nome,
+    email: dadosUsuario.email,
+    ativo: dadosUsuario.ativo !== undefined ? dadosUsuario.ativo : true,
+    twofactor: dadosUsuario.twofactor || false,
+    perfil: perfil || null,
+  };
+  setCollection('usuarios', [...usuarios, novoUsuario]);
+  return novoUsuario;
 };
 
-/**
- * Atualiza os dados de um utilizador existente.
- * @param {string} usuarioId - O ID do utilizador a ser atualizado.
- * @param {Object} dadosAtualizacao - Os dados a serem atualizados (conforme schema IbdnUsuarioUpdate).
- * @returns {Promise<Object>} Os dados do utilizador atualizado.
- */
 export const atualizarUsuario = async (usuarioId, dadosAtualizacao) => {
-    try {
-        const response = await api.put(`/usuario/${usuarioId}`, dadosAtualizacao);
-        return response.data;
-    } catch (error) {
-        console.error(`Erro ao atualizar utilizador com ID ${usuarioId}:`, error.response?.data || error.message);
-        throw error;
+  await delay();
+  let usuarios = getCollection('usuarios');
+  const perfis = getCollection('perfis');
+  let atualizado = null;
+
+  usuarios = usuarios.map((u) => {
+    if (u.id === usuarioId) {
+      const perfil = dadosAtualizacao.perfil_id
+        ? perfis.find((p) => p.id === dadosAtualizacao.perfil_id) || u.perfil
+        : u.perfil;
+
+      atualizado = { ...u, ...dadosAtualizacao, perfil };
+      delete atualizado.perfil_id; // Remove campo auxiliar
+      return atualizado;
     }
+    return u;
+  });
+  if (!atualizado) throw { response: { data: { detail: 'Utilizador não encontrado.' } } };
+  setCollection('usuarios', usuarios);
+  return atualizado;
 };
 
-/**
- * Exclui um utilizador.
- * @param {string} usuarioId - O ID do utilizador a ser excluído.
- * @returns {Promise<Object>} A resposta da API.
- */
 export const deletarUsuario = async (usuarioId) => {
-    try {
-        const response = await api.delete(`/usuario/${usuarioId}`);
-        return response.data;
-    } catch (error) {
-        console.error(`Erro ao deletar utilizador com ID ${usuarioId}:`, error.response?.data || error.message);
-        throw error;
-    }
+  await delay();
+  const usuarios = getCollection('usuarios');
+  setCollection('usuarios', usuarios.filter((u) => u.id !== usuarioId));
+  return { message: 'Utilizador excluído com sucesso.' };
 };

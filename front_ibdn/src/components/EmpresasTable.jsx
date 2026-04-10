@@ -1,55 +1,6 @@
 import React from "react";
-import { Link } from "react-router-dom"; // 1. Importar o Link
-
-// --- Ícones SVG ---
-const EditIcon = (props) => (
-  <svg
-    {...props}
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"
-    />
-  </svg>
-);
-const DeleteIcon = (props) => (
-  <svg
-    {...props}
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-    />
-  </svg>
-);
-const SealIcon = (props) => (
-  <svg
-    {...props}
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
-    ></path>
-  </svg>
-);
+import { Link } from "react-router-dom";
+import { Pencil, Trash2, Award, Building2 } from "lucide-react";
 
 /**
  * Componente para exibir uma tabela de empresas.
@@ -62,98 +13,154 @@ const SealIcon = (props) => (
 function EmpresasTable({ empresas, onEdit, onDelete, onAssociateSelo }) {
   if (!empresas || empresas.length === 0) {
     return (
-      <div className="text-center p-10 bg-white rounded-lg shadow">
-        <h3 className="text-lg font-semibold text-gray-700">
-          Nenhuma empresa encontrada
+      <div className="text-center p-14 premium-card bg-white rounded-3xl shadow-sm border border-gray-100 flex flex-col items-center">
+        <div className="w-16 h-16 rounded-full bg-ibdn-bg flex items-center justify-center mb-4">
+          <Building2 className="w-8 h-8 text-ibdn-primary opacity-50" />
+        </div>
+        <h3 className="text-xl font-serif font-bold text-gray-800">
+          Nenhuma organização ativa
         </h3>
-        <p className="mt-1 text-sm text-gray-500">
-          Pode começar por adicionar uma nova empresa.
+        <p className="mt-2 text-md text-gray-500 max-w-sm">
+          A sua lista de empresas está vazia no momento. Adicione a sua primeira organização para iniciar os cadastros.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto bg-white rounded-lg shadow">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+    <>
+      {/* Visão Mobile (Cards) */}
+      <div className="md:hidden space-y-4">
+        {empresas.map((empresa) => (
+          <div key={empresa.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-3 relative">
+            <div className="flex justify-between items-start">
+              <Link
+                to={`/empresas/${empresa.id}`}
+                className="flex flex-col"
+              >
+                <div className="text-base font-bold text-gray-900">{empresa.razao_social}</div>
+                <div className="text-sm text-gray-500 mt-0.5">{empresa.nome_fantasia || "-"}</div>
+              </Link>
+              {empresa.ativo ? (
+                <span className="px-2 py-1 inline-flex text-xs font-bold rounded-full bg-green-100 text-green-800 border border-green-200">
+                  Ativo
+                </span>
+              ) : (
+                <span className="px-2 py-1 inline-flex text-xs font-bold rounded-full bg-red-100 text-red-800 border border-red-200">
+                  Inativo
+                </span>
+              )}
+            </div>
+            <div className="text-sm text-gray-600 font-mono bg-gray-50 px-2 py-1 rounded inline-block w-fit">
+              {empresa.cnpj}
+            </div>
+            <div className="flex items-center justify-end space-x-2 mt-2 pt-3 border-t border-gray-50">
+              <button
+                onClick={() => onAssociateSelo(empresa.id)}
+                className="p-2 text-ibdn-accent bg-ibdn-accent/5 hover:bg-ibdn-accent/10 rounded-lg transition-colors flex flex-1 items-center justify-center font-medium text-sm"
+                title="Associar Selo"
+              >
+                <Award className="w-4 h-4 mr-1.5" /> Associar
+              </button>
+              <button
+                onClick={() => onEdit(empresa.id)}
+                className="p-2 text-gray-500 bg-gray-50 hover:text-ibdn-primary rounded-lg transition-colors"
+                title="Editar"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onDelete(empresa.id)}
+                className="p-2 text-gray-500 bg-gray-50 hover:text-red-600 rounded-lg transition-colors"
+                title="Excluir"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Visão Desktop (Tabela) */}
+      <div className="hidden md:block overflow-x-auto premium-card bg-white rounded-3xl shadow-sm border border-gray-100">
+      <table className="min-w-full divide-y divide-gray-100">
+        <thead className="bg-ibdn-bg/50">
           <tr>
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="px-6 py-4 text-left text-xs font-bold text-ibdn-earthy uppercase tracking-widest rounded-tl-3xl font-serif"
             >
               Razão Social
             </th>
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="px-6 py-4 text-left text-xs font-bold text-ibdn-earthy uppercase tracking-widest font-serif"
             >
               CNPJ
             </th>
             <th
               scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              className="px-6 py-4 text-left text-xs font-bold text-ibdn-earthy uppercase tracking-widest font-serif"
             >
               Status
             </th>
-            <th scope="col" className="relative px-6 py-3">
+            <th scope="col" className="relative px-6 py-4 rounded-tr-3xl">
               <span className="sr-only">Ações</span>
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-white divide-y divide-gray-50">
           {empresas.map((empresa) => (
-            <tr key={empresa.id} className="hover:bg-gray-50 transition-colors">
-              <td className="px-6 py-4 whitespace-nowrap">
-                {/* 2. Transformar o nome num Link */}
+            <tr key={empresa.id} className="hover:bg-ibdn-bg/30 transition-colors group">
+              <td className="px-6 py-5 whitespace-nowrap">
                 <Link
                   to={`/empresas/${empresa.id}`}
-                  className="hover:underline"
+                  className="flex flex-col group-hover:-translate-y-0.5 transition-transform"
                 >
-                  <div className="text-sm font-medium text-indigo-600 hover:text-indigo-800">
+                  <div className="text-sm font-bold text-gray-900 group-hover:text-ibdn-primary transition-colors">
                     {empresa.razao_social}
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-xs text-gray-500 mt-0.5">
                     {empresa.nome_fantasia || "-"}
                   </div>
                 </Link>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-900">{empresa.cnpj}</div>
+              <td className="px-6 py-5 whitespace-nowrap">
+                <div className="text-sm text-gray-600 font-mono bg-gray-50 px-2 py-1 rounded inline-block">{empresa.cnpj}</div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
+              <td className="px-6 py-5 whitespace-nowrap">
                 {empresa.ativo ? (
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-green-100 text-green-800 border border-green-200">
                     Ativo
                   </span>
                 ) : (
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                  <span className="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-red-100 text-red-800 border border-red-200">
                     Inativo
                   </span>
                 )}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div className="flex items-center justify-end space-x-4">
+              <td className="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
+                <div className="flex items-center justify-end space-x-3 opacity-70 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => onAssociateSelo(empresa.id)}
-                    className="text-blue-600 hover:text-blue-900"
+                    className="p-2 text-ibdn-accent hover:bg-ibdn-accent/10 rounded-lg transition-colors"
                     title="Associar Selo"
                   >
-                    <SealIcon className="w-5 h-5" />
+                    <Award className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => onEdit(empresa.id)}
-                    className="text-indigo-600 hover:text-indigo-900"
+                    className="p-2 text-gray-400 hover:text-ibdn-primary hover:bg-ibdn-primary/5 rounded-lg transition-colors"
                     title="Editar"
                   >
-                    <EditIcon className="w-5 h-5" />
+                    <Pencil className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => onDelete(empresa.id)}
-                    className="text-red-600 hover:text-red-900"
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     title="Excluir"
                   >
-                    <DeleteIcon className="w-5 h-5" />
+                    <Trash2 className="w-5 h-5" />
                   </button>
                 </div>
               </td>
@@ -161,7 +168,8 @@ function EmpresasTable({ empresas, onEdit, onDelete, onAssociateSelo }) {
           ))}
         </tbody>
       </table>
-    </div>
+      </div>
+    </>
   );
 }
 
