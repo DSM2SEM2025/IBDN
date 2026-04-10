@@ -11,6 +11,8 @@
 [![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
+[![Demo](https://img.shields.io/badge/🎮_Demo_Online-4CAF50?style=for-the-badge)](https://wellingtonspdev.github.io/IBDN-Demo/)
+
 </div>
 
 ---
@@ -263,13 +265,9 @@ IBDN/
 
 ## 🎮 Demo Online
 
-Uma versão de demonstração com dados mockados está disponível na pasta `ibdn-demo/`. Ela funciona **100% sem backend** — ideal para apresentações e portfólio.
+> **🔗 Acesse agora:** **[https://wellingtonspdev.github.io/IBDN-Demo/](https://wellingtonspdev.github.io/IBDN-Demo/)**
 
-```bash
-cd ibdn-demo
-npm install
-npm run dev
-```
+Uma versão de demonstração com dados mockados está disponível online e também na pasta `ibdn-demo/`. Ela funciona **100% sem backend** — ideal para apresentações e portfólio.
 
 **Credenciais de demo:**
 
