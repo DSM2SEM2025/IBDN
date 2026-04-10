@@ -12,7 +12,7 @@ import EmpresaForm from "../components/EmpresaForm";
 import EnderecoForm from "../components/EnderecoForm";
 import AssociarRamosForm from "../components/AssociarRamosForm";
 
-function CriarEmpresaPage() {
+function CriarEmpresaPage({ asModal, onClose }) {
   const [etapa, setEtapa] = useState(1);
 
   // Estado para cada parte do formulário
@@ -36,10 +36,15 @@ function CriarEmpresaPage() {
     ramoService.listarRamos().then(setTodosOsRamos).catch(console.error);
   }, []);
 
-  // Redireciona se o usuário já tiver uma empresa associada
-  if (user?.empresa_id) {
+  // Redireciona se o usuário já tiver uma empresa associada (somente se não for modal)
+  if (user?.empresa_id && !asModal) {
     return <Navigate to="/" replace />;
   }
+
+  const handleCancelClick = () => {
+    if (onClose) onClose();
+    else navigate("/");
+  };
 
   const handleNextFromEmpresa = (data) => {
     setDadosEmpresa(data);
@@ -101,21 +106,21 @@ function CriarEmpresaPage() {
     switch (etapa) {
       case 1:
         return (
-          <div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Etapa 1 de 3: Dados da Empresa
+          <div className="animate-fade-in-up">
+            <h2 className="text-2xl font-serif font-bold text-ibdn-primary mb-6">
+              Dados Fundamentais da Empresa
             </h2>
             <EmpresaForm
               onSubmit={handleNextFromEmpresa}
-              onCancel={() => navigate("/")}
+              onCancel={handleCancelClick}
             />
           </div>
         );
       case 2:
         return (
-          <div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Etapa 2 de 3: Endereço
+          <div className="animate-fade-in-up">
+            <h2 className="text-2xl font-serif font-bold text-ibdn-primary mb-6">
+              Localização Sede
             </h2>
             <EnderecoForm
               formData={dadosEndereco}
@@ -127,9 +132,9 @@ function CriarEmpresaPage() {
         );
       case 3:
         return (
-          <div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Etapa 3 de 3: Ramo de Atividade
+          <div className="animate-fade-in-up">
+            <h2 className="text-2xl font-serif font-bold text-ibdn-primary mb-6">
+              Área de Impacto e Atuação
             </h2>
             <AssociarRamosForm
               ramosAtuais={[]} // No momento da criação, a empresa não tem ramos associados ainda
@@ -145,17 +150,64 @@ function CriarEmpresaPage() {
     }
   };
 
+  const steps = [
+    { title: "Identificação", number: 1 },
+    { title: "Localização", number: 2 },
+    { title: "Impacto e Ramo", number: 3 },
+  ];
+
   return (
-    <div className="bg-white p-8 rounded-lg shadow-lg max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto space-y-8">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Registro da Empresa
+        <h1 className="text-4xl font-serif font-bold text-ibdn-primary">
+          Formalize seu Impacto
         </h1>
-        <p className="text-gray-600 mt-2">
-          Siga os passos para completar o seu perfil.
+        <p className="text-gray-600 mt-3 text-lg max-w-2xl mx-auto">
+          Inicie sua certificação preenchendo os dados corporativos. Cuidamos das informações com segurança.
         </p>
       </div>
-      {renderEtapa()}
+
+      <div className="flex justify-center mb-10 relative">
+        {/* Timeline Progress */}
+        <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -z-10 rounded-full transform -translate-y-1/2 px-16">
+          <div 
+            className="h-full bg-ibdn-accent transition-all duration-500 ease-in-out rounded-full" 
+            style={{ width: `${((etapa - 1) / (steps.length - 1)) * 100}%` }}
+          />
+        </div>
+        
+        <div className="flex justify-between w-full max-w-2xl px-4">
+          {steps.map((step) => {
+            const isCompleted = etapa > step.number;
+            const isCurrent = etapa === step.number;
+            
+            return (
+              <div key={step.number} className="flex flex-col items-center">
+                <div 
+                  className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg mb-2 shadow-sm transition-all duration-300 ${
+                    isCurrent 
+                      ? 'bg-ibdn-primary text-ibdn-accent ring-4 ring-ibdn-primary/20 scale-110' 
+                      : isCompleted 
+                        ? 'bg-ibdn-accent text-ibdn-primary'
+                        : 'bg-white text-gray-400 border-2 border-gray-200'
+                  }`}
+                >
+                  {isCompleted ? '✓' : step.number}
+                </div>
+                <span className={`text-sm font-medium ${
+                  isCurrent ? 'text-ibdn-primary' : 'text-gray-500'
+                }`}>
+                  {step.title}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="premium-card bg-white p-10 rounded-3xl shadow-lg border border-gray-100">
+        {renderEtapa()}
+      </div>
     </div>
   );
 }

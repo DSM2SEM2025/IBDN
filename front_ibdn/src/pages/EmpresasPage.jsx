@@ -7,8 +7,9 @@ import EmpresaForm from "../components/EmpresaForm";
 import AssociarSeloForm from "../components/AssociarSeloForm"; // Importar novo formulário
 
 const LoadingSpinner = () => (
-  <div className="flex justify-center items-center p-10">
-    <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-indigo-600"></div>
+  <div className="flex flex-col justify-center items-center p-20 premium-card bg-white rounded-3xl shadow-sm border border-gray-100 my-8">
+    <div className="w-12 h-12 border-4 border-ibdn-primary/20 border-t-ibdn-primary rounded-full animate-spin mb-4"></div>
+    <p className="text-ibdn-primary font-medium opacity-80">Carregando dados...</p>
   </div>
 );
 
@@ -116,8 +117,14 @@ function EmpresasPage() {
     if (loading) return <LoadingSpinner />;
     if (error)
       return (
-        <div className="text-center p-10 bg-red-100 text-red-700 rounded-lg shadow">
-          <h3 className="text-lg font-semibold">{error}</h3>
+        <div className="text-center p-14 premium-card bg-red-50 rounded-3xl shadow-sm border border-red-100 flex flex-col items-center my-8">
+          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-serif font-bold text-red-800">Erro</h3>
+          <p className="mt-2 text-md text-red-600 max-w-sm">{error}</p>
         </div>
       );
     return (
@@ -144,14 +151,17 @@ function EmpresasPage() {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Gerir Empresas</h1>
+    <div className="animate-fade-in-up space-y-8">
+      <div className="flex justify-between items-end border-b border-gray-200 pb-5">
+        <div>
+          <h1 className="text-3xl font-serif font-bold text-ibdn-primary tracking-tight">Gerenciamento de Entidades</h1>
+          <p className="mt-1 text-gray-500">Visualize, edite e acompanhe todas as empresas registradas.</p>
+        </div>
         <button
           onClick={handleOpenAddEmpresaModal}
-          className="px-4 py-2 bg-green-900 text-white font-semibold rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="inline-flex items-center justify-center px-5 py-2.5 bg-ibdn-primary text-white text-sm font-medium rounded-xl shadow-lg shadow-ibdn-primary/20 hover:bg-ibdn-primary-focus hover:-translate-y-0.5 transition-all duration-200"
         >
-          Adicionar Empresa
+          Nova Empresa
         </button>
       </div>
 

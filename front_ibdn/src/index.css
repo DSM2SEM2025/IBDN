@@ -1,1 +1,20 @@
 @import "tailwindcss";
+
+@theme {
+  --color-ibdn-primary: #1E3A18;
+  --color-ibdn-primary-focus: #2D5A27;
+  --color-ibdn-secondary: #3E5039;
+  --color-ibdn-accent: #DDB970;
+  --color-ibdn-earthy: #49151C;
+  --color-ibdn-bg: #F9FFFB;
+  
+  --font-sans: "Inter", "system-ui", "sans-serif";
+  --font-serif: "Playfair Display", "ui-serif", "Georgia", "serif";
+}
+
+@utility premium-glass {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(31, 58, 40, 0.15);
+}

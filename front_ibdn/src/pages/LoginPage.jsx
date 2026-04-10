@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { login as authServiceLogin } from "../services/authService";
 import useAuthStore from "../store/authStore";
+import logoIbdn from "../assets/logo_ibdn.png";
 
 function LoginPage() {
   const [email, setEmail] = useState("");
@@ -17,7 +18,7 @@ function LoginPage() {
 
     try {
       const data = await authServiceLogin(email, password);
-      loginToStore(data.access_token);
+      loginToStore(data.user);
       navigate("/");
     } catch (err) {
       setError("Falha na autenticação. Verifique seu e-mail e senha.");
@@ -26,14 +27,19 @@ function LoginPage() {
   };
 
   return (
-    <main className="flex items-center justify-center min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white sm:rounded-xl sm:shadow-lg">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900">
+    <main className="flex items-center justify-center min-h-screen bg-ibdn-bg p-4 sm:p-6 lg:p-8 relative overflow-hidden">
+      {/* Background Decorators */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-ibdn-primary/10 blur-3xl mix-blend-multiply"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-ibdn-accent/10 blur-3xl mix-blend-multiply"></div>
+      
+      <div className="w-full max-w-md p-10 space-y-8 bg-white/80 backdrop-blur-xl sm:rounded-3xl sm:shadow-2xl border border-white/50 relative z-10">
+        <div className="text-center flex flex-col items-center">
+          <img src={logoIbdn} alt="IBDN Logo" className="h-16 w-auto mb-6 drop-shadow-sm" />
+          <h2 className="text-3xl font-serif font-bold tracking-tight text-ibdn-primary">
             Acesse sua conta
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Bem-vindo ao painel de gerenciamento IBDN.
+            Bem-vindo ao Portal Ambiental IBDN
           </p>
         </div>
 
@@ -91,21 +97,20 @@ function LoginPage() {
           <div>
             <button
               type="submit"
-              className="flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-green-900 border border-transparent rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="flex justify-center w-full px-4 py-3 text-sm font-medium text-white bg-ibdn-primary rounded-xl shadow-lg shadow-ibdn-primary/20 hover:bg-ibdn-primary-focus focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ibdn-primary transition-all hover:-translate-y-0.5"
             >
               Entrar
             </button>
           </div>
 
-          {/* 2. Adicionar o link para a página de registro */}
           <div className="text-sm text-center">
             <p className="text-gray-600">
               Não tem uma conta?{" "}
               <Link
                 to="/register"
-                className="font-medium text-indigo-600 hover:text-indigo-500"
+                className="font-medium text-ibdn-accent hover:text-ibdn-primary transition-colors"
               >
-                Registre-se
+                Registre-se agora
               </Link>
             </p>
           </div>

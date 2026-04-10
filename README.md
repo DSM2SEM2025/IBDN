@@ -4,7 +4,7 @@
 
 ![IBDN Logo](https://ibdn.org.br/wp-content/themes/ibdn-theme/assets/images/logo-ibdn.svg)
 
-**Sistema completo para gerenciamento de empresas, certificações e usuários**
+**Sistema completo para gerenciamento de empresas, certificações ambientais e usuários**
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
@@ -23,6 +23,7 @@
 - [Pré-requisitos](#-pré-requisitos)
 - [Instalação](#-instalação-e-execução)
 - [Estrutura](#-estrutura-do-projeto)
+- [Demo Online](#-demo-online)
 - [API Docs](#-documentação-da-api)
 - [Scripts](#-scripts-disponíveis)
 - [Roadmap](#-próximos-passos)
@@ -31,7 +32,7 @@
 
 ## ✨ Visão Geral
 
-A **plataforma IBDN** é um sistema web completo que integra **frontend React** e **backend FastAPI** para o gerenciamento de certificações empresariais. A solução oferece uma interface intuitiva para administração de empresas, usuários, selos de certificação e permissões de acesso.
+A **plataforma IBDN** é um sistema web completo que integra **frontend React** e **backend FastAPI** para o gerenciamento de certificações ambientais empresariais. A solução oferece uma interface intuitiva para administração de empresas, usuários, selos de certificação e permissões de acesso.
 
 ### 👥 Perfis de Usuário
 
@@ -47,9 +48,9 @@ A **plataforma IBDN** é um sistema web completo que integra **frontend React** 
 <td width="50%">
 
 ### 🔒 **Autenticação & Segurança**
-- ✅ Login com JWT
+- ✅ Login com JWT (PyJWT)
 - ✅ Perfis com permissões específicas
-- ✅ Hash de senhas seguro
+- ✅ Hash de senhas com Passlib + bcrypt
 
 ### 🏢 **Gestão de Empresas**
 - ✅ CRUD completo de empresas
@@ -62,22 +63,22 @@ A **plataforma IBDN** é um sistema web completo que integra **frontend React** 
 ### 👥 **Gestão de Usuários**
 - ✅ CRUD de usuários
 - ✅ Associação a perfis
-- ✅ Controle de permissões
+- ✅ Controle granular de permissões
 
 ### 🏅 **Sistema de Selos**
-- ✅ Catálogo de certificações
-- ✅ Processo de solicitação
-- ✅ Aprovação por administradores
+- ✅ Catálogo de certificações ambientais
+- ✅ Processo de solicitação e renovação
+- ✅ Aprovação/recusa por administradores
 
 </td>
 </tr>
 </table>
 
 ### 🔔 **Recursos Adicionais**
-- **Notificações em tempo real**
-- **Interface responsiva**
-- **API RESTful documentada**
-- **Gerenciamento de estado otimizado**
+- **Notificações por empresa**
+- **Interface responsiva com TailwindCSS v4**
+- **API RESTful documentada (Swagger/ReDoc)**
+- **Gerenciamento de estado com Zustand**
 
 ---
 
@@ -89,12 +90,11 @@ A **plataforma IBDN** é um sistema web completo que integra **frontend React** 
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white)
-![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white)
 
 ### Frontend
-![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black)
-![Vite](https://img.shields.io/badge/Vite-B73BFE?style=flat-square&logo=vite&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
+![React](https://img.shields.io/badge/React_19-61DAFB?style=flat-square&logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite_6-B73BFE?style=flat-square&logo=vite&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS_4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
 ![Zustand](https://img.shields.io/badge/Zustand-FF6B6B?style=flat-square&logo=zustand&logoColor=white)
 
 </div>
@@ -103,23 +103,24 @@ A **plataforma IBDN** é um sistema web completo que integra **frontend React** 
 <summary><b>📦 Dependências Completas</b></summary>
 
 #### Backend
-- **FastAPI** - Framework web moderno
-- **SQLAlchemy** - ORM para Python
-- **MySQL** - Banco de dados relacional
+- **FastAPI** - Framework web assíncrono
+- **MySQL** - Banco de dados relacional (`mysql-connector-python`)
 - **Uvicorn** - Servidor ASGI
-- **Pydantic** - Validação de dados
-- **Python-Jose** - Manipulação de JWT
-- **Passlib** - Hash de senhas
-- **Alembic** - Migrações de banco (opcional)
+- **Pydantic v2** - Validação de dados
+- **PyJWT** - Geração e validação de tokens JWT
+- **Passlib + bcrypt** - Hash seguro de senhas
+- **APScheduler** - Agendamento de tarefas
+- **python-dotenv** - Variáveis de ambiente
 
 #### Frontend
-- **React** - Biblioteca UI
-- **Vite** - Build tool e dev server
-- **Zustand** - Gerenciamento de estado
-- **TailwindCSS** - Framework CSS
-- **React Router** - Roteamento
+- **React 19** - Biblioteca UI
+- **Vite 6** - Build tool e dev server
+- **Zustand 5** - Gerenciamento de estado
+- **TailwindCSS 4** - Framework CSS utilitário
+- **React Router 7** - Roteamento SPA
 - **Axios** - Cliente HTTP
-- **JWT Decode** - Decodificação de tokens
+- **Lucide React** - Ícones
+- **JWT Decode** - Decodificação de tokens no client
 
 </details>
 
@@ -129,9 +130,9 @@ A **plataforma IBDN** é um sistema web completo que integra **frontend React** 
 
 Certifique-se de ter instalado:
 
-```bash
-Node.js (LTS) ≥ 16.x
-Python ≥ 3.8
+```
+Node.js (LTS) ≥ 18.x
+Python ≥ 3.10
 MySQL ≥ 8.0
 Git
 ```
@@ -143,8 +144,8 @@ Git
 ### 1️⃣ Clone o Repositório
 
 ```bash
-git clone https://github.com/seu-usuario/projeto-ibdn.git
-cd projeto-ibdn
+git clone https://github.com/seu-usuario/IBDN.git
+cd IBDN
 ```
 
 ### 2️⃣ Configuração do Backend
@@ -161,30 +162,34 @@ source venv/bin/activate  # Linux/Mac
 ```
 
 #### Variáveis de Ambiente
-Crie o arquivo `.env` na raiz:
+Crie o arquivo `.env` na raiz (use `.env.example` como base):
 
 ```env
-# Database
+# Database (MySQL)
+DB_HOST=localhost
 DB_USER=seu_usuario
 DB_PASSWORD=sua_senha
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=ibdn_db
+DB_NAME=IBDN
+DB_PORT=3306
 
 # Security
 SECRET_KEY=sua-chave-muito-secreta-aqui
-ALLOWED_ORIGINS=http://localhost:5173
 
 # Admin Default
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=senha_forte_123
+
+# CORS
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
 ```
 
 #### Instalação e Execução
 ```bash
 pip install -r requirements.txt
-uvicorn main:app --reload
+python main.py
 ```
+
+O servidor cria automaticamente o banco de dados, tabelas e dados iniciais na primeira execução.
 
 ✅ **API disponível em:** http://localhost:8000
 
@@ -210,12 +215,7 @@ VITE_API_URL=http://localhost:8000
 #### Instalação e Execução
 ```bash
 npm install
-# ou
-yarn install
-
 npm run dev
-# ou
-yarn dev
 ```
 
 ✅ **App disponível em:** http://localhost:5173
@@ -226,37 +226,59 @@ yarn dev
 
 ## 📁 Estrutura do Projeto
 
-<div align="center">
-
 ```
-projeto-ibdn/
-├── 📂 app/                 # Backend (FastAPI)
-│   ├── 📁 controllers/     # Lógica de negócio
-│   ├── 📁 database/        # Config do banco
-│   ├── 📁 models/          # Modelos de dados
-│   ├── 📁 repository/      # Acesso aos dados
-│   ├── 📁 routers/         # Endpoints da API
-│   ├── 📁 security/        # Autenticação
-│   └── 📁 service/         # Serviços auxiliares
+IBDN/
+├── 📂 app/                    # Backend (FastAPI)
+│   ├── 📁 controllers/        # Lógica de negócio
+│   ├── 📁 database/           # Conexão e criação de tabelas (MySQL)
+│   ├── 📁 models/             # Modelos de dados (Pydantic)
+│   ├── 📁 repository/         # Acesso direto ao banco
+│   ├── 📁 routers/            # Endpoints da API
+│   ├── 📁 security/           # Autenticação JWT
+│   ├── 📁 service/            # Serviços auxiliares (CORS, etc.)
+│   └── 📁 logs/               # Logs da aplicação
 │
-├── 📂 front_ibdn/          # Frontend (React)
+├── 📂 front_ibdn/             # Frontend (React + Vite)
 │   ├── 📁 src/
-│   │   ├── 📁 components/  # Componentes reutilizáveis
-│   │   ├── 📁 pages/       # Páginas da aplicação
-│   │   ├── 📁 services/    # Comunicação com API
-│   │   ├── 📁 store/       # Estado global (Zustand)
-│   │   ├── 📄 App.jsx      # Rotas principais
-│   │   └── 📄 main.jsx     # Ponto de entrada
-│   │
+│   │   ├── 📁 assets/         # Imagens e logos
+│   │   ├── 📁 components/     # 28 componentes reutilizáveis
+│   │   ├── 📁 data/           # Dados mockados (mockData, mockStore)
+│   │   ├── 📁 pages/          # 15 páginas da aplicação
+│   │   ├── 📁 services/       # Camada de comunicação com API
+│   │   ├── 📁 store/          # Estado global (Zustand)
+│   │   ├── 📄 App.jsx         # Rotas e layout
+│   │   └── 📄 main.jsx        # Ponto de entrada
 │   ├── 📄 package.json
 │   └── 📄 vite.config.js
 │
-├── 📄 requirements.txt     # Deps do Python
-├── 📄 .env.example        # Exemplo de variáveis
-└── 📄 README.md           # Este arquivo
+├── 📂 ibdn-demo/              # Demo standalone (frontend-only)
+│
+├── 📄 main.py                 # Entrypoint do backend
+├── 📄 requirements.txt        # Dependências Python
+├── 📄 .env.example            # Template de variáveis de ambiente
+└── 📄 README.md               # Este arquivo
 ```
 
-</div>
+---
+
+## 🎮 Demo Online
+
+Uma versão de demonstração com dados mockados está disponível na pasta `ibdn-demo/`. Ela funciona **100% sem backend** — ideal para apresentações e portfólio.
+
+```bash
+cd ibdn-demo
+npm install
+npm run dev
+```
+
+**Credenciais de demo:**
+
+| Perfil | Email | Senha |
+|---|---|---|
+| Admin | `admin@ibdn.com` | `12345678` |
+| Empresa | `empresa@ibdn.com` | `12345678` |
+
+> Consulte o [README da demo](ibdn-demo/README.md) para detalhes sobre deploy no GitHub Pages.
 
 ---
 
@@ -277,20 +299,21 @@ Após iniciar o backend, acesse a documentação interativa:
 
 ## 🧪 Scripts Disponíveis
 
-### Frontend Commands
+### Frontend
 
 ```bash
 npm run dev      # 🚀 Servidor de desenvolvimento
 npm run build    # 📦 Build para produção
 npm run preview  # 👀 Visualizar build
-npm run lint     # 🔍 Análise de código
+npm run lint     # 🔍 Análise de código (ESLint)
 ```
 
-### Backend Commands
+### Backend
 
 ```bash
-uvicorn main:app --reload    # 🔄 Servidor com auto-reload
-uvicorn main:app --port 8080 # 🌐 Servidor em porta específica
+python main.py                   # 🚀 Iniciar com auto-setup do banco
+uvicorn main:app --reload        # 🔄 Servidor com auto-reload
+uvicorn main:app --port 8080     # 🌐 Servidor em porta específica
 ```
 
 ---
@@ -307,7 +330,7 @@ uvicorn main:app --port 8080 # 🌐 Servidor em porta específica
 - [ ] **🚀 Deploy & DevOps**
   - Containerização com Docker
   - CI/CD com GitHub Actions
-  - Deploy em cloud (Heroku/Vercel)
+  - Deploy em cloud
 
 - [ ] **📈 Monitoramento**
   - Logs estruturados
@@ -322,7 +345,6 @@ uvicorn main:app --port 8080 # 🌐 Servidor em porta específica
 ---
 
 <div align="center">
-
 
 ⭐ **Se este projeto foi útil para você, considere dar uma estrela!**
 

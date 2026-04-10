@@ -1,46 +1,38 @@
-// src/services/tipoSeloService.js
-import api from './api';
+// src/services/tipoSeloService.js — Mock
+import { getCollection, setCollection, nextId, delay } from '../data/mockStore';
 
 export const listarTiposSelo = async () => {
-    try {
-        // CORREÇÃO: A rota correta é /selos-catalogo/ conforme o backend
-        const response = await api.get('/selos-catalogo/');
-        return response.data;
-    } catch (error) {
-        console.error('Erro ao listar tipos de selo:', error.response?.data || error.message);
-        throw error;
-    }
+  await delay();
+  return getCollection('tipos_selo');
 };
 
 export const criarTipoSelo = async (dados) => {
-    try {
-        // CORREÇÃO: A rota correta é /selos-catalogo/
-        const response = await api.post('/selos-catalogo/', dados);
-        return response.data;
-    } catch (error) {
-        console.error('Erro ao criar tipo de selo:', error.response?.data || error.message);
-        throw error;
-    }
+  await delay();
+  const tipos = getCollection('tipos_selo');
+  const novoTipo = { ...dados, id: nextId('tipos_selo') };
+  setCollection('tipos_selo', [...tipos, novoTipo]);
+  return novoTipo;
 };
 
 export const atualizarTipoSelo = async (id, dados) => {
-    try {
-        // Esta rota não foi implementada no seu backend, mas se fosse, o caminho seria este:
-        const response = await api.put(`/selos-catalogo/${id}`, dados);
-        return response.data;
-    } catch (error) {
-        console.error(`Erro ao atualizar tipo de selo ${id}:`, error.response?.data || error.message);
-        throw error;
+  await delay();
+  let tipos = getCollection('tipos_selo');
+  let atualizado = null;
+  tipos = tipos.map((t) => {
+    if (t.id === Number(id)) {
+      atualizado = { ...t, ...dados };
+      return atualizado;
     }
+    return t;
+  });
+  if (!atualizado) throw { response: { data: { detail: 'Tipo de selo não encontrado.' } } };
+  setCollection('tipos_selo', tipos);
+  return atualizado;
 };
 
 export const deletarTipoSelo = async (id) => {
-    try {
-        // Esta rota não foi implementada no seu backend, mas se fosse, o caminho seria este:
-        const response = await api.delete(`/selos-catalogo/${id}`);
-        return response.data;
-    } catch (error) {
-        console.error(`Erro ao deletar tipo de selo ${id}:`, error.response?.data || error.message);
-        throw error;
-    }
+  await delay();
+  const tipos = getCollection('tipos_selo');
+  setCollection('tipos_selo', tipos.filter((t) => t.id !== Number(id)));
+  return { message: 'Tipo de selo excluído com sucesso.' };
 };

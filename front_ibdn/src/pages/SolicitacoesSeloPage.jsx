@@ -3,8 +3,9 @@ import * as seloService from "../services/seloService";
 import SolicitacoesSeloTable from "../components/SolicitacoesSeloTable";
 
 const LoadingSpinner = () => (
-  <div className="flex justify-center items-center p-10">
-    <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-indigo-600"></div>
+  <div className="flex flex-col justify-center items-center p-20 premium-card bg-white rounded-3xl shadow-sm border border-gray-100 my-8">
+    <div className="w-12 h-12 border-4 border-ibdn-primary/20 border-t-ibdn-primary rounded-full animate-spin mb-4"></div>
+    <p className="text-ibdn-primary font-medium opacity-80">Carregando dados...</p>
   </div>
 );
 
@@ -64,8 +65,14 @@ function SolicitacoesSeloPage() {
     if (loading) return <LoadingSpinner />;
     if (error)
       return (
-        <div className="text-center p-10 bg-red-100 text-red-700 rounded-lg shadow">
-          <h3 className="text-lg font-semibold">{error}</h3>
+        <div className="text-center p-14 premium-card bg-red-50 rounded-3xl shadow-sm border border-red-100 flex flex-col items-center my-8">
+          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-serif font-bold text-red-800">Erro</h3>
+          <p className="mt-2 text-md text-red-600 max-w-sm">{error}</p>
         </div>
       );
     return (
@@ -78,11 +85,14 @@ function SolicitacoesSeloPage() {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Solicitações de Selo
-        </h1>
+    <div className="animate-fade-in-up space-y-8">
+      <div className="flex justify-between items-end border-b border-gray-200 pb-5">
+        <div>
+          <h1 className="text-3xl font-serif font-bold text-ibdn-primary tracking-tight">
+            Validação de Solicitações
+          </h1>
+          <p className="mt-1 text-gray-500">Avalie e aprove novos selos requisitados pelas empresas.</p>
+        </div>
       </div>
       {renderContent()}
     </div>
