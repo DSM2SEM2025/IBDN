@@ -18,7 +18,7 @@ function LoginPage() {
 
     try {
       const data = await authServiceLogin(email, password);
-      loginToStore(data.user);
+      loginToStore(data.user, data.access_token);
       navigate("/");
     } catch (err) {
       setError("Falha na autenticação. Verifique seu e-mail e senha.");

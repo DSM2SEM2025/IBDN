@@ -43,7 +43,7 @@ function NotificacaoForm({ onSubmit, onCancel, isSaving }) {
           onChange={handleChange}
           required
           rows={4}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-ibdn-primary focus:ring-ibdn-primary sm:text-sm"
           placeholder="Escreva a mensagem da notificação aqui..."
         />
       </div>
@@ -61,7 +61,7 @@ function NotificacaoForm({ onSubmit, onCancel, isSaving }) {
           name="tipo"
           value={formData.tipo}
           onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+          className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-ibdn-primary focus:outline-none focus:ring-ibdn-primary sm:text-sm"
         >
           <option value="info">Info</option>
           <option value="aviso">Aviso</option>
@@ -75,14 +75,14 @@ function NotificacaoForm({ onSubmit, onCancel, isSaving }) {
           type="button"
           onClick={onCancel}
           disabled={isSaving}
-          className="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
+          className="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-ibdn-primary focus:ring-offset-2 disabled:opacity-50"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={isSaving}
-          className="inline-flex justify-center rounded-md border border-transparent bg-green-900 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
+          className="inline-flex justify-center rounded-md border border-transparent bg-ibdn-primary py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-ibdn-primary-focus focus:outline-none focus:ring-2 focus:ring-ibdn-primary focus:ring-offset-2 disabled:opacity-50"
         >
           {isSaving ? "Enviando..." : "Enviar Notificação"}
         </button>

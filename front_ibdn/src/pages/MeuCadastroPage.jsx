@@ -180,16 +180,19 @@ function MeuCadastroPage() {
     );
 
   return (
-    <div className="space-y-8">
-      <h1 className="text-3xl font-bold text-gray-900">Meu Cadastro</h1>
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <div className="flex justify-between items-center border-b pb-3 mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">
-            Dados da Empresa
-          </h2>
+    <div className="space-y-8 animate-fade-in-up">
+      <div className="flex justify-between items-end border-b border-gray-200 pb-5">
+        <div>
+          <h1 className="text-3xl font-serif font-bold text-ibdn-primary tracking-tight">Meu Cadastro</h1>
+          <p className="mt-1 text-gray-500">Gerencie os dados da sua empresa e configurações da conta.</p>
+        </div>
+      </div>
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+        <div className="flex justify-between items-center border-b border-gray-100 pb-5 mb-6">
+          <h2 className="text-xl font-serif font-bold text-ibdn-primary">Dados da Empresa</h2>
           <button
             onClick={() => handleOpenModal("EMPRESA", empresa)}
-            className="px-4 py-2 text-sm bg-green-900 text-white font-semibold rounded-md shadow-sm hover:bg-green-700"
+            className="px-4 py-2 text-sm bg-ibdn-primary text-white font-medium rounded-xl shadow-sm shadow-ibdn-primary/20 hover:bg-ibdn-primary-focus transition-colors"
           >
             Editar
           </button>
@@ -215,12 +218,12 @@ function MeuCadastroPage() {
           </p>
         </div>
       </div>
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <div className="flex justify-between items-center border-b pb-3 mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">Endereço</h2>
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+        <div className="flex justify-between items-center border-b border-gray-100 pb-5 mb-6">
+          <h2 className="text-xl font-serif font-bold text-ibdn-primary">Endereço</h2>
           <button
             onClick={() => handleOpenModal("ENDERECO", endereco)}
-            className="px-4 py-2 text-sm bg-green-900 text-white font-semibold rounded-md shadow-sm hover:bg-green-700"
+            className="px-4 py-2 text-sm bg-ibdn-primary text-white font-medium rounded-xl shadow-sm shadow-ibdn-primary/20 hover:bg-ibdn-primary-focus transition-colors"
           >
             {endereco ? "Editar" : "Adicionar"}
           </button>
@@ -235,14 +238,12 @@ function MeuCadastroPage() {
           <p className="text-sm text-gray-500">Nenhum endereço cadastrado.</p>
         )}
       </div>
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <div className="flex justify-between items-center border-b pb-3 mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">
-            Ramos de Atividade
-          </h2>
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+        <div className="flex justify-between items-center border-b border-gray-100 pb-5 mb-6">
+          <h2 className="text-xl font-serif font-bold text-ibdn-primary">Ramos de Atividade</h2>
           <button
             onClick={() => handleOpenModal("RAMOS")}
-            className="px-4 py-2 text-sm bg-green-900 text-white font-semibold rounded-md shadow-sm hover:bg-green-700"
+            className="px-4 py-2 text-sm bg-ibdn-primary text-white font-medium rounded-xl shadow-sm shadow-ibdn-primary/20 hover:bg-ibdn-primary-focus transition-colors"
           >
             Gerenciar
           </button>
@@ -264,16 +265,12 @@ function MeuCadastroPage() {
           </p>
         )}
       </div>
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">
-          Meus Selos
-        </h2>
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+        <h2 className="text-xl font-serif font-bold text-ibdn-primary border-b border-gray-100 pb-5 mb-6">Meus Selos</h2>
         <SelosAssociadosTable selos={selos} />
       </div>
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold text-gray-800 border-b pb-3 mb-4">
-          Minhas Notificações
-        </h2>
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+        <h2 className="text-xl font-serif font-bold text-ibdn-primary border-b border-gray-100 pb-5 mb-6">Minhas Notificações</h2>
         <NotificacoesList
           notificacoes={notificacoes}
           onMarkAsRead={handleMarkAsRead}

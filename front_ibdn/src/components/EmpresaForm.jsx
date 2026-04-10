@@ -220,7 +220,7 @@ function EmpresaForm({ initialData = {}, onSubmit, onCancel, isSaving }) {
         <button
           type="submit"
           disabled={isSaving}
-          className="inline-flex justify-center rounded-md border border-transparent bg-green-900 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700"
+          className="inline-flex justify-center rounded-md border border-transparent bg-ibdn-primary py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-ibdn-primary-focus"
         >
           {isSaving ? "Aguarde..." : "Salvar Empresa"}
         </button>

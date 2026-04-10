@@ -77,7 +77,7 @@ function UsuarioForm({
             value={formData.nome}
             onChange={handleChange}
             required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-ibdn-primary focus:ring-ibdn-primary sm:text-sm"
           />
         </div>
 
@@ -96,7 +96,7 @@ function UsuarioForm({
             value={formData.email}
             onChange={handleChange}
             required
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-ibdn-primary focus:ring-ibdn-primary sm:text-sm"
           />
         </div>
 
@@ -115,7 +115,7 @@ function UsuarioForm({
             value={formData.senha}
             onChange={handleChange}
             required={!isEditing} // Senha é obrigatória apenas na criação
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-ibdn-primary focus:ring-ibdn-primary sm:text-sm"
             placeholder={
               isEditing ? "Deixe em branco para não alterar" : "********"
             }
@@ -135,7 +135,7 @@ function UsuarioForm({
             name="perfil_id"
             value={formData.perfil_id}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-ibdn-primary focus:outline-none focus:ring-ibdn-primary sm:text-sm"
           >
             <option value="">Sem Perfil</option>
             {perfis.map((perfil) => (
@@ -154,7 +154,7 @@ function UsuarioForm({
             type="checkbox"
             checked={formData.ativo}
             onChange={handleChange}
-            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            className="h-4 w-4 rounded border-gray-300 text-ibdn-primary focus:ring-ibdn-primary"
           />
           <label htmlFor="ativo" className="ml-2 block text-sm text-gray-900">
             Utilizador Ativo
@@ -168,14 +168,14 @@ function UsuarioForm({
           type="button"
           onClick={onCancel}
           disabled={isSaving}
-          className="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
+          className="rounded-md border border-gray-300 bg-white py-2 px-4 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-ibdn-primary focus:ring-offset-2 disabled:opacity-50"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={isSaving}
-          className="inline-flex justify-center rounded-md border border-transparent bg-green-900 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
+          className="inline-flex justify-center rounded-md border border-transparent bg-ibdn-primary py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-ibdn-primary-focus focus:outline-none focus:ring-2 focus:ring-ibdn-primary focus:ring-offset-2 disabled:opacity-50"
         >
           {isSaving ? "Salvando..." : "Salvar"}
         </button>
