@@ -146,7 +146,7 @@ Git
 ### 1️⃣ Clone o Repositório
 
 ```bash
-git clone https://github.com/seu-usuario/IBDN.git
+git clone https://github.com/DSM2SEM2025/IBDN.git
 cd IBDN
 ```
 
